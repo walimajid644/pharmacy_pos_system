@@ -1,0 +1,18 @@
+{
+  "recorded_utc": "2026-11-01T09:00:54.516190+00:00",
+  "artifacts": [
+    {
+      "path": "src-tauri\\target\\release\\pharmacy-pos.exe",
+      "bytes": 6076416,
+      "modified_utc": "2026-11-01T08:58:53.664814+00:00",
+      "sha256": "3C2B7FBF84308781088B6C0CC6DEFDAB2B24D7DA1E57CA7D8BC8D6F5AB6BFC3B"
+    },
+    {
+      "path": "src-tauri\\target\\release\\bundle\\nsis\\Pharmacy POS_0.1.0_x64-setup.exe",
+      "bytes": 2453011,
+      "modified_utc": "2026-11-01T08:58:53.586004+00:00",
+      "sha256": "651EDC117AC50F9272298FB4C22AC5C8093ADAE4413402AC5B21DC7D47672BB3"
+    }
+  ],
+  "acceptance": "Build artifacts only; clean installation and signed-in desktop/hardware acceptance pending"
+}

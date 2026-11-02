@@ -1,0 +1,10 @@
+[
+  "Five-minute lock clears cart and purchase draft and shows sign-in when native logout ok",
+  "Five-minute lock clears cart and purchase draft and shows sign-in when native logout fail",
+  "Five-minute lock clears cart and purchase draft and shows sign-in when native logout hang",
+  "Keyboard activity renews idle timeout; the session still locks five minutes after last activity",
+  "First click after a suspended/expired interval locks rather than reviving the old cart",
+  "Delayed barcode lookup shared by input and repeated Enter adds once using two queries",
+  "Escape cancels a pending barcode add and stale results cannot refill the cart",
+  "Failed shared barcode search displays an error and leaves cart unchanged"
+]

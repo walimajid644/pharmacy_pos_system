@@ -1,0 +1,5 @@
+{
+  "productName": "Pharmacy POS Backup Test",
+  "identifier": "com.pharmacypos.codex.backup",
+  "app": { "windows": [{ "title": "Pharmacy POS Backup Test", "width": 1280, "height": 800, "minWidth": 1024, "minHeight": 600 }] }
+}

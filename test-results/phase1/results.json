@@ -1,0 +1,13 @@
+[
+  "Login fits 1024x600; labels and autocomplete target native inputs",
+  "Dashboard metric/quick-action/alert panels fit 1024x600",
+  "Barcode + immediate Enter adds once in two queries; F8/F9/F10 work; checkout and summary visible in light/dark",
+  "Confirmed loose-strip opening remains visible on its sale line",
+  "Estimate dialog traps Tab; Escape closes only the inner dialog and restores focus",
+  "Closed-drawer expense void blocked with an actionable inline reason",
+  "Source document shortage lists item and available/requested units",
+  "Expired estimate explains how to renew validity",
+  "Unavailable/cancelled/converted source documents cannot be loaded",
+  "Valid source shows number, current-price notice and changed-price count; checkout stays visible",
+  "Primary commercial labels render in Urdu"
+]

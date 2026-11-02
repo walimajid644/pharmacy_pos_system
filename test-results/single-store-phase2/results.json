@@ -1,0 +1,12 @@
+[
+  "Customer list distinguishes debt, over-limit, account credit and settled balances in light/dark",
+  "Changing statement customer clears prior data; failed load cannot print/collect; successful print and collection use the loaded customer",
+  "Out-of-order statement responses cannot replace the newer selected customer",
+  "Customer account credit is visible and has no collect-debt action",
+  "Held-only expiry report retains quantity/value and opens exact batch; supplier return still requires adjustment review/approval",
+  "Accountant can inspect expiry report but cannot invoke manager batch actions",
+  "Expiry workspace uses configured 14-day window; expired and quarantined badges coexist; all-batch filter retains later batches",
+  "Product batch row opens the selected batch in expiry/quarantine actions",
+  "Accountant cashier report exposes credit separately and retains visible net totals at 1024x600",
+  "Cashier and accountant remain blocked from expiry action workspace"
+]

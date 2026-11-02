@@ -1,0 +1,12 @@
+[
+  "CSV file retains leading zeros/base quantities; preview writes nothing; review dialog traps Tab and Escape leaves workspace open",
+  "Reviewed import requires acknowledgement; failed save retains operation ID for safe retry",
+  "Invalid preview shows row error and blocks import",
+  "Bulk setup reviews exact selected products/revision and sends only requested reorder change",
+  "Bulk pack-history rejection stays visible without dismissing reviewed changes",
+  "Controlled POS blocks checkout until evidence, sends dedicated prescription note, and last-sale reprint shows saved evidence/DRAP",
+  "Generic-name counter search works; patient+doctor pair satisfies controlled-sale evidence without a note",
+  "Accountant controlled report shows saved prescription/classification and pages read-only results",
+  "FBR spike is gated, has no auto-call/production action, and clears token after mocked sandbox validation",
+  "Role guards block cashier/accountant onboarding actions and cashier controlled-report access"
+]

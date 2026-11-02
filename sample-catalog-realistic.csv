@@ -1,0 +1,50 @@
+name,sku,barcode,generic_name,pack_size,unit_price,wholesale_price,cost_price,reorder_level,reorder_quantity,category,manufacturer,sell_by_loose_unit,controlled_substance,drap_registration,tax_exempt,notes
+Panadol 500mg Tablets,PNDL500,8964000495056,Paracetamol,10,15.00,12.00,8.50,100,500,Analgesics,GSK Pakistan,1,0,,0,Common pain reliever
+Augmentin 625mg Tablets,AUG625,8964000123456,Amoxicillin + Clavulanic Acid,10,45.00,38.00,28.00,50,200,Antibiotics,GSK Pakistan,0,1,DRAP-12345,0,Prescription required
+Brufen 400mg Tablets,BRF400,8964000234567,Ibuprofen,10,18.00,15.00,10.50,80,400,Analgesics,Abbott Pakistan,1,0,,0,Anti-inflammatory
+Calpol Syrup 120ml,CLPL120,8964000345678,Paracetamol,1,65.00,55.00,42.00,30,100,Analgesics,GSK Pakistan,0,0,,0,Pediatric formulation
+Disprin Tablets,DSP100,8964000456789,Aspirin,10,12.00,10.00,7.00,100,500,Analgesics,Reckitt Pakistan,1,0,,0,Soluble tablets
+Flagyl 400mg Tablets,FLG400,8964000567890,Metronidazole,10,35.00,30.00,22.00,40,200,Antibiotics,Sanofi Pakistan,0,1,DRAP-23456,0,Anti-protozoal antibiotic
+Gaviscon Syrup 200ml,GAV200,8964000678901,Alginate + Antacid,1,185.00,160.00,125.00,20,50,Antacids,Reckitt Pakistan,0,0,,0,Heartburn relief
+Immodium Capsules,IMD002,8964000789012,Loperamide,6,95.00,82.00,65.00,25,100,Antidiarrheals,Johnson & Johnson,0,0,,0,Anti-diarrheal
+Januvia 100mg Tablets,JNV100,8964000890123,Sitagliptin,14,420.00,385.00,315.00,20,50,Antidiabetics,MSD Pakistan,0,1,DRAP-34567,0,Type 2 diabetes
+Lasix 40mg Tablets,LSX040,8964000901234,Furosemide,10,22.00,19.00,14.00,50,200,Diuretics,Sanofi Pakistan,0,1,DRAP-45678,0,Loop diuretic
+Lipitor 20mg Tablets,LPT020,8964001012345,Atorvastatin,10,180.00,155.00,125.00,30,100,Cardiovascular,Pfizer Pakistan,0,1,DRAP-56789,0,Cholesterol management
+Motilium 10mg Tablets,MTL010,8964001123456,Domperidone,10,28.00,24.00,18.00,60,300,Antiemetics,Abbott Pakistan,0,0,,0,Nausea and vomiting
+Norvasc 5mg Tablets,NRV005,8964001234567,Amlodipine,14,95.00,82.00,65.00,40,150,Cardiovascular,Pfizer Pakistan,0,1,DRAP-67890,0,Blood pressure
+ORS Sachet,ORS001,8964001345678,Oral Rehydration Salts,1,8.00,6.50,4.50,200,1000,Electrolytes,Local,0,0,,0,Single use sachet
+Ponstan 500mg Tablets,PNS500,8964001456789,Mefenamic Acid,10,32.00,28.00,21.00,50,250,Analgesics,Pfizer Pakistan,1,0,,0,Pain and inflammation
+Risek 20mg Capsules,RSK020,8964001567890,Omeprazole,14,85.00,72.00,58.00,50,200,Antacids,Getz Pharma,0,0,,0,Acid reflux
+Septran Tablets,SPT400,8964001678901,Sulfamethoxazole + Trimethoprim,10,38.00,32.00,24.00,40,200,Antibiotics,GSK Pakistan,0,1,DRAP-78901,0,Bacterial infections
+Telfast 120mg Tablets,TLF120,8964001789012,Fexofenadine,10,165.00,145.00,115.00,30,100,Antihistamines,Sanofi Pakistan,0,0,,0,Allergy relief
+Ventolin Inhaler,VNT100,8964001890123,Salbutamol,1,285.00,255.00,210.00,15,50,Respiratory,GSK Pakistan,0,1,DRAP-89012,0,Asthma relief
+Zyrtec 10mg Tablets,ZYR010,8964001901234,Cetirizine,10,95.00,82.00,65.00,40,200,Antihistamines,UCB Pakistan,0,0,,0,24-hour allergy relief
+Multivitamin Tablets,MVT100,8964002012345,Multivitamin Complex,30,120.00,105.00,85.00,50,150,Vitamins,Seven Seas,0,0,,0,Daily supplement
+Vitamin C 500mg Tablets,VTC500,8964002123456,Ascorbic Acid,30,85.00,72.00,58.00,60,200,Vitamins,Local,0,0,,0,Immune support
+Zinc Tablets 50mg,ZNC050,8964002234567,Zinc Sulfate,30,95.00,82.00,68.00,50,150,Minerals,Local,0,0,,0,Zinc supplement
+Betadine Solution 120ml,BTD120,8964002345678,Povidone Iodine,1,165.00,145.00,115.00,25,80,Antiseptics,Mundipharma,0,0,,0,Topical antiseptic
+Cotton Wool 50g,CTW050,8964002456789,Medical Cotton,1,45.00,38.00,28.00,40,150,Medical Supplies,Local,0,0,,0,Absorbent cotton
+Bandage Roll 5cm,BND005,8964002567890,Elastic Bandage,1,55.00,48.00,38.00,30,100,Medical Supplies,Local,0,0,,0,Compression bandage
+Surgical Mask (Box of 50),MSK050,8964002678901,Disposable Mask,50,250.00,220.00,180.00,20,50,Medical Supplies,Local,0,0,,0,3-ply surgical masks
+Thermometer Digital,THM001,8964002789012,Digital Thermometer,1,350.00,310.00,255.00,15,40,Devices,Omron,0,0,,0,Oral/underarm use
+Blood Pressure Monitor,BPM001,8964002890123,BP Monitor,1,3500.00,3200.00,2750.00,5,15,Devices,Omron,0,0,,0,Automatic digital
+Glucometer Strips (Box of 50),GLU050,8964002901234,Glucose Test Strips,50,1250.00,1125.00,950.00,10,30,Devices,Accu-Chek,0,0,,0,For Accu-Chek meters
+Insulin Syringe 1ml (Box of 10),INS010,8964003012345,Insulin Syringe,10,180.00,160.00,135.00,20,60,Medical Supplies,BD,0,0,,0,U-100 with needle
+Nebulizer Machine,NBZ001,8964003123456,Compressor Nebulizer,1,4500.00,4100.00,3550.00,3,10,Devices,Omron,0,0,,0,For respiratory therapy
+Baby Lotion 200ml,BBL200,8964003234567,Baby Moisturizer,1,285.00,255.00,210.00,20,60,Baby Care,Johnson & Johnson,0,0,,0,Gentle formula
+Baby Powder 200g,BBP200,8964003345678,Talcum Powder,1,195.00,175.00,145.00,25,80,Baby Care,Johnson & Johnson,0,0,,0,Talc-free option available
+Diapers Medium (Pack of 30),DPR030,8964003456789,Disposable Diapers,30,850.00,780.00,650.00,15,40,Baby Care,Pampers,0,0,,0,Size M - 6-11kg
+Baby Wipes (Pack of 80),BBW080,8964003567890,Baby Wet Wipes,80,245.00,220.00,185.00,30,80,Baby Care,Johnson & Johnson,0,0,,0,Fragrance-free
+Gripe Water 120ml,GRP120,8964003678901,Herbal Colic Relief,1,125.00,110.00,88.00,20,60,Baby Care,Woodwards,0,0,,0,Natural ingredients
+Protein Powder Vanilla 500g,PRT500,8964003789012,Whey Protein,1,2250.00,2050.00,1750.00,10,25,Supplements,Optimum Nutrition,0,0,,0,For muscle recovery
+Omega-3 Capsules 1000mg,OMG100,8964003890123,Fish Oil,30,650.00,590.00,495.00,20,50,Supplements,Nature's Bounty,0,0,,0,Heart and brain health
+Calcium + Vitamin D Tablets,CAL050,8964003901234,Calcium Carbonate,30,185.00,165.00,138.00,30,80,Supplements,Local,0,0,,0,Bone health
+Shampoo Anti-Dandruff 200ml,SHP200,8964004012345,Ketoconazole Shampoo,1,425.00,385.00,320.00,15,40,Dermatology,Nizoral,0,0,,0,Medicated shampoo
+Moisturizing Cream 100g,MST100,8964004123456,Emollient Cream,1,385.00,345.00,285.00,20,50,Dermatology,Cetaphil,0,0,,0,For dry skin
+Sunscreen SPF 50+ 50ml,SUN050,8964004234567,Sun Protection,1,685.00,625.00,525.00,15,40,Dermatology,Neutrogena,0,0,,0,Broad spectrum UVA/UVB
+Acne Gel 30g,ACN030,8964004345678,Benzoyl Peroxide 5%,1,295.00,265.00,220.00,20,50,Dermatology,Local,0,0,,0,Topical treatment
+Eye Drops Lubricating 10ml,EYE010,8964004456789,Artificial Tears,1,155.00,138.00,115.00,30,80,Ophthalmology,Refresh,0,0,,0,Preservative-free
+Ear Drops 15ml,EAR015,8964004567890,Wax Softener,1,185.00,165.00,138.00,20,60,ENT,Local,0,0,,0,Carbamide peroxide
+Nasal Spray 15ml,NSL015,8964004678901,Saline Solution,1,165.00,148.00,122.00,25,70,ENT,Local,0,0,,0,Decongestant-free
+Cough Syrup 100ml,CGH100,8964004789012,Dextromethorphan,1,145.00,128.00,105.00,30,100,Respiratory,Benylin,0,0,,0,Non-drowsy formula
+Lozenges Honey-Lemon,LZG012,8964004890123,Throat Lozenges,12,85.00,75.00,60.00,40,150,Respiratory,Strepsils,0,0,,0,Soothing relief

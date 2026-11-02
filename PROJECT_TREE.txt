@@ -1,0 +1,132 @@
+pharmacy-pos/
+│
+├── 📄 Documentation (Read these first!)
+│   ├── START_HERE.md              ← ⭐ Begin here! Quick 5-min setup
+│   ├── SETUP.md                   Detailed installation guide
+│   ├── PROJECT_STATUS.md          What's done, what's next
+│   ├── DEVELOPMENT_GUIDE.md       Architecture & patterns
+│   ├── DATABASE_SCHEMA.md         Complete DB documentation
+│   ├── README.md                  Project overview
+│   └── PROJECT_TREE.txt           This file
+│
+├── 📁 Configuration Files
+│   ├── package.json               Dependencies & scripts
+│   ├── tsconfig.json              TypeScript config
+│   ├── tsconfig.node.json         TypeScript Node config
+│   ├── vite.config.ts             Vite bundler config
+│   ├── tailwind.config.js         Tailwind CSS config
+│   ├── postcss.config.js          PostCSS config
+│   ├── .gitignore                 Git ignore rules
+│   ├── .npmrc                     npm config
+│   └── .env.example               Environment variables template
+│
+├── 📁 IDE Configuration
+│   └── .vscode/
+│       ├── settings.json          VS Code settings
+│       └── extensions.json        Recommended extensions
+│
+├── 📁 src/ (Vue 3 Frontend)
+│   │
+│   ├── 📁 components/             Reusable UI components
+│   │   └── ui/                    Base components
+│   │       ├── Button.vue         ✅ Button with variants
+│   │       ├── Input.vue          ✅ Input with validation
+│   │       └── Card.vue           ✅ Container card
+│   │
+│   ├── 📁 views/                  Page components (routes)
+│   │   ├── LoginView.vue          ✅ Authentication screen
+│   │   ├── DashboardView.vue      ✅ Main app layout
+│   │   ├── POSView.vue            ✅ Point of sale terminal
+│   │   ├── ProductsView.vue       🚧 Product management (placeholder)
+│   │   └── CustomersView.vue      🚧 Customer management (placeholder)
+│   │
+│   ├── 📁 stores/                 Pinia state management
+│   │   ├── auth.ts                ✅ User authentication state
+│   │   ├── cart.ts                ✅ Shopping cart state
+│   │   └── settings.ts            ✅ App settings state
+│   │
+│   ├── 📁 lib/                    Core utilities
+│   │   ├── database.ts            ✅ SQLite wrapper functions
+│   │   ├── types.ts               ✅ TypeScript type definitions
+│   │   ├── schemas.ts             ✅ Zod validation schemas
+│   │   └── utils.ts               ✅ Helper functions (format, date, etc)
+│   │
+│   ├── 📁 router/                 Vue Router
+│   │   └── index.ts               ✅ Route definitions & guards
+│   │
+│   ├── 📁 assets/                 Static assets
+│   │   └── styles/
+│   │       └── index.css          ✅ Tailwind base styles
+│   │
+│   ├── App.vue                    ✅ Root Vue component
+│   └── main.ts                    ✅ App entry point
+│
+├── 📁 src-tauri/ (Rust Backend)
+│   │
+│   ├── 📁 migrations/             SQLite schema files
+│   │   ├── 001_initial_schema.sql ✅ Create tables, indexes, default user
+│   │   └── 002_sample_data.sql    ✅ Test data (10 products, 5 customers)
+│   │
+│   ├── 📁 src/                    Rust source code
+│   │   ├── lib.rs                 ✅ Tauri application setup
+│   │   └── main.rs                ✅ Application entry point
+│   │
+│   ├── Cargo.toml                 ✅ Rust dependencies
+│   ├── build.rs                   ✅ Build script
+│   └── tauri.conf.json            ✅ Tauri configuration
+│
+├── 📁 dist/                       (Generated) Production build output
+├── 📁 node_modules/               (Generated) npm dependencies
+├── 📁 target/                     (Generated) Rust build artifacts
+│
+└── index.html                     HTML entry point
+
+═══════════════════════════════════════════════════════════════
+
+FILE COUNT SUMMARY:
+  Documentation:     7 files
+  Source Code:      25+ files
+  Configuration:    10 files
+  Total LOC:       ~2,500 lines
+
+TECH STACK:
+  Frontend:  Vue 3 + TypeScript + Tailwind CSS
+  Desktop:   Tauri 2.x (Rust + WebView)
+  Database:  SQLite (embedded)
+  State:     Pinia
+  Router:    Vue Router
+  Forms:     VeeValidate + Zod
+
+STATUS:
+  ✅ Complete:     Infrastructure, Auth, POS Terminal, Database
+  🚧 In Progress:  Product Management, Customer Management
+  📅 Planned:      Reports, Printer Support, Auto-updates
+
+═══════════════════════════════════════════════════════════════
+
+QUICK COMMANDS:
+
+  npm install              Install dependencies
+  npm run tauri:dev        Run dev server (hot reload)
+  npm run tauri:build      Build production app
+  npm run dev              Run Vite only (UI preview)
+  npm run build            TypeScript compile check
+
+DEFAULT LOGIN:
+  Username: admin
+  Password: admin123
+
+DATABASE LOCATION:
+  Windows: %APPDATA%\com.pharmacypos.app\pharmacy.db
+
+═══════════════════════════════════════════════════════════════
+
+NEXT STEPS:
+  1. Read START_HERE.md
+  2. Run npm install
+  3. Run npm run tauri:dev
+  4. Login with admin/admin123
+  5. Search for "Panadol" in POS (sample data included)
+  6. Check PROJECT_STATUS.md for tasks to work on
+
+═══════════════════════════════════════════════════════════════

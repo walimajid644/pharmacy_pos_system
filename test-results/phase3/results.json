@@ -1,0 +1,8 @@
+[
+  "Retail pricing renders with cart and checkout visible",
+  "Wholesale customer switches charged cart prices; walk-in restores retail without clearing lines",
+  "Product editor loads wholesale price and saving blank sends SQL NULL for retail fallback",
+  "Suggestions require reviewed supplier selection and populate an unsaved draft with 40 units; no order command executes",
+  "Read-only audit renders imported history, passes user/action filters and pages by 100",
+  "Cashier and accountant cannot open protected suggestions or audit workspaces"
+]
