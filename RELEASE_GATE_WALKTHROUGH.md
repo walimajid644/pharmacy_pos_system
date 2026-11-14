@@ -1,6 +1,8 @@
 # Release gate — disposable counter-day walkthrough
 
-Status: **not executed through the native desktop UI**. Use only a disposable Windows account/VM or separately isolated application identifier/data directory. Installing this candidate on the same Windows account uses the existing application identifier and may open its existing pharmacy database; that is not a fresh-install test.
+Status: **partial automated native evidence; installed-release operator acceptance pending**. The November 8 isolated Tauri integration uses real SQLite/auth/IPC and the POS/import/shift UI, with native API setup for other steps. It covers the deterministic monetary/stock totals below, controlled evidence, credit, role restrictions and 90 layout combinations. See `tests/native/README.md` and `test-results/native-acceptance/latest.json`. It is a debug test build with synthetic data and does not close clean-install, upgraded installed-release, print or manual operator checks.
+
+Use only a disposable Windows account/VM or separately isolated application identifier/data directory. Installing this candidate on the same Windows account uses the existing application identifier and may open its existing pharmacy database; that is not a fresh-install test.
 
 Record operator, date, OS/build, WebView2 version, application artifact SHA-256 and database variant (fresh/upgraded). Run once on fresh data and once on a backup copy of older synthetic data. Keep screenshots, error text and stock/drawer totals at each step. Do not mark a step passed from automated unit-test evidence alone.
 

@@ -233,11 +233,11 @@ async fn release_gate_counter_day_on_fresh_and_upgraded_database() {
         // Run the actual view SQL, not a parallel test-only report implementation.
         for (view, section) in [
             (
-                include_str!("../../src/views/DailyClosingView.vue"),
+                include_str!("../../src/composables/useDailyClosing.ts"),
                 "async function loadTodaySales()",
             ),
             (
-                include_str!("../../src/views/ReportsView.vue"),
+                include_str!("../../src/composables/useReports.ts"),
                 "async function generateDailySalesReport()",
             ),
         ] {

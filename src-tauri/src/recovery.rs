@@ -31,7 +31,7 @@ pub(crate) async fn get_saved(
     let id = if let Some(id) = invoice_id {
         id
     } else {
-        let latest:Option<String>=sqlx::query_scalar("SELECT id FROM sales_invoices WHERE cashier_id=? AND status='completed' ORDER BY created_at DESC,rowid DESC LIMIT 1").bind(&actor).fetch_optional(pool).await.map_err(|e|e.to_string())?;
+        let latest:Option<String>=sqlx::query_scalar("SELECT id FROM sales_invoices WHERE cashier_id=? AND status='completed' ORDER BY created_at DESC,rowid DESC LIMIT 1").bind(actor).fetch_optional(pool).await.map_err(|e|e.to_string())?;
         match latest {
             Some(id) => id,
             None => return Ok(None),
@@ -47,9 +47,9 @@ pub(crate) async fn get_saved(
     if role == "cashier" && row.get::<String, _>("cashier_id") != actor {
         return Err("Cashiers may recover only their own saved sales".into());
     }
-    let invoice=select_safe(&pool,"SELECT i.*,COALESCE(i.customer_name_snapshot,'Walk-in') AS customer_name,i.customer_phone_snapshot AS customer_phone,i.cashier_name_snapshot AS cashier_name FROM sales_invoices i WHERE id=?".into(),vec![id.clone().into()]).await?.remove(0);
-    let items=select_safe(&pool,"SELECT i.*,i.product_name_snapshot AS product_name,i.batch_number_snapshot AS batch_number,i.controlled_snapshot AS controlled_substance,i.drap_snapshot AS drap_registration_number FROM sales_invoice_items i LEFT JOIN products p ON p.id=i.product_id WHERE invoice_id=? ORDER BY i.rowid".into(),vec![id.into()]).await?;
-    let shop = select_safe(&pool, "SELECT * FROM app_settings LIMIT 1".into(), vec![])
+    let invoice=select_safe(pool,"SELECT i.*,COALESCE(i.customer_name_snapshot,'Walk-in') AS customer_name,i.customer_phone_snapshot AS customer_phone,i.cashier_name_snapshot AS cashier_name FROM sales_invoices i WHERE id=?".into(),vec![id.clone().into()]).await?.remove(0);
+    let items=select_safe(pool,"SELECT i.*,i.product_name_snapshot AS product_name,i.batch_number_snapshot AS batch_number,i.controlled_snapshot AS controlled_substance,i.drap_snapshot AS drap_registration_number FROM sales_invoice_items i LEFT JOIN products p ON p.id=i.product_id WHERE invoice_id=? ORDER BY i.rowid".into(),vec![id.into()]).await?;
+    let shop = select_safe(pool, "SELECT * FROM app_settings LIMIT 1".into(), vec![])
         .await?
         .into_iter()
         .next();
@@ -82,12 +82,7 @@ async fn performance(
     if b <= a || (b - a).num_days() > 366 {
         return Err("Choose a valid date range of up to one year".into());
     }
-    select_safe(
-        &pool,
-        PERFORMANCE_SQL.into(),
-        vec![start.into(), end.into()],
-    )
-    .await
+    select_safe(pool, PERFORMANCE_SQL.into(), vec![start.into(), end.into()]).await
 }
 pub(crate) const PERFORMANCE_SQL: &str = r#"WITH bounds AS (SELECT julianday(?) AS start,julianday(?) AS end),
  s AS (SELECT cashier_id,COUNT(*) AS invoice_count,SUM(net_amount) AS invoiced,SUM(CASE WHEN payment_method='cash' THEN net_amount ELSE 0 END) AS cash,SUM(CASE WHEN payment_method='card' THEN net_amount ELSE 0 END) AS card,SUM(CASE WHEN payment_method='mobile' THEN net_amount ELSE 0 END) AS mobile,SUM(CASE WHEN payment_method='credit' THEN net_amount ELSE 0 END) AS credit,

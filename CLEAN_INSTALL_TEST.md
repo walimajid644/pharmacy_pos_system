@@ -15,11 +15,11 @@
 
 ### Candidate Installer
 - **Filename**: `Pharmacy POS_0.1.0_x64-setup.exe`
-- **SHA-256**: `651EDC117AC50F9272298FB4C22AC5C8093ADAE4413402AC5B21DC7D47672BB3`
-- **Size**: 2,453,011 bytes (2.3 MB)
-- **Build date**: November 1, 2026 (Phase 3 catalog/controlled-sale candidate)
+- **SHA-256**: `1DDF178F65DE811A4ECF6FCD0AE799CF2419BB662F01B76B70129497C3D4E219`
+- **Size**: 2,473,626 bytes
+- **Build date**: November 14, 2026, Asia/Karachi (component/module refactor candidate)
 - **Type**: Unsigned NSIS x64 installer
-- **Artifact manifest**: `test-results/single-store-phase3/artifacts.json`
+- **Artifact manifest**: `test-results/release-gate/artifacts.json`
 
 **Critical**: Verify the installer SHA-256 hash matches before proceeding. Use PowerShell:
 ```powershell
@@ -29,10 +29,11 @@ Get-FileHash "Pharmacy POS_0.1.0_x64-setup.exe" -Algorithm SHA256
 ## Supporting Evidence (Not Clean Machine Results)
 
 The following automated tests **pass** but do not substitute for clean machine acceptance:
-- 77 native Rust tests (fresh/upgrade database, transactions, permissions)
-- 52 browser fixture scenarios (UI flows, idle-lock, logout edge cases)
+- 79 native Rust tests (fresh/upgrade database, transactions, permissions)
+- 59 browser fixture scenarios (UI flows, form saves, idle-lock, logout edge cases)
 - Synthetic fresh and upgraded database counter-day tests
 - Database integrity and migration checks
+- Real isolated Tauri/WebView2 synthetic integration with 90 layout combinations, exported backup and two process restarts; see `test-results/native-acceptance/`. Test API authentication setup and a debug binary do not prove installed-release first-run/login interactions.
 
 **These are development evidence only.** See [RELEASE_GATE_WALKTHROUGH.md](RELEASE_GATE_WALKTHROUGH.md) and [SINGLE_STORE_90_DAY_PLAN.md](SINGLE_STORE_90_DAY_PLAN.md) for full acceptance criteria.
 

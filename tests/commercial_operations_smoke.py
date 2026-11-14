@@ -8,14 +8,14 @@ db = sqlite3.connect(':memory:')
 db.row_factory = sqlite3.Row
 for name in ['001_initial_schema', '004_phase5_inventory', '007_desktop_operations', '008_supplier_drawer', '009_pos_sale_details', '010_commercial_operations', '011_credit_and_expiry', '012_pricing_and_audit', '013_catalog_and_controlled']:
     db.executescript((root / 'src-tauri/migrations' / (name + '.sql')).read_text(encoding='utf-8'))
-finance = (root / 'src/views/FinanceView.vue').read_text(encoding='utf-8')
-query = re.search(r'entries.value=await executeQuery<Entry>\(`(.*?)`\)', finance, re.S).group(1)
+finance = (root / 'src/composables/useFinance.ts').read_text(encoding='utf-8')
+query = re.search(r'entries.value\s*=\s*await executeQuery<Entry>\(\s*`(.*?)`\s*,?\s*\)', finance, re.S).group(1)
 assert db.execute(query).fetchall() == []
 db.execute("INSERT INTO products(id,sku,name,unit_price,cost_price,created_at,updated_at) VALUES('p','P','Medicine',12,5,'now','now')")
 db.execute("INSERT INTO product_batches(id,product_id,batch_number,expiry_date,quantity_in_stock,cost_price_at_batch,received_date,created_at,updated_at) VALUES('b','p','Batch1','2099-12-31',25,5,'now','now','now')")
 db.execute("INSERT INTO product_batches(id,product_id,batch_number,expiry_date,quantity_in_stock,cost_price_at_batch,received_date,created_at,updated_at) VALUES('expired','p','Batch2','2000-01-01',7,5,'now','now','now')")
-search = (root / 'src/views/AdvancedItemSearchView.vue').read_text(encoding='utf-8')
-base = re.search(r'const base=`(.*?)`', search, re.S).group(1).replace('${where}', 'p.deleted_at IS NULL')
+search = (root / 'src/composables/useAdvancedItemSearch.ts').read_text(encoding='utf-8')
+base = re.search(r'const base\s*=\s*`(.*?)`', search, re.S).group(1).replace('${where}', 'p.deleted_at IS NULL')
 row = db.execute(base).fetchone()
 assert row['stock'] == 25 and row['expired_stock'] == 7 and row['next_expiry'] == '2099-12-31'
 assert db.execute('SELECT COUNT(*) FROM (' + base + ') WHERE stock>0').fetchone()[0] == 1
@@ -27,9 +27,9 @@ assert row['kind'] == 'expense' and row['amount_cents'] == 25000 and row['status
 print('Commercial SQL smoke passed: migrated schema, unified ledger, available/expired stock and stock filters.')
 
 # Quarantine changes sellability, not physical valuation; disposal changes both.
-reports = (root / 'src/views/ReportsView.vue').read_text(encoding='utf-8')
+reports = (root / 'src/composables/useReports.ts').read_text(encoding='utf-8')
 section = reports.split('async function generateStockValuationReport()', 1)[1]
-valuation = re.search(r'executeQuery<any>\(\s*`(.*?)`', section, re.S).group(1)
+valuation = re.search(r'executeQuery<[^>]+>\(\s*`(.*?)`', section, re.S).group(1)
 db.execute("UPDATE product_batches SET quantity_in_stock=quantity_in_stock-3 WHERE id='b'")
 db.execute("INSERT INTO batch_holds(id,batch_id,quantity,reason,created_by,created_at) VALUES('hold','b',3,'Inspection',?,'now')", [actor])
 row = db.execute(valuation).fetchone()
@@ -58,7 +58,7 @@ print('Populated Phase 2 upgrade preserves retail prices and imports immutable a
 
 # The near-expiry report retains held-only batches and uses local calendar days.
 section = reports.split('async function generateNearExpiryReport()', 1)[1]
-near_query = re.search(r'executeQuery<any>\(\s*`(.*?)`', section, re.S).group(1)
+near_query = re.search(r'executeQuery<[^>]+>\(\s*`(.*?)`', section, re.S).group(1)
 db.execute("UPDATE product_batches SET quantity_in_stock=0,expiry_date=date('now','localtime','-1 day') WHERE id='expired'")
 db.execute("INSERT INTO batch_holds(id,batch_id,quantity,reason,created_by,created_at) VALUES('held-expired','expired',7,'Inspection',?,'now')", [actor])
 rows = db.execute(near_query, [db.execute("SELECT date('now','localtime','+14 day')").fetchone()[0]]).fetchall()

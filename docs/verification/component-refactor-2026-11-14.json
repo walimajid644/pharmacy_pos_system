@@ -1,0 +1,139 @@
+{
+  "date": "2026-11-14",
+  "scope": "Completed reviewed mixed-responsibility view/module refactor; coherent atomic transaction bodies retained",
+  "views": [
+    {
+      "file": "src/views/AdvancedItemSearchView.vue",
+      "before_lines": 54,
+      "after_lines": 37
+    },
+    {
+      "file": "src/views/CatalogImportView.vue",
+      "before_lines": 28,
+      "after_lines": 37
+    },
+    {
+      "file": "src/views/CommercialDocumentsView.vue",
+      "before_lines": 62,
+      "after_lines": 57
+    },
+    {
+      "file": "src/views/CustomerLedgerView.vue",
+      "before_lines": 39,
+      "after_lines": 37
+    },
+    {
+      "file": "src/views/CustomersView.vue",
+      "before_lines": 297,
+      "after_lines": 205
+    },
+    {
+      "file": "src/views/DailyClosingView.vue",
+      "before_lines": 393,
+      "after_lines": 226
+    },
+    {
+      "file": "src/views/DashboardView.vue",
+      "before_lines": 173,
+      "after_lines": 74
+    },
+    {
+      "file": "src/views/ExpiryActionsView.vue",
+      "before_lines": 32,
+      "after_lines": 43
+    },
+    {
+      "file": "src/views/FinanceView.vue",
+      "before_lines": 69,
+      "after_lines": 62
+    },
+    {
+      "file": "src/views/POSView.vue",
+      "before_lines": 970,
+      "after_lines": 286
+    },
+    {
+      "file": "src/views/PurchaseOrderReceiveView.vue",
+      "before_lines": 448,
+      "after_lines": 59
+    },
+    {
+      "file": "src/views/PurchaseOrdersView.vue",
+      "before_lines": 491,
+      "after_lines": 127
+    },
+    {
+      "file": "src/views/PurchaseSuggestionsView.vue",
+      "before_lines": 29,
+      "after_lines": 36
+    },
+    {
+      "file": "src/views/ReportsView.vue",
+      "before_lines": 577,
+      "after_lines": 175
+    },
+    {
+      "file": "src/views/SalesHistoryView.vue",
+      "before_lines": 599,
+      "after_lines": 117
+    },
+    {
+      "file": "src/views/SalesReturnFormView.vue",
+      "before_lines": 95,
+      "after_lines": 38
+    },
+    {
+      "file": "src/views/SalesReturnsView.vue",
+      "before_lines": 189,
+      "after_lines": 117
+    },
+    {
+      "file": "src/views/SettingsView.vue",
+      "before_lines": 439,
+      "after_lines": 151
+    },
+    {
+      "file": "src/views/SupplierLedgerView.vue",
+      "before_lines": 127,
+      "after_lines": 66
+    },
+    {
+      "file": "src/views/SuppliersView.vue",
+      "before_lines": 716,
+      "after_lines": 106
+    },
+    {
+      "file": "src/views/UsersView.vue",
+      "before_lines": 406,
+      "after_lines": 76
+    }
+  ],
+  "feature_components": 35,
+  "browser_scenarios": {
+    "phase1": 11,
+    "phase2": 7,
+    "phase3": 13,
+    "release-gate": 8,
+    "single-store-phase2": 10,
+    "single-store-phase3": 10
+  },
+  "browser_total": 59,
+  "rust_library_tests": 79,
+  "native_test_modules": [
+    "sales",
+    "database_api",
+    "purchase_orders",
+    "submissions",
+    "commercial"
+  ],
+  "native_acceptance_manifest": "test-results/native-acceptance/latest.json",
+  "release_artifacts": "test-results/release-gate/artifacts.json",
+  "native_acceptance": {
+    "status": "passed",
+    "sha256": "78f5e6aa4b8fad0aee30df132ebf8fbd83111e1a57eb94dceca27b246fd2023b",
+    "invoice_count": 3,
+    "layout_checks": 90,
+    "matching_binary_restarts": 2,
+    "console_errors": 0
+  }
+}

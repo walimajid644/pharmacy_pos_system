@@ -1,9 +1,9 @@
-import { z } from 'zod'
+import { z } from 'zod';
 
 export const loginSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-})
+});
 
 export const productSchema = z.object({
   sku: z.string().min(1, 'SKU is required'),
@@ -20,7 +20,7 @@ export const productSchema = z.object({
   controlled_substance: z.boolean(),
   reorder_level: z.number().int().min(0),
   is_active: z.boolean(),
-})
+});
 
 export const productBatchSchema = z.object({
   product_id: z.string().uuid(),
@@ -29,7 +29,7 @@ export const productBatchSchema = z.object({
   quantity_in_stock: z.number().int().min(0),
   cost_price_at_batch: z.number().min(0),
   received_date: z.string(),
-})
+});
 
 export const customerSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
@@ -39,7 +39,7 @@ export const customerSchema = z.object({
   customer_type: z.enum(['retail', 'wholesale']),
   credit_limit: z.number().min(0),
   is_active: z.boolean(),
-})
+});
 
 export const settingsSchema = z.object({
   company_name: z.string().min(1, 'Company name is required'),
@@ -47,10 +47,10 @@ export const settingsSchema = z.object({
   company_phone: z.string().nullable(),
   tax_rate: z.number().min(0).max(100, 'Tax rate must be between 0 and 100'),
   theme: z.enum(['light', 'dark']),
-})
+});
 
-export type LoginInput = z.infer<typeof loginSchema>
-export type ProductInput = z.infer<typeof productSchema>
-export type ProductBatchInput = z.infer<typeof productBatchSchema>
-export type CustomerInput = z.infer<typeof customerSchema>
-export type SettingsInput = z.infer<typeof settingsSchema>
+export type LoginInput = z.infer<typeof loginSchema>;
+export type ProductInput = z.infer<typeof productSchema>;
+export type ProductBatchInput = z.infer<typeof productBatchSchema>;
+export type CustomerInput = z.infer<typeof customerSchema>;
+export type SettingsInput = z.infer<typeof settingsSchema>;

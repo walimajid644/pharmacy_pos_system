@@ -48,6 +48,9 @@ typings
 .stylelintcache
 
 # Compiled output
+node_modules/
+/test-results/
+.eslintcache
 dist
 dist-ssr
 *.local

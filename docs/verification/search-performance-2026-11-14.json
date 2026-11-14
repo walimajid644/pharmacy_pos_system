@@ -1,0 +1,34 @@
+{
+  "products": 20000,
+  "batches": 40000,
+  "sqlite": "3.50.4",
+  "python": "3.14.2",
+  "platform": "Windows",
+  "scope": "Actual POS SQL, in-memory synthetic data; excludes native IPC and rendering",
+  "results": [
+    {
+      "term": "990000019999",
+      "median_ms": 10.42,
+      "p95_ms": 53.46,
+      "rows": 1
+    },
+    {
+      "term": "Medicine 019",
+      "median_ms": 9.1,
+      "p95_ms": 51.42,
+      "rows": 20
+    },
+    {
+      "term": "Generic 42",
+      "median_ms": 9.83,
+      "p95_ms": 59.86,
+      "rows": 20
+    },
+    {
+      "term": "missing product",
+      "median_ms": 7.56,
+      "p95_ms": 42.79,
+      "rows": 0
+    }
+  ]
+}

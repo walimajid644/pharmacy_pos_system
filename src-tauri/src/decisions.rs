@@ -112,15 +112,28 @@ pub(crate) async fn decide_return(
     let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
     require_approver(&mut tx, actor).await?;
     let refund_shift_id: Option<String> = if request.action == "refunded" {
-        let method: String = sqlx::query_scalar("SELECT refund_method FROM sales_returns WHERE id = ? AND status = 'approved'")
-            .bind(&request.record_id).fetch_optional(&mut *tx).await.map_err(|e| e.to_string())?
-            .ok_or("Return is not approved")?;
+        let method: String = sqlx::query_scalar(
+            "SELECT refund_method FROM sales_returns WHERE id = ? AND status = 'approved'",
+        )
+        .bind(&request.record_id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?
+        .ok_or("Return is not approved")?;
         if method == "cash" {
-            Some(sqlx::query_scalar("SELECT id FROM cashier_shifts WHERE status = 'open' LIMIT 1")
-                .fetch_optional(&mut *tx).await.map_err(|e| e.to_string())?
-                .ok_or("Open a cash drawer shift before paying a cash refund")?)
-        } else { None }
-    } else { None };
+            Some(
+                sqlx::query_scalar("SELECT id FROM cashier_shifts WHERE status = 'open' LIMIT 1")
+                    .fetch_optional(&mut *tx)
+                    .await
+                    .map_err(|e| e.to_string())?
+                    .ok_or("Open a cash drawer shift before paying a cash refund")?,
+            )
+        } else {
+            None
+        }
+    } else {
+        None
+    };
     let changed = sqlx::query(
         "UPDATE sales_returns SET status = ?, approved_by = COALESCE(approved_by, ?), \
          approved_at = COALESCE(approved_at, ?), refunded_by = CASE WHEN ? = 'refunded' THEN ? ELSE refunded_by END, refund_reference = CASE WHEN ? = 'refunded' THEN ? ELSE refund_reference END, refund_shift_id = COALESCE(?, refund_shift_id), updated_at = ? \
@@ -143,12 +156,24 @@ pub(crate) async fn decide_return(
     if changed.rows_affected() != 1 {
         return Err("Return status has changed".to_string());
     }
-    if request.action=="refunded" {
+    if request.action == "refunded" {
         let r=sqlx::query("SELECT r.refund_method,r.refund_amount,i.customer_id FROM sales_returns r JOIN sales_invoices i ON i.id=r.original_invoice_id WHERE r.id=?").bind(&request.record_id).fetch_one(&mut *tx).await.map_err(|e|e.to_string())?;
-        if r.get::<String,_>("refund_method")=="credit_note" {
-            let customer=r.get::<Option<String>,_>("customer_id").ok_or("Credit note requires a registered customer")?;let cents=(r.get::<f64,_>("refund_amount")*100.0).round() as i64;
+        if r.get::<String, _>("refund_method") == "credit_note" {
+            let customer = r
+                .get::<Option<String>, _>("customer_id")
+                .ok_or("Credit note requires a registered customer")?;
+            let cents = (r.get::<f64, _>("refund_amount") * 100.0).round() as i64;
             sqlx::query("UPDATE customers SET current_balance=ROUND(current_balance-?/100.0,2),updated_at=? WHERE id=?").bind(cents).bind(&request.timestamp).bind(&customer).execute(&mut *tx).await.map_err(|e|e.to_string())?;
-            crate::credit::append(&mut tx,&customer,"credit_return",&request.record_id,-cents,actor,"Sales return credit note").await?;
+            crate::credit::append(
+                &mut tx,
+                &customer,
+                "credit_return",
+                &request.record_id,
+                -cents,
+                actor,
+                "Sales return credit note",
+            )
+            .await?;
         }
     }
     tx.commit().await.map_err(|e| e.to_string())
@@ -231,10 +256,15 @@ mod tests {
             .await
             .unwrap();
         sqlx::raw_sql(include_str!("../migrations/007_desktop_operations.sql"))
-            .execute(&pool).await.unwrap();
+            .execute(&pool)
+            .await
+            .unwrap();
         sqlx::query("INSERT INTO cashier_shifts (id, cashier_id, opened_at, opening_cash_cents, status) VALUES ('test-shift', ?, '2026-10-25T09:00:00Z', 10000, 'open')")
             .bind(ADMIN).execute(&pool).await.unwrap();
-        sqlx::query("ALTER TABLE sales_returns ADD COLUMN refunded_by TEXT").execute(&pool).await.unwrap();
+        sqlx::query("ALTER TABLE sales_returns ADD COLUMN refunded_by TEXT")
+            .execute(&pool)
+            .await
+            .unwrap();
         sqlx::raw_sql(include_str!("../migrations/005_approval_guards.sql"))
             .execute(&pool)
             .await
@@ -291,17 +321,29 @@ mod tests {
         decide_return(&pool, ADMIN, request("ret", "approved"))
             .await
             .unwrap();
-        let pending_reference: Option<String> = sqlx::query_scalar("SELECT refund_reference FROM sales_returns WHERE id = 'ret'")
-            .fetch_one(&pool).await.unwrap();
+        let pending_reference: Option<String> =
+            sqlx::query_scalar("SELECT refund_reference FROM sales_returns WHERE id = 'ret'")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
         assert_eq!(pending_reference, None);
         decide_return(&pool, ADMIN, request("ret", "refunded"))
-            .await.unwrap();
-        let refund_reference: String = sqlx::query_scalar("SELECT refund_reference FROM sales_returns WHERE id = 'ret'")
-            .fetch_one(&pool).await.unwrap();
+            .await
+            .unwrap();
+        let refund_reference: String =
+            sqlx::query_scalar("SELECT refund_reference FROM sales_returns WHERE id = 'ret'")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
         assert!(refund_reference.starts_with("RF-"));
-        assert!(decide_return(&pool, ADMIN, request("ret", "refunded")).await.is_err());
-        let unchanged: String = sqlx::query_scalar("SELECT refund_reference FROM sales_returns WHERE id = 'ret'")
-            .fetch_one(&pool).await.unwrap();
+        assert!(decide_return(&pool, ADMIN, request("ret", "refunded"))
+            .await
+            .is_err());
+        let unchanged: String =
+            sqlx::query_scalar("SELECT refund_reference FROM sales_returns WHERE id = 'ret'")
+                .fetch_one(&pool)
+                .await
+                .unwrap();
         assert_eq!(refund_reference, unchanged);
         assert!(
             sqlx::query("UPDATE sales_returns SET status = 'rejected' WHERE id = 'ret'")

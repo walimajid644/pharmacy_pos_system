@@ -1,8 +1,10 @@
-# FBR Integration Status — November 1, 2026
+# FBR Integration Status — November 8, 2026
 
 ## Summary Status: 🟡 SPIKE COMPLETE, PRODUCTION BLOCKED
 
 **Required by the user; onboarding route not yet confirmed. Production integration is NOT complete.** 
+
+The user reconfirmed that the route is still unconfirmed. No sandbox or production network request was made in this verification pass. The official DI technical assistance page and linked v1.12 specification were reviewed again. Validation now requires unique `itemSNo` confirmations covering every submitted item and rejects conflicting invalid item statuses. Token redaction occurs recursively before JSON serialization, including escaped values and object keys. These changes have regression coverage in the current 79-test native suite.
 
 This build includes a DI sandbox validation spike, not invoice submission, a Tier-1 POS adapter, production fiscalization, an FBR-certified product or a tested compliance claim.
 
@@ -17,7 +19,7 @@ This build includes a DI sandbox validation spike, not invoice submission, a Tie
 ### What is NOT Implemented ❌
 - Production invoice posting
 - Automatic checkout integration
-- FBR invoice number generation
+- Recording the FBR-issued invoice number
 - QR code generation
 - Invoice reconciliation
 - Durable request history

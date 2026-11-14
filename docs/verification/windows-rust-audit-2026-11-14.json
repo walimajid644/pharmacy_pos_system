@@ -1,0 +1,33 @@
+{
+  "date": "2026-11-14T18:42:37.122Z",
+  "target": "x86_64-pc-windows-msvc",
+  "advisoryDatabase": {
+    "advisory-count": 1509,
+    "last-commit": "4ef2df8e806a65e2f1ecc14f56f51249062b23d6",
+    "last-updated": "2026-11-13T13:33:03+01:00"
+  },
+  "findings": [
+    {
+      "id": "RUSTSEC-2023-0071",
+      "package": "rsa",
+      "version": "0.9.10",
+      "active": false,
+      "informational": null
+    },
+    {
+      "id": "RUSTSEC-2024-0370",
+      "package": "proc-macro-error",
+      "version": "1.0.4",
+      "active": false,
+      "informational": "unmaintained"
+    },
+    {
+      "id": "RUSTSEC-2024-0429",
+      "package": "glib",
+      "version": "0.18.5",
+      "active": false,
+      "informational": "unsound"
+    }
+  ],
+  "blockers": []
+}

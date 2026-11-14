@@ -1,5 +1,31 @@
 # Release Gate Status - Master Prompt R1-R7
 
+## Current verification — November 14, 2026
+
+The reviewed component/module refactor is complete; see `COMPONENT_REFACTOR.md`. Current evidence: production build/NSIS packaging, 79 Rust tests, 59 browser scenarios, native counter-day integration, 90 native-backed layouts, two native process restarts and exported-snapshot integrity all pass. Current installer metadata is in `RELEASE_NOTES.md` and `test-results/release-gate/artifacts.json`.
+
+The manual/external acceptance gates listed below remain open: clean Windows, exact installed-release operator fresh/upgrade walkthrough, physical equipment, real-shop data/onboarding and production FBR. Refactoring and development-PC evidence do not mark those gates accepted. The older dated sections retain their original evidence counts and artifact references.
+
+## Previous status — November 8, 2026
+
+This section supersedes the November 1 plan below, including its estimates, artifact hashes and blanket feature-completion claims. The release gate remains open.
+
+| Gate | Current evidence | Remaining acceptance |
+| --- | --- | --- |
+| R1 Clean Windows | Installer build; concrete operator script | Clean Windows PC/VM unavailable; no clean-install result |
+| R2 Fresh counter day | Real isolated Tauri/WebView2 integration: UI import/shift/POS, actual native transactions and backup; two process restarts pass | Installed-release operator walkthrough, first-run authentication interactions and printed outputs |
+| R3 Upgrade counter day | Native on-disk legacy migration/counter-day/restore regression passes | Upgraded synthetic database walkthrough through the installed release |
+| R4 Printer/scanner | Keyboard barcode path and UI checks pass | Intended printers/scanner unavailable; physical output and manual previews remain pending |
+| R5 Catalog/onboarding | Actual CSV import through native UI; synthetic XLSX parser and SQLite checks pass | Owner-reviewed real pharmacy file, shop-scale timings and operator demo |
+| R6 FBR | DI sandbox validation spike; stronger item confirmation and secret redaction tests | Route still unconfirmed by user; local credentials, sandbox requests and production posting/reconciliation remain incomplete |
+| R7 Release truth | Current manifests, test limits and operator instructions documented | Live release acceptance depends on the open gates above |
+
+Verification: **79 Rust tests, 52 browser fixture scenarios, native counter-day integration, 90 native-backed route/locale/theme/viewport combinations, two native process restarts, catalog parser and real SQLite smoke checks pass**. The native test binary uses a separate identifier/database and synthetic API authentication setup; it is not the installed NSIS release. See `tests/native/README.md`, `test-results/native-acceptance/latest.json` and `persistence.json`.
+
+Current installer metadata is in `RELEASE_NOTES.md` and `test-results/release-gate/artifacts.json`. No real FBR request, clean machine, physical hardware or real pharmacy onboarding result is claimed.
+
+## Historical November 1 plan
+
 **Last Updated**: November 1, 2026  
 **Version**: 0.1.0 Release Candidate  
 **Purpose**: Track remaining release gate items for live pharmacy trial

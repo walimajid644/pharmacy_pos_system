@@ -1,22 +1,30 @@
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch } from 'vue';
 
-export type Language = 'en' | 'ur' | 'mixed'
-export type NumberFormat = 'en' | 'ur'
-export type DateFormat = 'dmy' | 'mdy' | 'iso'
+export type Language = 'en' | 'ur' | 'mixed';
+export type NumberFormat = 'en' | 'ur';
+export type DateFormat = 'dmy' | 'mdy' | 'iso';
 
-const STORAGE_KEY_LANG = 'pharmacy-pos-language'
-const STORAGE_KEY_NUM = 'pharmacy-pos-number-format'
-const STORAGE_KEY_DATE = 'pharmacy-pos-date-format'
+const STORAGE_KEY_LANG = 'pharmacy-pos-language';
+const STORAGE_KEY_NUM = 'pharmacy-pos-number-format';
+const STORAGE_KEY_DATE = 'pharmacy-pos-date-format';
 
 // Initialize from localStorage
-const currentLanguage = ref<Language>((localStorage.getItem(STORAGE_KEY_LANG) as Language) || 'mixed')
-const numberFormat = ref<NumberFormat>((localStorage.getItem(STORAGE_KEY_NUM) as NumberFormat) || 'en')
-const dateFormat = ref<DateFormat>((localStorage.getItem(STORAGE_KEY_DATE) as DateFormat) || 'dmy')
+const currentLanguage = ref<Language>(
+  (localStorage.getItem(STORAGE_KEY_LANG) as Language) || 'mixed',
+);
+const numberFormat = ref<NumberFormat>(
+  (localStorage.getItem(STORAGE_KEY_NUM) as NumberFormat) || 'en',
+);
+const dateFormat = ref<DateFormat>((localStorage.getItem(STORAGE_KEY_DATE) as DateFormat) || 'dmy');
 
-watch(currentLanguage, lang => {
-  document.documentElement.lang = lang === 'ur' ? 'ur' : 'en'
-  document.documentElement.dir = lang === 'ur' ? 'rtl' : 'ltr'
-}, { immediate: true })
+watch(
+  currentLanguage,
+  (lang) => {
+    document.documentElement.lang = lang === 'ur' ? 'ur' : 'en';
+    document.documentElement.dir = lang === 'ur' ? 'rtl' : 'ltr';
+  },
+  { immediate: true },
+);
 
 // Translation dictionary
 export const translations = {
@@ -33,7 +41,7 @@ export const translations = {
   suppliers: { en: 'Suppliers', ur: 'سپلائرز' },
   purchase_orders: { en: 'Purchase Orders', ur: 'خریداری کے آرڈرز' },
   settings: { en: 'Settings', ur: 'ترتیبات' },
-  
+
   // Common Actions
   save: { en: 'Save', ur: 'محفوظ کریں' },
   cancel: { en: 'Cancel', ur: 'منسوخ کریں' },
@@ -45,13 +53,13 @@ export const translations = {
   export: { en: 'Export', ur: 'ایکسپورٹ' },
   print: { en: 'Print', ur: 'پرنٹ کریں' },
   logout: { en: 'Logout', ur: 'لاگ آؤٹ' },
-  
+
   // Auth
   username: { en: 'Username', ur: 'صارف نام' },
   password: { en: 'Password', ur: 'پاس ورڈ' },
   login: { en: 'Login', ur: 'لاگ ان' },
   remember_me: { en: 'Remember me', ur: 'مجھے یاد رکھیں' },
-  
+
   // POS
   cart: { en: 'Cart', ur: 'ٹوکری' },
   subtotal: { en: 'Subtotal', ur: 'ذیلی کل' },
@@ -63,7 +71,7 @@ export const translations = {
   mobile: { en: 'Mobile', ur: 'موبائل' },
   checkout: { en: 'Checkout', ur: 'چیک آؤٹ' },
   scan_or_search: { en: 'Scan or search product', ur: 'اسکین یا مصنوعات تلاش کریں' },
-  
+
   // Products
   product_name: { en: 'Product Name', ur: 'مصنوعات کا نام' },
   sku: { en: 'SKU', ur: 'کوڈ' },
@@ -77,7 +85,7 @@ export const translations = {
   status: { en: 'Status', ur: 'حیثیت' },
   active: { en: 'Active', ur: 'فعال' },
   inactive: { en: 'Inactive', ur: 'غیر فعال' },
-  
+
   // Customers
   customer_name: { en: 'Customer Name', ur: 'گاہک کا نام' },
   customer_code: { en: 'Customer Code', ur: 'گاہک کوڈ' },
@@ -88,31 +96,31 @@ export const translations = {
   wholesale: { en: 'Wholesale', ur: 'تھوک' },
   credit_limit: { en: 'Credit Limit', ur: 'قرضہ کی حد' },
   current_balance: { en: 'Current Balance', ur: 'موجودہ بیلنس' },
-  
+
   // Sales
   invoice_number: { en: 'Invoice Number', ur: 'انوائس نمبر' },
   invoice_date: { en: 'Invoice Date', ur: 'انوائس کی تاریخ' },
   payment_method: { en: 'Payment Method', ur: 'ادائیگی کا طریقہ' },
   amount: { en: 'Amount', ur: 'رقم' },
-  
+
   // Dashboard
   todays_sales: { en: "Today's Sales", ur: 'آج کی فروخت' },
   total_products: { en: 'Total Products', ur: 'کل مصنوعات' },
   low_stock_items: { en: 'Low Stock Items', ur: 'کم اسٹاک آئٹمز' },
   near_expiry_items: { en: 'Near Expiry Items', ur: 'میعاد ختم ہونے والے' },
-  
+
   // Batch
   batch_number: { en: 'Batch Number', ur: 'بیچ نمبر' },
   expiry_date: { en: 'Expiry Date', ur: 'میعاد ختم' },
   quantity: { en: 'Quantity', ur: 'مقدار' },
-  
+
   // Reports
   daily_sales: { en: 'Daily Sales', ur: 'روزانہ فروخت' },
   sales_by_product: { en: 'Sales by Product', ur: 'مصنوعات کے لحاظ سے' },
   low_stock_report: { en: 'Low Stock Report', ur: 'کم اسٹاک رپورٹ' },
   near_expiry_report: { en: 'Near Expiry Report', ur: 'میعاد ختم رپورٹ' },
   stock_valuation: { en: 'Stock Valuation', ur: 'اسٹاک کی مالیت' },
-  
+
   // Settings
   company_info: { en: 'Company Info', ur: 'کمپنی کی معلومات' },
   tax_currency: { en: 'Tax & Currency', ur: 'ٹیکس اور کرنسی' },
@@ -120,37 +128,37 @@ export const translations = {
   receipt_settings: { en: 'Receipt', ur: 'رسید' },
   appearance: { en: 'Appearance', ur: 'ظاہری شکل' },
   language: { en: 'Language', ur: 'زبان' },
-  
+
   // Theme
   light_mode: { en: 'Light Mode', ur: 'روشن موڈ' },
   dark_mode: { en: 'Dark Mode', ur: 'تاریک موڈ' },
   auto_mode: { en: 'Auto', ur: 'خودکار' },
-  
+
   // Days
   days: { en: 'days', ur: 'دن' },
   today: { en: 'Today', ur: 'آج' },
   yesterday: { en: 'Yesterday', ur: 'کل' },
-  
+
   // Time
   last_login: { en: 'Last Login', ur: 'آخری لاگ ان' },
-  
+
   // Roles
   admin: { en: 'Admin', ur: 'ایڈمن' },
   manager: { en: 'Manager', ur: 'منیجر' },
   cashier: { en: 'Cashier', ur: 'کیشئر' },
   accountant: { en: 'Accountant', ur: 'اکاؤنٹنٹ' },
-  
+
   // Messages
   success: { en: 'Success', ur: 'کامیابی' },
   error: { en: 'Error', ur: 'خرابی' },
   warning: { en: 'Warning', ur: 'انتباہ' },
   info: { en: 'Info', ur: 'معلومات' },
-  
+
   // Units
   rs: { en: 'Rs', ur: 'روپے' },
   items: { en: 'items', ur: 'آئٹمز' },
   pcs: { en: 'pcs', ur: 'عدد' },
-  
+
   // Phase 5: Suppliers
   supplier_name: { en: 'Supplier Name', ur: 'سپلائر کا نام' },
   supplier_code: { en: 'Supplier Code', ur: 'سپلائر کوڈ' },
@@ -160,7 +168,7 @@ export const translations = {
   country: { en: 'Country', ur: 'ملک' },
   payment_terms: { en: 'Payment Terms', ur: 'ادائیگی کی شرائط' },
   notes: { en: 'Notes', ur: 'نوٹس' },
-  
+
   // Phase 5: Purchase Orders
   po_number: { en: 'PO Number', ur: 'پی او نمبر' },
   order_date: { en: 'Order Date', ur: 'آرڈر کی تاریخ' },
@@ -177,7 +185,7 @@ export const translations = {
   quantity_received: { en: 'Qty Received', ur: 'مقدار وصول' },
   unit_cost: { en: 'Unit Cost', ur: 'یونٹ لاگت' },
   shipping: { en: 'Shipping', ur: 'شپنگ' },
-  
+
   // Phase 5: Stock Adjustments
   stock_adjustments: { en: 'Stock Adjustments', ur: 'اسٹاک ایڈجسٹمنٹ' },
   adjustment_number: { en: 'Adjustment #', ur: 'ایڈجسٹمنٹ نمبر' },
@@ -198,7 +206,7 @@ export const translations = {
   rejected: { en: 'Rejected', ur: 'مسترد' },
   approve: { en: 'Approve', ur: 'منظور کریں' },
   reject: { en: 'Reject', ur: 'مسترد کریں' },
-  
+
   // Phase 5: Returns & Refunds
   sales_returns: { en: 'Sales Returns', ur: 'فروخت کی واپسی' },
   return_number: { en: 'Return #', ur: 'واپسی نمبر' },
@@ -215,9 +223,9 @@ export const translations = {
   refunded: { en: 'Refunded', ur: 'واپس کیا' },
   process_return: { en: 'Process Return', ur: 'واپسی کریں' },
   restock: { en: 'Restock', ur: 'دوبارہ اسٹاک' },
-}
+};
 
-export type TranslationKey = keyof typeof translations
+export type TranslationKey = keyof typeof translations;
 
 // Urdu numerals mapping
 const urduNumerals: { [key: string]: string } = {
@@ -231,91 +239,99 @@ const urduNumerals: { [key: string]: string } = {
   '7': '۷',
   '8': '۸',
   '9': '۹',
-}
+};
 
 export function useI18n() {
-  const pick = (english: string, urdu: string): string => currentLanguage.value === 'en'
-    ? english : currentLanguage.value === 'ur' ? urdu : `${english} / ${urdu}`
+  const pick = (english: string, urdu: string): string =>
+    currentLanguage.value === 'en'
+      ? english
+      : currentLanguage.value === 'ur'
+        ? urdu
+        : `${english} / ${urdu}`;
 
   const t = (key: TranslationKey): string => {
-    const translation = translations[key]
-    if (!translation) return key
-    
+    const translation = translations[key];
+    if (!translation) return key;
+
     if (currentLanguage.value === 'en') {
-      return translation.en
+      return translation.en;
     } else if (currentLanguage.value === 'ur') {
-      return translation.ur
+      return translation.ur;
     } else {
       // Mixed: show both
-      return `${translation.en} / ${translation.ur}`
+      return `${translation.en} / ${translation.ur}`;
     }
-  }
+  };
 
   const tEn = (key: TranslationKey): string => {
-    return translations[key]?.en || key
-  }
+    return translations[key]?.en || key;
+  };
 
   const tUr = (key: TranslationKey): string => {
-    return translations[key]?.ur || key
-  }
+    return translations[key]?.ur || key;
+  };
 
   const formatNumber = (num: number | string): string => {
-    const str = num.toString()
+    const str = num.toString();
     if (numberFormat.value === 'ur') {
-      return str.replace(/[0-9]/g, (digit) => urduNumerals[digit] || digit)
+      return str.replace(/[0-9]/g, (digit) => urduNumerals[digit] || digit);
     }
-    return str
-  }
+    return str;
+  };
 
   const formatCurrency = (amount: number): string => {
     const formatted = amount.toLocaleString('en-PK', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
-    })
-    
+    });
+
     if (numberFormat.value === 'ur') {
-      const urduNumber = formatted.replace(/[0-9]/g, (digit) => urduNumerals[digit] || digit)
-      return `${urduNumber} ${tUr('rs')}`
+      const urduNumber = formatted.replace(/[0-9]/g, (digit) => urduNumerals[digit] || digit);
+      return `${urduNumber} ${tUr('rs')}`;
     }
-    
-    return `Rs ${formatted}`
-  }
+
+    return `Rs ${formatted}`;
+  };
 
   const formatDate = (value: string | Date): string => {
-    const date = typeof value === 'string' ? new Date(value) : value
-    if (Number.isNaN(date.getTime())) return String(value)
-    const year = String(date.getFullYear())
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
-    const formatted = dateFormat.value === 'iso' ? `${year}-${month}-${day}`
-      : dateFormat.value === 'mdy' ? `${month}/${day}/${year}` : `${day}/${month}/${year}`
-    return formatNumber(formatted)
-  }
+    const date = typeof value === 'string' ? new Date(value) : value;
+    if (Number.isNaN(date.getTime())) return String(value);
+    const year = String(date.getFullYear());
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const formatted =
+      dateFormat.value === 'iso'
+        ? `${year}-${month}-${day}`
+        : dateFormat.value === 'mdy'
+          ? `${month}/${day}/${year}`
+          : `${day}/${month}/${year}`;
+    return formatNumber(formatted);
+  };
 
   const formatDateTime = (value: string | Date): string => {
-    const date = typeof value === 'string' ? new Date(value) : value
-    if (Number.isNaN(date.getTime())) return String(value)
-    const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
-    return `${formatDate(date)} ${formatNumber(time)}`
-  }
+    const date = typeof value === 'string' ? new Date(value) : value;
+    if (Number.isNaN(date.getTime())) return String(value);
+    const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+    return `${formatDate(date)} ${formatNumber(time)}`;
+  };
 
   const setLanguage = (lang: Language) => {
-    currentLanguage.value = lang
-    localStorage.setItem(STORAGE_KEY_LANG, lang)
-  }
+    currentLanguage.value = lang;
+    localStorage.setItem(STORAGE_KEY_LANG, lang);
+  };
 
   const setNumberFormat = (format: NumberFormat) => {
-    numberFormat.value = format
-    localStorage.setItem(STORAGE_KEY_NUM, format)
-  }
+    numberFormat.value = format;
+    localStorage.setItem(STORAGE_KEY_NUM, format);
+  };
 
   const setDateFormat = (format: DateFormat) => {
-    dateFormat.value = format
-    localStorage.setItem(STORAGE_KEY_DATE, format)
-  }
+    dateFormat.value = format;
+    localStorage.setItem(STORAGE_KEY_DATE, format);
+  };
 
-  const isRTL = computed(() => currentLanguage.value === 'ur')
-  
+  const isRTL = computed(() => currentLanguage.value === 'ur');
+
   return {
     pick,
     t,
@@ -332,5 +348,5 @@ export function useI18n() {
     setNumberFormat,
     setDateFormat,
     isRTL,
-  }
+  };
 }

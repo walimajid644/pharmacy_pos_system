@@ -8,7 +8,29 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "typecheck": "vue-tsc --noEmit",
+    "lint": "eslint src --max-warnings 0",
+    "format": "prettier --write src tests scripts *.mjs *.js *.ts *.json .github",
+    "format:check": "prettier --check src tests scripts *.mjs *.js *.ts *.json .github",
+    "rust:format": "cargo fmt --manifest-path src-tauri/Cargo.toml --all",
+    "rust:format:check": "cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check",
+    "rust:lint": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml --lib --no-default-features --offline",
+    "test:unit": "node scripts/test-unit.mjs",
+    "test:ui": "node scripts/test-ui.mjs",
+    "check": "npm run lint && npm run format:check && npm run typecheck && npm run test:unit && npm run rust:format:check && npm run rust:lint && npm run test:rust",
+    "verify": "npm run check && npm run build && npm run test:ui && npm run test:performance",
+    "audit:rust": "node scripts/audit-rust.mjs",
+    "test:performance": "python tests/performance_smoke.py"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    }
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",
@@ -23,16 +45,25 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@tauri-apps/cli": "^2.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20.10.0",
     "@types/uuid": "^9.0.7",
     "@vitejs/plugin-vue": "^6.0.10",
     "autoprefixer": "^10.4.16",
+    "axe-core": "^4.14.0",
+    "eslint": "^10.15.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vue": "^10.12.1",
+    "globals": "^17.14.0",
     "postcss": "^8.4.32",
+    "prettier": "^3.10.1",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.3.0",
+    "typescript-eslint": "^8.72.2",
     "vite": "^7.3.7",
-    "vue-tsc": "^2.2.12"
+    "vue-eslint-parser": "^10.4.2",
+    "vue-tsc": "^3.3.14"
   }
 }

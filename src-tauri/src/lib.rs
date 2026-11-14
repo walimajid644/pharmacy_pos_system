@@ -1,31 +1,34 @@
 #[cfg(debug_assertions)]
 use tauri::Manager;
 
-mod database_api;
-mod backups;
-mod digital_receipts;
-mod decisions;
-mod purchase_orders;
-mod sales;
-mod commercial;
-mod credit;
-mod expiry;
-mod recovery;
 mod audit;
-mod suggestions;
+mod backups;
 mod catalog;
+mod commercial;
 mod controlled;
+mod credit;
+mod database_api;
+mod decisions;
+mod diagnostics;
+mod digital_receipts;
+mod expiry;
 mod fbr;
+mod purchase_orders;
+mod recovery;
+mod sales;
 mod shifts;
-mod supplier_ledger;
 mod submissions;
+mod suggestions;
+mod supplier_ledger;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_sql::Builder::new().build())
         .manage(database_api::SessionState::default())
+        .manage(diagnostics::Diagnostics::default())
         .invoke_handler(tauri::generate_handler![
+            diagnostics::record_diagnostic,
             database_api::login_user,
             database_api::change_password,
             database_api::logout_user,
@@ -68,9 +71,16 @@ pub fn run() {
             decisions::add_product_batch
         ])
         .setup(|app| {
+            diagnostics::install_panic_hook(app.handle().clone());
             let pool = database_api::app_pool(app.handle()).map_err(std::io::Error::other)?;
-            tauri::async_runtime::block_on(database_api::initialize(&pool))
-                .map_err(std::io::Error::other)?;
+            tauri::async_runtime::block_on(database_api::initialize(&pool)).map_err(|error| {
+                diagnostics::record(
+                    app.handle(),
+                    diagnostics::Event::StartupFailed,
+                    diagnostics::Source::App,
+                );
+                std::io::Error::other(error)
+            })?;
             backups::start_daily(app.handle(), pool);
             #[cfg(debug_assertions)]
             {

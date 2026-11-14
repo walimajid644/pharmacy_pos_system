@@ -138,8 +138,19 @@ fn interpret(bytes: &[u8], expected: usize, token: &str) -> Result<SandboxResult
             .and_then(Value::as_str)
             .is_some_and(|s| s.eq_ignore_ascii_case("Valid"));
     let lines = header.get("invoiceStatuses").and_then(Value::as_array);
-    let lines_valid = lines.is_some_and(|lines| {
+    // Count alone cannot prove every submitted item was checked.
+    let complete_items = lines.is_some_and(|lines| {
+        let mut serials = std::collections::BTreeSet::new();
         lines.len() == expected
+            && lines.iter().all(|r| {
+                r.get("itemSNo")
+                    .and_then(Value::as_str)
+                    .and_then(|n| n.parse::<usize>().ok())
+                    .is_some_and(|n| n > 0 && n <= expected && serials.insert(n))
+            })
+    });
+    let lines_valid = lines.is_some_and(|lines| {
+        complete_items
             && lines.iter().all(|r| {
                 r.get("statusCode").and_then(Value::as_str) == Some("00")
                     && r.get("status")
@@ -151,19 +162,43 @@ fn interpret(bytes: &[u8], expected: usize, token: &str) -> Result<SandboxResult
         "valid"
     } else if !valid
         || lines.is_some_and(|lines| {
-            lines
-                .iter()
-                .any(|r| r.get("statusCode").and_then(Value::as_str) != Some("00"))
+            lines.iter().any(|r| {
+                r.get("statusCode").and_then(Value::as_str) != Some("00")
+                    || r.get("status")
+                        .and_then(Value::as_str)
+                        .is_some_and(|s| s.eq_ignore_ascii_case("Invalid"))
+            })
         })
     {
         "invalid"
     } else {
         "review"
     };
-    let response = serde_json::to_string_pretty(&p)
-        .map_err(|_| "Could not format sandbox response")?
-        .replace(token, "[redacted]");
+    // Redact before JSON escaping, including nested strings and property names.
+    let response = serde_json::to_string_pretty(&redact_response(p.clone(), token))
+        .map_err(|_| "Could not format sandbox response")?;
     Ok(SandboxResult{status:status.into(),message:match status{"valid"=>"Sandbox validation accepted every item. No invoice was issued or reported to production.","invalid"=>"Sandbox validation rejected the payload or one of its items. Review the returned errors.",_=>"Response is incomplete for per-item confirmation. Review it in the assigned sandbox portal."}.into(),response})
+}
+fn redact_response(value: Value, token: &str) -> Value {
+    if token.is_empty() {
+        return value;
+    }
+    match value {
+        Value::String(s) => Value::String(s.replace(token, "[redacted]")),
+        Value::Array(values) => Value::Array(
+            values
+                .into_iter()
+                .map(|v| redact_response(v, token))
+                .collect(),
+        ),
+        Value::Object(values) => Value::Object(
+            values
+                .into_iter()
+                .map(|(k, v)| (k.replace(token, "[redacted]"), redact_response(v, token)))
+                .collect(),
+        ),
+        v => v,
+    }
 }
 #[tauri::command]
 pub async fn validate_fbr_sandbox(
@@ -210,6 +245,50 @@ mod tests {
     use super::*;
     use serde_json::json;
     #[test]
+    fn sandbox_requires_unique_item_confirmation_and_rejects_conflicting_status() {
+        let mut p = json!({"validationResponse":{"statusCode":"00","status":"Valid","invoiceStatuses":[{"itemSNo":"1","statusCode":"00","status":"Valid"},{"itemSNo":"1","statusCode":"00","status":"Valid"}]}});
+        assert_eq!(
+            interpret(p.to_string().as_bytes(), 2, "secret")
+                .unwrap()
+                .status,
+            "review"
+        );
+        p["validationResponse"]["invoiceStatuses"][1]["itemSNo"] = json!("2");
+        assert_eq!(
+            interpret(p.to_string().as_bytes(), 2, "secret")
+                .unwrap()
+                .status,
+            "valid"
+        );
+        p["validationResponse"]["invoiceStatuses"][1]["status"] = json!("Invalid");
+        assert_eq!(
+            interpret(p.to_string().as_bytes(), 2, "secret")
+                .unwrap()
+                .status,
+            "invalid"
+        );
+        p["validationResponse"]["invoiceStatuses"][1]["status"] = json!("Valid");
+        p["validationResponse"]["invoiceStatuses"][1]["itemSNo"] = json!("3");
+        assert_eq!(
+            interpret(p.to_string().as_bytes(), 2, "secret")
+                .unwrap()
+                .status,
+            "review"
+        );
+    }
+    #[test]
+    fn sandbox_redacts_escaped_tokens_before_serializing_nested_response() {
+        let token = "synthetic-token-with-quote\"and\\slash";
+        let p = json!({"validationResponse":{"statusCode":"01","status":"Invalid","error":format!("Bearer {token}"),"details":[{(token):token}]}});
+        let r = interpret(p.to_string().as_bytes(), 1, token).unwrap();
+        let decoded: Value = serde_json::from_str(&r.response).unwrap();
+        assert_eq!(decoded["validationResponse"]["error"], "Bearer [redacted]");
+        assert_eq!(
+            decoded["validationResponse"]["details"][0]["[redacted]"],
+            "[redacted]"
+        );
+    }
+    #[test]
     fn sandbox_mixed_header_and_item_statuses_never_claim_success() {
         let p = json!({"validationResponse":{"statusCode":"00","status":"Invalid","invoiceStatuses":[{"statusCode":"01","status":"Invalid","error":"Provide rate"}]}});
         assert_eq!(
@@ -218,7 +297,7 @@ mod tests {
                 .status,
             "invalid"
         );
-        let p = json!({"validationResponse":{"statusCode":"00","status":"Valid","invoiceStatuses":[{"statusCode":"00","status":"Valid"}]}});
+        let p = json!({"validationResponse":{"statusCode":"00","status":"Valid","invoiceStatuses":[{"itemSNo":"1","statusCode":"00","status":"Valid"}]}});
         assert_eq!(
             interpret(p.to_string().as_bytes(), 1, "secret")
                 .unwrap()

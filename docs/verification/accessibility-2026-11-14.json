@@ -1,0 +1,159 @@
+{
+  "date": "2026-11-14T18:59:21.427Z",
+  "engine": "axe-core",
+  "scope": "Eight fixture routes and four create dialogs, 1024x600, English/light; automated checks do not replace keyboard/screen-reader review",
+  "scans": [
+    {
+      "view": "/login",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        }
+      ]
+    },
+    {
+      "view": "/pos",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "aria-prohibited-attr",
+          "nodes": 1
+        },
+        {
+          "id": "color-contrast",
+          "nodes": 14
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "view": "/products",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 4
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "view": "/purchase-orders",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 3
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "view": "/customers",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 9
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "view": "/reports",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "view": "/users",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 3
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "view": "/settings",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 7
+        },
+        {
+          "id": "label-content-name-mismatch",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "view": "/products:create-dialog",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 7
+        }
+      ]
+    },
+    {
+      "view": "/customers:create-dialog",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ]
+    },
+    {
+      "view": "/users:create-dialog",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 2
+        }
+      ]
+    },
+    {
+      "view": "/suppliers:create-dialog",
+      "violations": [],
+      "incomplete": [
+        {
+          "id": "color-contrast",
+          "nodes": 1
+        }
+      ]
+    }
+  ]
+}

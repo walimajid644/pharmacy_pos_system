@@ -1,0 +1,19 @@
+* text=auto
+*.vue text eol=lf
+*.ts text eol=lf
+*.mjs text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.rs text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.py text eol=lf
+*.ps1 text eol=crlf
+*.png binary
+*.ico binary
+*.exe binary
+
+*.toml text eol=lf
+*.lock text eol=lf
+*.css text eol=lf
+*.html text eol=lf

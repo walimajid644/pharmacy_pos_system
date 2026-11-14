@@ -1,0 +1,8 @@
+{
+  "date": "2026-11-14T18:58:02.662Z",
+  "upstream": "sqlx-sqlite 0.8.6",
+  "upstreamSourceFilesIdentical": 51,
+  "manifestChange": "libsqlite3-sys 0.30.1 -> 0.39.1",
+  "upstreamManifestSHA256": "8dc33d0ee8972b11a855b02c72f0ddbfddf8a07d14f3d8ca8ab54aa4774dc425",
+  "vendoredManifestSHA256": "9b837d50cfc2e6f54aab15136ae02dcbfba64004aa14ac9453879e9888117da5"
+}

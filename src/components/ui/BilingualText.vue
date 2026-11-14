@@ -1,25 +1,23 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useI18n, type TranslationKey } from '@/lib/i18n'
+import { computed } from 'vue';
+import { useI18n, type TranslationKey } from '@/lib/i18n';
 
 const props = defineProps<{
-  textKey: TranslationKey
-  showBoth?: boolean
-}>()
+  textKey: TranslationKey;
+  showBoth?: boolean;
+}>();
 
-const { tEn, tUr, language } = useI18n()
+const { tEn, tUr, language } = useI18n();
 
-const showEn = computed(() => 
-  props.showBoth || language.value === 'en' || language.value === 'mixed'
-)
+const showEn = computed(
+  () => props.showBoth || language.value === 'en' || language.value === 'mixed',
+);
 
-const showUr = computed(() => 
-  props.showBoth || language.value === 'ur' || language.value === 'mixed'
-)
+const showUr = computed(
+  () => props.showBoth || language.value === 'ur' || language.value === 'mixed',
+);
 
-const separator = computed(() => 
-  language.value === 'mixed' ? ' / ' : ''
-)
+const separator = computed(() => (language.value === 'mixed' ? ' / ' : ''));
 </script>
 
 <template>

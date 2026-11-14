@@ -1,23 +1,23 @@
 <script setup lang="ts">
-import { useI18n, type Language } from '@/lib/i18n'
+import { useI18n, type Language } from '@/lib/i18n';
 
-const { language, setLanguage } = useI18n()
+const { language, setLanguage } = useI18n();
 
 const languages: { value: Language; label: string; urLabel: string }[] = [
   { value: 'en', label: 'EN', urLabel: 'انگریزی' },
   { value: 'mixed', label: 'EN/UR', urLabel: 'دونوں' },
   { value: 'ur', label: 'UR', urLabel: 'اردو' },
-]
+];
 
 function cycleLanguage() {
-  const currentIndex = languages.findIndex(l => l.value === language.value)
-  const nextIndex = (currentIndex + 1) % languages.length
-  setLanguage(languages[nextIndex].value)
+  const currentIndex = languages.findIndex((l) => l.value === language.value);
+  const nextIndex = (currentIndex + 1) % languages.length;
+  setLanguage(languages[nextIndex].value);
 }
 
 const currentLang = () => {
-  return languages.find(l => l.value === language.value)
-}
+  return languages.find((l) => l.value === language.value);
+};
 </script>
 
 <template>

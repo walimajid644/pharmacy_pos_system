@@ -1,6 +1,42 @@
 # Release Notes
 
-## 0.1.0 Release Candidate — November 1, 2026 (Current)
+## 0.1.0 Release Candidate — November 14, 2026 (Current)
+
+Completed the reviewed component/module refactor: 35 feature components, workflow separation across the large screens, dedicated POS customer/search/cart/source-document composables, typed report rows, and separate Rust test modules. See `COMPONENT_REFACTOR.md` for scope and ownership conventions. Atomic native transactions and authorization remain together.
+
+Verification passed: production TypeScript/Vite and Tauri/NSIS builds, **79 Rust tests**, **59 browser scenarios**, real native counter-day integration, **90 native-backed layout combinations**, two process restarts and exported-snapshot integrity. Supplier, user and settings form saves are covered explicitly. Browser fixtures mock the native bridge; the separate Tauri integration build uses actual Rust/SQLite and synthetic API authentication setup.
+
+The unsigned x64 installer is `Pharmacy POS_0.1.0_x64-setup.exe`, **2,473,626 bytes**, SHA-256 `1DDF178F65DE811A4ECF6FCD0AE799CF2419BB662F01B76B70129497C3D4E219`. The production executable is 6,103,552 bytes, SHA-256 `EE666513CD03AF16852E1696BDC37EBED96D813224EEBEFC476F10B8E8EA23AD`. Metadata is recorded in `test-results/release-gate/artifacts.json`.
+
+The source refactor is complete for the reviewed scope. Clean Windows/installed-release operator acceptance, physical printers/scanner, real-shop onboarding and production FBR integration remain separate open release gates. The shop's FBR route remains unconfirmed; this pass made no fiscal network request.
+
+## 0.1.0 Release Candidate — November 8, 2026 (Previous)
+
+**Status: development verification passed; release acceptance remains open.** FBR production integration is incomplete because the shop's onboarding route is still unconfirmed.
+
+### Changes
+
+- Fixed TypeScript button typing and a malformed POS style block that prevented production builds.
+- Restored POS search focus after checkout, rapid barcode/Escape clearing, payment selection styles and keyboard result scrolling.
+- Preserved retail-price fallback when optional wholesale pricing is cleared, while retaining explicit zero prices.
+- Kept the credit warning and inventory dashboard within the minimum 1024×600 layout.
+- Hardened FBR sandbox validation against duplicate/missing item confirmations, conflicting invalid statuses and escaped-token leakage. No fiscal network request was made.
+
+### Verification
+
+- **79 native Rust library tests** and **52 browser fixture scenarios** passed.
+- **Real Tauri/WebView2 integration** passed against a separately identified synthetic database: actual import/shift/POS UI, native stock/money operations, Udhar/wholesale, controlled evidence, quarantine, cashier access restrictions and backup export.
+- **90 native-backed screen/language/theme/viewport combinations**, two process restarts and read-only exported-snapshot integrity checks passed. The drawer closed at Rs 160 with zero variance; stock, invoices and settled credit survived both restarts.
+- Synthetic CSV/XLSX parsing, real SQLite commercial smoke checks and the TypeScript/Vite production build passed.
+- Native integration uses a debug test binary and synthetic API authentication setup. It does not prove installed-release first-run authentication, manual visual/translation acceptance or printed output. See `tests/native/README.md` and `test-results/native-acceptance/verification.md`.
+
+### Current packaging and open gates
+
+The normal production entry/configuration excludes native acceptance controls and the test debugging port. The production Tauri build and NSIS packaging passed on November 8, 2026 (Asia/Karachi). The unsigned x64 installer is `Pharmacy POS_0.1.0_x64-setup.exe`, 2,462,452 bytes, SHA-256 `C5525587BE57A0B120B8AA867C95148E5C1485C45E323667C5BD271B9FAA6D0C`. The executable is 6,092,800 bytes, SHA-256 `1D74946D68729C46150FDAD1FBE95F8C8F433A5CE19C4C882F6ABBC372418C6A`. Both are recorded in `test-results/release-gate/artifacts.json`.
+
+Still required: clean Windows installation, installed-release fresh/upgrade operator walkthrough, intended receipt/label printers and scanner, owner-reviewed real pharmacy import and onboarding timing, and FBR route/credentials followed by sandbox and production implementation/acceptance. Development-PC tests do not close these gates. See `CLEAN_INSTALL_OPERATOR_SCRIPT.md` and the current section of `RELEASE_GATE_STATUS.md`.
+
+## 0.1.0 Release Candidate — November 1, 2026 (Historical)
 
 **Status**: ⚠️ Code complete, manual testing incomplete
 

@@ -1,0 +1,263 @@
+.suppliers-view {
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.suppliers-view .view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.suppliers-view .view-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.suppliers-view .view-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-top: 0.25rem;
+}
+
+.suppliers-view .button-icon {
+  font-size: 1.5rem;
+  margin-right: 0.5rem;
+}
+
+.suppliers-view .filters-card {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+}
+
+.suppliers-view .filters-grid {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+}
+
+.suppliers-view .search-input {
+  font-size: 1rem;
+}
+
+.suppliers-view .filter-select {
+  padding: 0.625rem 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.suppliers-view .loading-state {
+  text-align: center;
+  padding: 4rem;
+}
+
+.suppliers-view .spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+.suppliers-view .empty-state {
+  text-align: center;
+  padding: 4rem;
+}
+
+.suppliers-view .empty-icon {
+  font-size: 5rem;
+  margin-bottom: 1rem;
+}
+
+.suppliers-view .empty-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.suppliers-view .empty-subtitle {
+  color: var(--color-text-secondary);
+  margin-bottom: 2rem;
+}
+
+.suppliers-view .suppliers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.suppliers-view .supplier-card {
+  padding: 1.5rem;
+  transition: var(--transition-fast);
+}
+
+.suppliers-view .supplier-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.suppliers-view .supplier-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  margin-bottom: 1rem;
+}
+
+.suppliers-view .supplier-name {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.suppliers-view .supplier-code {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  font-family: monospace;
+}
+
+.suppliers-view .supplier-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.suppliers-view .detail-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.suppliers-view .detail-icon {
+  font-size: 1.125rem;
+}
+
+.suppliers-view .supplier-actions {
+  display: flex;
+  gap: 0.75rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* Modal */
+.suppliers-view .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.suppliers-view .modal-content {
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+.suppliers-view .modal-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 2rem;
+}
+
+.suppliers-view .modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.suppliers-view .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+}
+
+.suppliers-view .form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.suppliers-view .form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.suppliers-view .form-field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.suppliers-view .form-textarea {
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.suppliers-view .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.suppliers-view .checkbox-label input[type='checkbox'] {
+  width: 1.125rem;
+  height: 1.125rem;
+  cursor: pointer;
+  accent-color: var(--color-primary);
+}
+
+.suppliers-view .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+@media (max-width: 768px) {
+  .suppliers-view {
+    padding: 1rem;
+  }
+
+  .suppliers-view .filters-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .suppliers-view .suppliers-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .suppliers-view .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .suppliers-view .modal-content {
+    padding: 1.5rem;
+  }
+}

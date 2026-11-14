@@ -1,6 +1,33 @@
 ﻿# Next Steps Checklist
 
-Last reviewed: November 1, 2026
+Last reviewed: November 14, 2026
+
+## Component/module refactor — November 14
+
+- [x] Complete the reviewed large-screen refactor into feature components and workflow composables; separate selected inline Rust test modules.
+- [x] Verify 79 Rust tests, 59 browser scenarios, real native counter-day operations, 90 native-backed layouts, two restarts and exported backup integrity.
+- [x] Rebuild the normal production executable/NSIS installer and record hashes in `test-results/release-gate/artifacts.json`.
+
+See `COMPONENT_REFACTOR.md` and current `RELEASE_NOTES.md`. The older dated checklist below is retained as historical acceptance context. Clean-machine, installed-release operator, hardware, real-shop and FBR gates remain open.
+
+## Current acceptance update — November 8
+
+This update supersedes the older percentage estimates below. Feature implementation is substantial but FBR production is incomplete; documentation and test plans do not constitute acceptance.
+
+- [x] 79 Rust library tests and 52 browser fixture scenarios pass; catalog file and real SQLite smoke checks pass.
+- [x] Real Tauri/WebView2 native integration now exercises synthetic counter-day operations, credit, controlled evidence, quarantine and role restrictions; 90 route/language/theme/viewport checks pass. Final manifests are in `test-results/native-acceptance/`.
+- [x] Repair checkout search focus, rapid scanner/Escape clearing, optional wholesale-price fallback, payment styles, minimum-size payment warnings and dashboard alert sizing.
+- [x] Prepare a concrete clean-machine operator script in `CLEAN_INSTALL_OPERATOR_SCRIPT.md`.
+- [x] Rebuild the production executable and NSIS installer; record current hashes/sizes in `test-results/release-gate/artifacts.json` and `RELEASE_NOTES.md`.
+- [ ] Installed-release operator walkthrough on fresh and upgraded synthetic data, including print previews and first-run interactions.
+- [ ] Clean Windows installation; development-PC native tests do not satisfy it.
+- [ ] Intended receipt/label printers and scanner; no hardware available.
+- [ ] Owner-reviewed pharmacy CSV/XLSX and timed real-shop onboarding/demo.
+- [ ] FBR route confirmation, local credentials, official sandbox cases and production implementation/acceptance. User reconfirmed route is still unconfirmed.
+
+See `RELEASE_NOTES.md` and `test-results/release-gate/artifacts.json` for current artifact metadata. The November 1 section below is historical and its hashes/test counts describe that older candidate.
+
+## Historical November 1 checklist
 
 ---
 

@@ -1,5 +1,15 @@
 {
   "productName": "Pharmacy POS Upgrade Test",
   "identifier": "com.pharmacypos.codex.upgrade",
-  "app": { "windows": [{ "title": "Pharmacy POS Upgrade Test", "width": 1280, "height": 800, "minWidth": 1024, "minHeight": 600 }] }
+  "app": {
+    "windows": [
+      {
+        "title": "Pharmacy POS Upgrade Test",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 1024,
+        "minHeight": 600
+      }
+    ]
+  }
 }

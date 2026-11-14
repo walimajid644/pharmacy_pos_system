@@ -88,11 +88,13 @@ async fn save(pool: &Pool<Sqlite>, actor: &str, r: CustomerRequest) -> Result<St
     } else {
         let code = format!(
             "C-{}",
-            &Uuid::new_v4().simple().to_string()[..10].to_uppercase()
+            Uuid::new_v4().simple().to_string()[..10].to_uppercase()
         );
         sqlx::query("INSERT INTO customers(id,customer_code,first_name,last_name,phone_number,address,customer_type,credit_limit,is_active,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)").bind(&id).bind(code).bind(r.first_name.trim()).bind(r.last_name.trim()).bind(r.phone_number).bind(r.address).bind(r.customer_type).bind(r.credit_limit).bind(r.is_active).bind(&now).bind(&now).execute(&mut *tx).await.map_err(|e|e.to_string())?;
     }
-    if (r.credit_limit-prior.unwrap_or(0.0)).abs()>0.00001 {sqlx::query("INSERT INTO audit_events(id,event_type,actor_id,occurred_at,entity_type,entity_id,reference,details) VALUES(?,'customer_limit',?,?,'customer',?,?,?)").bind(Uuid::new_v4().to_string()).bind(actor).bind(&now).bind(&id).bind(&id).bind(format!("Credit limit Rs {:.2} → Rs {:.2}",prior.unwrap_or(0.0),r.credit_limit)).execute(&mut *tx).await.map_err(|e|e.to_string())?;}
+    if (r.credit_limit - prior.unwrap_or(0.0)).abs() > 0.00001 {
+        sqlx::query("INSERT INTO audit_events(id,event_type,actor_id,occurred_at,entity_type,entity_id,reference,details) VALUES(?,'customer_limit',?,?,'customer',?,?,?)").bind(Uuid::new_v4().to_string()).bind(actor).bind(&now).bind(&id).bind(&id).bind(format!("Credit limit Rs {:.2} → Rs {:.2}",prior.unwrap_or(0.0),r.credit_limit)).execute(&mut *tx).await.map_err(|e|e.to_string())?;
+    }
     tx.commit().await.map_err(|e| e.to_string())?;
     Ok(id)
 }

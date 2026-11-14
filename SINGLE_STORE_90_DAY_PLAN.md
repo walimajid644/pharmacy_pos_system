@@ -1,6 +1,8 @@
 # Single-store 90-day plan — execution status
 
-Updated: November 1, 2026. The user authorized advancing through the Phase 2 completion pass and now **Phase 3**. The user also confirmed FBR integration is required, but its onboarding route is not yet known. Implementation progress does not close the desktop or fiscal acceptance gates.
+November 14 verification update: the reviewed source component/module refactor is complete. Production builds, 79 Rust tests, 59 browser scenarios, native counter-day integration, 90 native-backed layouts, two process restarts and exported-snapshot integrity pass. See `COMPONENT_REFACTOR.md` and `RELEASE_NOTES.md` for the current candidate. The external/manual acceptance gates described below remain open.
+
+Previous update: November 8, 2026. The user authorized completing the remaining implementation and verification work. FBR integration is required; the user reconfirmed that the shop's onboarding route is still unconfirmed. Implementation progress does not close desktop, hardware or fiscal acceptance gates.
 
 ## Phase 1 — reliability and daily counter parity
 
@@ -9,12 +11,12 @@ Updated: November 1, 2026. The user authorized advancing through the Phase 2 com
 | Current frontend, native tests and Windows installer | Build/test results recorded in RELEASE_NOTES.md and test-results/release-gate/ |
 | Fresh and upgraded database counter-day integrity | Native cross-module test covers both, including restart and native snapshot/restore; not desktop UI acceptance |
 | First admin password change | Native authentication gate and password change tested; desktop first-run check pending |
-| Receiving, sale pack/loose/strip confirm, return, adjustment, supplier cash payment and blind closing | Integrated native workflow and individual regression tests; signed-in desktop walkthrough pending |
+| Receiving, sale pack/loose/strip confirm, return, adjustment, supplier cash payment and blind closing | Real Tauri/WebView2 synthetic integration exercises the POS and blind-close UI plus native commands; installed-release operator walkthrough remains pending |
 | Daily Closing / Reports | Actual view SQL checked against the counter-day fixture; signed-in desktop display/printing pending |
 | Idle lock after five minutes | Real App.vue browser fixture verifies cleared cart/draft, login route, activity renewal, resumed click, failed/stalled native logout; native session expiry also has a separate Rust test |
 | POS micro-polish and operational edge-case messages | Existing implementation retained; isolated browser regression evidence at 1024×600 |
 | Clean Windows without developer tools | Pending: user has development PC only; no clean PC/VM available in this session |
-| Signed-in native desktop E2E on fresh/upgraded data | Pending: computer-use runtime fails to initialize with “failed to write kernel assets”; browser fixtures are not a substitute |
+| Signed-in native desktop E2E on fresh/upgraded data | Isolated native test build now runs on the development PC with real SQLite/auth/IPC. See tests/native/README.md and test-results/native-acceptance/. Installed-release manual fresh/upgrade acceptance is still pending; native unit tests cover the legacy upgrade |
 | Receipt/label printers and barcode scanner | Pending: intended hardware unavailable |
 
 **Release gate remains open. Phase 1 is not accepted for live operation.** The user authorized continuing the implementation sequence; clean Windows and hardware results have not been inferred from that authorization.
@@ -45,7 +47,14 @@ Automated evidence: 63 native tests, 42 browser scenarios across five suites, re
 - Existing wholesale pricing, purchase suggestions and sensitive-action audit remain implemented and under regression tests.
 - **FBR:** a real DI sandbox validation connector is implemented as a spike, based on official material, with no production/post-invoice path. Route confirmation, credentials, real sandbox scenarios and production design/acceptance remain open. See [FBR_INTEGRATION_STATUS.md](FBR_INTEGRATION_STATUS.md).
 
-Automated evidence: 77 native tests, 52 browser scenarios across six suites, parser tests using actual synthetic `.xlsx`/UTF-8 CSV and real SQLite checks. No real pharmacy import sample, live FBR request, clean Windows, signed-in native desktop or physical printer/scanner acceptance is claimed. No verified starter medicine database is bundled; a user-provided catalog pack can use the same reviewed import path. The under-one-day onboarding target is not yet benchmarked at a real shop.
+Automated evidence: 79 native tests, 52 browser scenarios across six suites, parser tests using actual synthetic `.xlsx`/UTF-8 CSV and real SQLite checks. The separate Tauri integration build additionally exercises native-backed workflows and 90 route/language/theme/viewport combinations. Authentication setup uses native APIs with synthetic credentials; this is not a manual installed-release sign-off. No real pharmacy sample, live FBR request, clean Windows or physical printer/scanner acceptance is claimed. No verified starter medicine database is bundled; an owner-reviewed catalog can use the existing import path. The under-one-day onboarding target is not yet benchmarked at a real shop.
+
+## November 8 repair and acceptance pass
+
+- Restored POS search focus after checkout, scanner/Escape clearing, payment selection styles and keyboard result scrolling. Fixed the malformed POS style block and typed button attributes so the production frontend compiles.
+- Clearing optional wholesale pricing now preserves retail fallback; explicit zero remains zero. The credit warning fits the minimum-size payment dock. Dashboard panels and inventory alerts fit 1024×600.
+- FBR sandbox validation now requires unique item confirmations matching every submitted item, rejects conflicting invalid statuses and redacts tokens before JSON escaping. Two additional native regressions pass. No FBR request was sent.
+- Native acceptance uses a separate application identifier and synthetic database; production entry/configuration do not expose test controls or a debugging port. Its manifest distinguishes actual UI actions from native API setup and lists remaining gates.
 
 ## Reproducible automated checks
 

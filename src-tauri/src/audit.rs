@@ -210,4 +210,3 @@ mod tests {
         assert_eq!(actor, "m");
     }
 }
-

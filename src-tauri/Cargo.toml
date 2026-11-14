@@ -17,7 +17,7 @@ tauri = { version = "2", features = [] }
 tauri-plugin-sql = { version = "2", features = ["sqlite"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio"] }
+sqlx = { version = "0.8", default-features = false, features = ["sqlite", "runtime-tokio"] }
 uuid = { version = "1", features = ["v4"] }
 bcrypt = "0.17"
 reqwest = { version = "0.13", default-features = false, features = ["json", "native-tls"] }
@@ -33,3 +33,7 @@ codegen-units = 1
 lto = true
 opt-level = "s"
 strip = true
+
+# Security backport: preserve stable SQLx/Tauri APIs while using patched SQLite.
+[patch.crates-io]
+sqlx-sqlite = { path = "vendor/sqlx-sqlite" }

@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from 'vue';
 
 const props = defineProps<{
-  title: string
-  titleUr?: string
-  value: string | number
-  icon?: string
-  trend?: 'up' | 'down' | 'neutral'
-  trendValue?: string
-  color?: 'primary' | 'success' | 'warning' | 'danger' | 'secondary'
-  clickable?: boolean
-}>()
+  title: string;
+  titleUr?: string;
+  value: string | number;
+  icon?: string;
+  trend?: 'up' | 'down' | 'neutral';
+  trendValue?: string;
+  color?: 'primary' | 'success' | 'warning' | 'danger' | 'secondary';
+  clickable?: boolean;
+}>();
 
 const emit = defineEmits<{
-  click: []
-}>()
+  click: [];
+}>();
 
 const colorClass = computed(() => {
   const colors = {
@@ -23,16 +23,17 @@ const colorClass = computed(() => {
     warning: 'stat-card-warning',
     danger: 'stat-card-danger',
     secondary: 'stat-card-secondary',
-  }
-  return colors[props.color || 'primary']
-})
+  };
+  return colors[props.color || 'primary'];
+});
 </script>
 
 <template>
-  <component :is="clickable ? 'button' : 'div'"
+  <component
+    :is="clickable ? 'button' : 'div'"
     :type="clickable ? 'button' : undefined"
     class="stat-card"
-    :class="[colorClass, { 'clickable': clickable }]"
+    :class="[colorClass, { clickable: clickable }]"
     @click="clickable && emit('click')"
   >
     <div class="stat-card-header">
