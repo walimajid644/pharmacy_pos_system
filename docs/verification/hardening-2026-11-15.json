@@ -1,0 +1,79 @@
+{
+  "date": "2026-11-15",
+  "status": "development-verification-passed",
+  "qualityGate": "lint, Prettier, Vue/TypeScript, unit/schema tests, Rust fmt, Clippy, 82 Rust tests passed",
+  "browserScenarios": 59,
+  "accessibility": {
+    "scans": 12,
+    "automatedViolations": 0,
+    "scope": "Eight fixture routes and four create dialogs, 1024x600, English/light; automated checks do not replace keyboard/screen-reader review"
+  },
+  "dependencies": {
+    "cleanNpmInstall": "passed; zero vulnerabilities",
+    "activeWindowsRustBlockers": [],
+    "inactiveFindings": [
+      {
+        "id": "RUSTSEC-2023-0071",
+        "package": "rsa",
+        "version": "0.9.10",
+        "active": false,
+        "informational": null
+      },
+      {
+        "id": "RUSTSEC-2024-0370",
+        "package": "proc-macro-error",
+        "version": "1.0.4",
+        "active": false,
+        "informational": "unmaintained"
+      },
+      {
+        "id": "RUSTSEC-2024-0429",
+        "package": "glib",
+        "version": "0.18.5",
+        "active": false,
+        "informational": "unsound"
+      }
+    ]
+  },
+  "native": {
+    "status": "passed",
+    "sha256": "b627c0d17074c0c06ee6719dd8a67688790ac38a0a80a58a223b8fee739145ab",
+    "scenarioResults": [
+      "Real native bridge/session active; separate test identifier and backup path verified",
+      "Real CSV UI preview writes nothing; explicit reviewed commit creates three products and two opening batches atomically",
+      "Native shift opened through UI with blind total; real purchase receipt adds 20 base units",
+      "Actual POS barcode/keyboard path: declined strip has no effect; pack + two loose cash sale saves Rs120/change30 and stock8",
+      "Real supplier payment, overpayment rejection, cash expense, approved refund/restock and adjustment reconcile stock8",
+      "Actual blind-close UI records expected Rs160/zero variance; post-close expense void rejected",
+      "Real wholesale credit sale charges saved Rs8; walk-in credit rejected; collection retry does not collect twice",
+      "Controlled POS blocks missing evidence; saved/report DRAP and classification survive later catalog edits",
+      "Quarantined units cannot be sold through actual native bridge; credit/card drawer closes at zero cash",
+      "90 real native-backed route/locale/theme/viewport checks; checkout and page bounds checked",
+      "Real cashier cannot access prescription tables, another cashier sale, controlled report or catalog import; summary remains available",
+      "Native backup exported; exactly three test invoices persisted; no unexpected frontend errors"
+    ],
+    "layoutCombinations": 90,
+    "matchingProcessRestarts": 1,
+    "exportedBackupIntegrity": "passed",
+    "sqliteVersion": "3.54.1",
+    "securityPolicy": {
+      "inlineBlocked": true,
+      "networkBlocked": true,
+      "dynamicStyle": true,
+      "violations": [
+        "script-src-elem",
+        "connect-src"
+      ]
+    },
+    "diagnostics": "enum-only payload; extra fields rejected; bounded rotation/rate covered by Rust tests"
+  },
+  "artifacts": "release-artifacts-2026-11-15.json",
+  "signatures": "signatures-2026-11-15.json",
+  "limitations": [
+    "Unsigned application and installer; real publisher signing still required",
+    "CI configured; hosted execution awaits pushing changes",
+    "Development PC and synthetic data; clean-machine, installed-release operator, physical hardware and real-shop acceptance remain open",
+    "Full assistive-technology, Urdu and dark accessibility review remains open",
+    "FBR onboarding route unconfirmed; fiscal network integration/acceptance incomplete"
+  ]
+}

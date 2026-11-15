@@ -1,6 +1,8 @@
 # Single-store 90-day plan — execution status
 
-November 14 verification update: the reviewed source component/module refactor is complete. Production builds, 79 Rust tests, 59 browser scenarios, native counter-day integration, 90 native-backed layouts, two process restarts and exported-snapshot integrity pass. See `COMPONENT_REFACTOR.md` and `RELEASE_NOTES.md` for the current candidate. The external/manual acceptance gates described below remain open.
+November 15 hardening update: automated quality gates, pinned Windows CI, strict CSP, bounded diagnostics, patched SQLite 3.54.1, field/dialog accessibility and signature checks are implemented. 82 Rust tests, 59 browser scenarios, 12 accessibility scans, 90 native-backed layouts, matching native restart/backup and CSP/diagnostic checks pass. The rebuilt installer is unsigned. See `ENGINEERING_STANDARDS.md`, `RELEASE_NOTES.md` and `docs/verification/hardening-2026-11-15.json`. External acceptance and confirmed FBR integration remain open.
+
+Previous November 14 verification update: the reviewed source component/module refactor is complete. Production builds, 79 Rust tests, 59 browser scenarios, native counter-day integration, 90 native-backed layouts, two process restarts and exported-snapshot integrity pass. See `COMPONENT_REFACTOR.md` and `RELEASE_NOTES.md` for the current candidate. The external/manual acceptance gates described below remain open.
 
 Previous update: November 8, 2026. The user authorized completing the remaining implementation and verification work. FBR integration is required; the user reconfirmed that the shop's onboarding route is still unconfirmed. Implementation progress does not close desktop, hardware or fiscal acceptance gates.
 

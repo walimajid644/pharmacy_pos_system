@@ -1,6 +1,20 @@
 ﻿# Next Steps Checklist
 
-Last reviewed: November 14, 2026
+Last reviewed: November 15, 2026
+
+## Engineering hardening — November 15
+
+- [x] Add repeatable ESLint/Prettier/TypeScript/Rust quality gates and pinned Windows CI workflow.
+- [x] Apply strict desktop CSP, bounded metadata-only diagnostics and stronger frontend error types.
+- [x] Patch bundled SQLite to 3.54.1; verify all 51 driver source files remain identical to upstream.
+- [x] Verify 82 Rust tests, 59 browser scenarios, 12 accessibility scans, 90 native-backed layouts, native restart/backup integrity and native security checks.
+- [x] Verify a clean frontend dependency install with zero vulnerabilities and a Windows Rust audit with no active vulnerability findings.
+- [x] Rebuild the production application and installer; record current hashes and signature status.
+- [ ] Provide real publisher signing; both artifacts currently report NotSigned.
+- [ ] Run the configured CI workflow on the hosting service after pushing the changes.
+- [ ] Complete the external/operator/FBR gates and full accessibility acceptance described in `ENGINEERING_STANDARDS.md`.
+
+Current evidence: `docs/verification/hardening-2026-11-15.json` and `RELEASE_NOTES.md`.
 
 ## Component/module refactor — November 14
 

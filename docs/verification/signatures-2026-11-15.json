@@ -1,0 +1,14 @@
+[
+  {
+    "File": "pharmacy-pos.exe",
+    "SHA256": "6C99F9BF71E6765D1EB824775D31746E0B03B9758E6B9AE09AE07BC760055F75",
+    "Status": "NotSigned",
+    "Signer": null
+  },
+  {
+    "File": "Pharmacy POS_0.1.0_x64-setup.exe",
+    "SHA256": "30DB24BBB1995011ECCBB2F499413DA38BAA5465BF05CB8B4568D75C7FF3DB5C",
+    "Status": "NotSigned",
+    "Signer": null
+  }
+]

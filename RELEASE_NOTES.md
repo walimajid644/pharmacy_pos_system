@@ -1,6 +1,20 @@
 # Release Notes
 
-## 0.1.0 Release Candidate — November 14, 2026 (Current)
+## 0.1.0 Engineering Hardening — November 15, 2026 (Current)
+
+Added repeatable lint/format/type/native/browser checks, a Windows CI workflow with pinned actions, strict desktop CSP, bounded metadata-only diagnostics, stronger error types, field-label associations and keyboard handling for four editor dialogs. Corrected payment/tab contrast and app-controlled dark-mode styling. Installed dependencies and generated test evidence are excluded from Git; local files are retained. See `ENGINEERING_STANDARDS.md`.
+
+Verification passed: **82 Rust tests**, **59 browser scenarios**, **12 accessibility scans with zero automated violations**, strict type/lint/format checks, migrated-schema/parser/cart tests, clean `npm ci` with zero npm vulnerabilities, production frontend build and Tauri/NSIS packaging. The synthetic search SQL baseline covers 20,000 products and 40,000 batches; it does not measure native IPC or rendering. The CI workflow is configured; hosted execution awaits pushing these changes.
+
+The final rebuilt isolated native application also passes counter-day operations, 90 layout combinations, a matching-binary process restart, exported-backup integrity, effective CSP blocking/permitted-style checks and metadata-only diagnostics. See `docs/verification/hardening-2026-11-15.json`.
+
+Bundled SQLite is patched to **3.54.1** through a documented SQLx dependency backport. All 51 upstream driver source files and licenses are unchanged. The Windows Rust audit has no active vulnerability findings; unused optional/other-platform RSA, GLib and proc-macro-error findings remain explicitly reported. Details and sanitized evidence are in `docs/verification/`.
+
+The unsigned installer is **2,511,954 bytes**, SHA-256 `30DB24BBB1995011ECCBB2F499413DA38BAA5465BF05CB8B4568D75C7FF3DB5C`. The production executable is **6,180,352 bytes**, SHA-256 `6C99F9BF71E6765D1EB824775D31746E0B03B9758E6B9AE09AE07BC760055F75`. Both report `NotSigned`; `scripts/check-signatures.ps1 -RequireSigned` prevents treating these as signed release artifacts.
+
+Real publisher signing, clean Windows/installed-release acceptance, physical printers/scanner, real-shop onboarding, full assistive-technology/Urdu/dark accessibility review and confirmed FBR integration remain open. No fiscal network request or production installation was performed.
+
+## 0.1.0 Release Candidate — November 14, 2026 (Before hardening)
 
 Completed the reviewed component/module refactor: 35 feature components, workflow separation across the large screens, dedicated POS customer/search/cart/source-document composables, typed report rows, and separate Rust test modules. See `COMPONENT_REFACTOR.md` for scope and ownership conventions. Atomic native transactions and authorization remain together.
 

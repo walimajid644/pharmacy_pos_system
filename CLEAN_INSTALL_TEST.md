@@ -15,9 +15,9 @@
 
 ### Candidate Installer
 - **Filename**: `Pharmacy POS_0.1.0_x64-setup.exe`
-- **SHA-256**: `1DDF178F65DE811A4ECF6FCD0AE799CF2419BB662F01B76B70129497C3D4E219`
-- **Size**: 2,473,626 bytes
-- **Build date**: November 14, 2026, Asia/Karachi (component/module refactor candidate)
+- **SHA-256**: `30DB24BBB1995011ECCBB2F499413DA38BAA5465BF05CB8B4568D75C7FF3DB5C`
+- **Size**: 2,511,954 bytes
+- **Build date**: November 15, 2026, Asia/Karachi (engineering hardening candidate)
 - **Type**: Unsigned NSIS x64 installer
 - **Artifact manifest**: `test-results/release-gate/artifacts.json`
 

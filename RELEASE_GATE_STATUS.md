@@ -1,10 +1,12 @@
 # Release Gate Status - Master Prompt R1-R7
 
-## Current verification — November 14, 2026
+## Current verification — November 15, 2026
 
-The reviewed component/module refactor is complete; see `COMPONENT_REFACTOR.md`. Current evidence: production build/NSIS packaging, 79 Rust tests, 59 browser scenarios, native counter-day integration, 90 native-backed layouts, two native process restarts and exported-snapshot integrity all pass. Current installer metadata is in `RELEASE_NOTES.md` and `test-results/release-gate/artifacts.json`.
+Engineering hardening and the reviewed component/module refactor are implemented. Current checks pass: **82 Rust tests**, **59 browser scenarios**, **12 accessibility scans with zero automated violations**, strict lint/type/format checks, unit/schema tests, production frontend and Tauri/NSIS builds. A clean dependency install reports zero npm vulnerabilities. The Windows Rust gate has no active vulnerability findings; inactive optional/other-platform findings remain reported.
 
-The manual/external acceptance gates listed below remain open: clean Windows, exact installed-release operator fresh/upgrade walkthrough, physical equipment, real-shop data/onboarding and production FBR. Refactoring and development-PC evidence do not mark those gates accepted. The older dated sections retain their original evidence counts and artifact references.
+The final rebuilt isolated native app passes counter-day operations, **90 route/language/theme/viewport combinations**, a matching-binary process restart, exported-backup integrity, effective CSP checks and metadata-only diagnostic checks. Bundled SQLite is **3.54.1**. Sanitized evidence and exact artifact hashes are in `docs/verification/hardening-2026-11-15.json`, `release-artifacts-2026-11-15.json` and `RELEASE_NOTES.md`. The CI workflow is configured; hosted execution has not run here.
+
+The application and installer are **unsigned**. Real publisher signing, clean Windows, exact installed-release fresh/upgrade operator walkthroughs, physical equipment, real-shop onboarding, full assistive-technology/Urdu/dark accessibility review and production FBR remain open. Automated development-PC checks do not close these acceptance gates. Older dated sections retain their historical evidence counts.
 
 ## Previous status — November 8, 2026
 
