@@ -9,7 +9,7 @@ const { router, formatCurrency, loading, saving, po, receiveItems, canReceive, r
 </script>
 
 <template>
-  <div class="tool-terminal receive-view">
+  <div class="tool-terminal receive-view compact-workspace">
     <div class="tool-header view-header">
       <div>
         <h2 class="view-title">Receive Purchase Order</h2>

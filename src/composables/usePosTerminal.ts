@@ -77,6 +77,9 @@ export function usePosTerminal() {
   } = usePosCustomer();
   const {
     searchQuery,
+    productSearchOpen,
+    openProductSearch,
+    resetProductSearch,
     searchResults,
     searchLoading,
     searchError,
@@ -84,7 +87,6 @@ export function usePosTerminal() {
     searchInput,
     onProductSearchInput,
     handleBarcodeInput,
-    resetProductSearch,
   } = usePosProductSearch((product, loose) => addToCart(product, loose));
   const {
     lineGross,
@@ -181,7 +183,7 @@ export function usePosTerminal() {
   }
 
   function onPaymentShortcut(event: KeyboardEvent) {
-    if (event.repeat || event.isComposing) return;
+    if (event.repeat || event.isComposing || productSearchOpen.value) return;
     const method = ({ F8: 'cash', F9: 'card', F10: 'mobile' } as Record<string, string>)[event.key];
     if (method) {
       event.preventDefault();
@@ -347,6 +349,9 @@ export function usePosTerminal() {
     showCost,
     selectedCustomer,
     searchQuery,
+    productSearchOpen,
+    openProductSearch,
+    resetProductSearch,
     searchResults,
     searchLoading,
     searchError,

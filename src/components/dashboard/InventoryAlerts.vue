@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from '@/lib/i18n';
 import type { AlertTab, LowStockItem, NearExpiryItem } from '@/lib/dashboardTypes';
+import CompactPages from '@/components/ui/CompactPages.vue';
 import Badge from '@/components/ui/Badge.vue';
 import Card from '@/components/ui/Card.vue';
 import Button from '@/components/ui/Button.vue';
@@ -89,39 +90,47 @@ function getExpiryText(days: number): string {
         </p>
       </div>
 
-      <table v-else class="alerts-table">
-        <thead>
-          <tr>
-            <th class="label"><BilingualText textKey="product_name" /></th>
-            <th class="label"><BilingualText textKey="sku" /></th>
-            <th class="label"><BilingualText textKey="stock" /></th>
-            <th class="label">{{ pick('Reorder Level', 'دوبارہ آرڈر کی حد') }}</th>
-            <th class="label">{{ pick('Actions', 'اقدامات') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in lowStockItems" :key="item.id" class="table-row">
-            <td class="body font-medium">{{ item.name }}</td>
-            <td class="mono body-sm">{{ item.sku }}</td>
-            <td>
-              <Badge variant="danger" :dot="true" size="sm">
-                {{ formatNumber(item.current_stock) }} {{ pick('units', 'اکائیاں') }}
-              </Badge>
-            </td>
-            <td class="body-sm">{{ formatNumber(item.reorder_level) }}</td>
-            <td>
-              <Button
-                v-if="canManageProducts"
-                variant="outline"
-                size="sm"
-                @click="emit('products')"
-              >
-                {{ pick('View', 'دیکھیں') }}
-              </Button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <CompactPages
+        v-else
+        :items="lowStockItems"
+        :row-height="34"
+        :header-height="32"
+        v-slot="{ rows }"
+      >
+        <table class="alerts-table">
+          <thead>
+            <tr>
+              <th class="label"><BilingualText textKey="product_name" /></th>
+              <th class="label"><BilingualText textKey="sku" /></th>
+              <th class="label"><BilingualText textKey="stock" /></th>
+              <th class="label">{{ pick('Reorder Level', 'دوبارہ آرڈر کی حد') }}</th>
+              <th class="label">{{ pick('Actions', 'اقدامات') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="{ item } in rows" :key="item.id" class="table-row">
+              <td class="body font-medium">{{ item.name }}</td>
+              <td class="mono body-sm">{{ item.sku }}</td>
+              <td>
+                <Badge variant="danger" :dot="true" size="sm">
+                  {{ formatNumber(item.current_stock) }} {{ pick('units', 'اکائیاں') }}
+                </Badge>
+              </td>
+              <td class="body-sm">{{ formatNumber(item.reorder_level) }}</td>
+              <td>
+                <Button
+                  v-if="canManageProducts"
+                  variant="outline"
+                  size="sm"
+                  @click="emit('products')"
+                >
+                  {{ pick('View', 'دیکھیں') }}
+                </Button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </CompactPages>
     </div>
 
     <!-- Near Expiry Tab -->
@@ -142,43 +151,51 @@ function getExpiryText(days: number): string {
         </p>
       </div>
 
-      <table v-else class="alerts-table">
-        <thead>
-          <tr>
-            <th class="label"><BilingualText textKey="product_name" /></th>
-            <th class="label"><BilingualText textKey="batch_number" /></th>
-            <th class="label"><BilingualText textKey="expiry_date" /></th>
-            <th class="label">{{ pick('Days Left', 'باقی دن') }}</th>
-            <th class="label"><BilingualText textKey="stock" /></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in nearExpiryItems" :key="item.id" class="table-row">
-            <td class="body font-medium">{{ item.name }}</td>
-            <td class="mono body-sm">{{ item.batch_number }}</td>
-            <td class="body-sm">{{ formatDate(item.expiry_date) }}</td>
-            <td>
-              <Badge
-                :variant="getExpiryBadgeVariant(getDaysUntilExpiry(item.expiry_date))"
-                size="sm"
-              >
-                {{ getExpiryText(getDaysUntilExpiry(item.expiry_date)) }}
-              </Badge>
-            </td>
-            <td class="body-sm">
-              {{ formatNumber(item.quantity_in_stock) }}
-              <Button
-                v-if="canManageProducts"
-                variant="ghost"
-                size="xs"
-                @click="emit('expiry', item.id)"
-              >
-                {{ pick('Actions', 'کارروائیاں') }}
-              </Button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <CompactPages
+        v-else
+        :items="nearExpiryItems"
+        :row-height="34"
+        :header-height="32"
+        v-slot="{ rows }"
+      >
+        <table class="alerts-table">
+          <thead>
+            <tr>
+              <th class="label"><BilingualText textKey="product_name" /></th>
+              <th class="label"><BilingualText textKey="batch_number" /></th>
+              <th class="label"><BilingualText textKey="expiry_date" /></th>
+              <th class="label">{{ pick('Days Left', 'باقی دن') }}</th>
+              <th class="label"><BilingualText textKey="stock" /></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="{ item } in rows" :key="item.id" class="table-row">
+              <td class="body font-medium">{{ item.name }}</td>
+              <td class="mono body-sm">{{ item.batch_number }}</td>
+              <td class="body-sm">{{ formatDate(item.expiry_date) }}</td>
+              <td>
+                <Badge
+                  :variant="getExpiryBadgeVariant(getDaysUntilExpiry(item.expiry_date))"
+                  size="sm"
+                >
+                  {{ getExpiryText(getDaysUntilExpiry(item.expiry_date)) }}
+                </Badge>
+              </td>
+              <td class="body-sm">
+                {{ formatNumber(item.quantity_in_stock) }}
+                <Button
+                  v-if="canManageProducts"
+                  variant="ghost"
+                  size="xs"
+                  @click="emit('expiry', item.id)"
+                >
+                  {{ pick('Actions', 'کارروائیاں') }}
+                </Button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </CompactPages>
     </div>
   </Card>
 </template>

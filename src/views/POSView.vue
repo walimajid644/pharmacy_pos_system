@@ -3,8 +3,7 @@ import { bindTemplateRef } from '@/lib/templateRefs';
 import SavedSaleActions from '@/components/SavedSaleActions.vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
-import Card from '@/components/ui/Card.vue';
-import Badge from '@/components/ui/Badge.vue';
+import PosProductSearchDialog from '@/components/pos/PosProductSearchDialog.vue';
 import PosCartTable from '@/components/pos/PosCartTable.vue';
 import PosSaleSummary from '@/components/pos/PosSaleSummary.vue';
 import PosPrescriptionFields from '@/components/pos/PosPrescriptionFields.vue';
@@ -36,6 +35,9 @@ const {
   showCost,
   selectedCustomer,
   searchQuery,
+  productSearchOpen,
+  openProductSearch,
+  resetProductSearch,
   searchResults,
   searchLoading,
   searchError,
@@ -84,7 +86,7 @@ const bindsearchInput = bindTemplateRef(searchInput);
 
 <template>
   <main class="pos-terminal" :aria-label="pick('Sales terminal', 'فروخت کا ٹرمینل')">
-    <header class="pos-header">
+    <header class="pos-header" :inert="productSearchOpen">
       <div class="pos-brand">
         <span class="pos-rx" aria-hidden="true">℞</span>
         <div>
@@ -126,7 +128,7 @@ const bindsearchInput = bindTemplateRef(searchInput);
             name="pos-customer-mode"
             :checked="!selectedCustomerId && !customerSearch.trim()"
             @change="chooseCustomer(null)"
-          />{{ pick('Walk-in', 'عام گاہک') }}</label
+          />{{ pick('Casual client', 'عام گاہک') }}</label
         >
         <label
           ><input
@@ -202,7 +204,7 @@ const bindsearchInput = bindTemplateRef(searchInput);
         {{ pick('Detach document', 'دستاویز الگ کریں') }}
       </button>
     </div>
-    <div class="pos-workspace">
+    <div class="pos-workspace" :inert="productSearchOpen">
       <section class="pos-main" :aria-label="pick('Sale entry and items', 'فروخت کے آئٹم')">
         <div class="pos-entry-strip">
           <div class="pos-client-field">
@@ -273,116 +275,38 @@ const bindsearchInput = bindTemplateRef(searchInput);
                 id="pos-product-search"
                 :ref="bindsearchInput"
                 v-model="searchQuery"
-                size="lg"
+                size="sm"
                 type="search"
                 autocomplete="off"
-                :label="pick('Item / barcode', 'آئٹم / بارکوڈ')"
+                :label="pick('ITEM', 'آئٹم / بارکوڈ')"
                 :title="pick('Product or barcode search (F2)', 'مصنوعات یا بارکوڈ تلاش (F2)')"
                 aria-keyshortcuts="F2"
                 :placeholder="t('scan_or_search')"
                 prefix-text="⌕"
                 @input="onProductSearchInput"
-                @keydown="handleBarcodeInput"
+                @keydown="openProductSearch"
               />
-              <div
-                v-if="searchQuery.trim().length >= 2 || searchResults.length"
-                class="pos-product-results"
-              >
-                <p v-if="searchLoading" role="status" class="pos-result-message">
-                  {{ pick('Searching products…', 'مصنوعات تلاش کی جا رہی ہیں…') }}
-                </p>
-                <p v-else-if="searchError" role="alert" class="pos-result-message pos-error">
-                  {{
-                    pick(
-                      'Product search failed. Try again.',
-                      'مصنوعات کی تلاش ناکام ہوئی۔ دوبارہ کوشش کریں۔',
-                    )
-                  }}
-                </p>
-                <p v-else-if="!searchResults.length" role="status" class="pos-result-message">
-                  {{ pick('No matching products.', 'کوئی مماثل مصنوعات نہیں ملیں۔') }}
-                </p>
-                <template v-else>
-                  <p class="pos-result-count body-sm text-text-secondary">
-                    {{ formatNumber(searchResults.length) }}
-                    {{
-                      pick(
-                        'matches · ↑↓ choose · Enter pack · Shift+Enter loose',
-                        'نتائج · ↑↓ منتخب · Enter پیک · Shift+Enter کھلی اکائی',
-                      )
-                    }}
-                  </p>
-                  <Card
-                    v-for="(product, index) in searchResults"
-                    :key="product.id"
-                    hoverable
-                    padding="md"
-                    :class="[
-                      'pos-product-card',
-                      'pos-product-row',
-                      { highlighted: highlightedProductIndex === index },
-                    ]"
-                    @click="addToCart(product, false)"
-                  >
-                    <div class="flex items-start justify-between gap-3">
-                      <div class="flex-1 min-w-0">
-                        <h4 class="heading-4 mb-1">{{ product.name }}</h4>
-                        <p class="body-sm text-text-secondary truncate">
-                          <bdi>{{ product.sku }}</bdi> · {{ formatNumber(product.pack_size) }}
-                          {{ pick('units/pack', 'اکائیاں/پیک') }}
-                        </p>
-                      </div>
-                      <div class="text-right flex-shrink-0">
-                        <div class="number-display-md text-brand-600 mb-1">
-                          {{ formatCurrency(cartStore.unitPrice(product) * product.pack_size) }}
-                        </div>
-                        <div class="flex items-center gap-1 justify-end">
-                          <Badge
-                            :variant="
-                              product.batches.reduce((sum, b) => sum + b.quantity_in_stock, 0) <=
-                              product.reorder_level
-                                ? 'warning'
-                                : 'success'
-                            "
-                            size="sm"
-                          >
-                            {{ t('stock') }}
-                            {{
-                              formatNumber(
-                                product.batches.reduce((sum, b) => sum + b.quantity_in_stock, 0),
-                              )
-                            }}
-                          </Badge>
-                          <Badge
-                            v-if="
-                              product.batches[0] && getBatchWarning(product.batches[0].expiry_date)
-                            "
-                            variant="warning"
-                            size="sm"
-                          >
-                            {{ getBatchWarning(product.batches[0].expiry_date) }}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                    <div class="pos-result-actions" @click.stop>
-                      <Button variant="primary" size="sm" @click="addToCart(product, false)">
-                        {{ pick('Pack', 'پیک') }}
-                      </Button>
-                      <Button
-                        v-if="product.sell_by_loose_unit"
-                        variant="outline"
-                        size="sm"
-                        @click="addToCart(product, true)"
-                      >
-                        {{ pick('Loose', 'کھلی') }}
-                      </Button>
-                    </div>
-                  </Card>
-                </template>
-              </div>
             </div>
           </div>
+          <PosPrescriptionFields
+            :pick="pick"
+            :cart-store="cartStore"
+            :has-controlled="hasControlled"
+            :prescription-missing="prescriptionMissing"
+            v-model:patient-name="patientName"
+            v-model:doctor-name="doctorName"
+            v-model:prescription-note="prescriptionNote"
+          />
+          <label class="pos-remarks"
+            >{{ pick('Sale remarks (optional)', 'فروخت کے نوٹس (اختیاری)')
+            }}<textarea
+              v-model="saleRemarks"
+              maxlength="500"
+              rows="2"
+              :placeholder="pick('Notes saved with this invoice', 'انوائس کے ساتھ محفوظ نوٹس')"
+            ></textarea>
+          </label>
+
           <div class="pos-entry-tools">
             <strong class="pos-price-mode">{{
               cartStore.customerType === 'wholesale'
@@ -392,8 +316,8 @@ const bindsearchInput = bindTemplateRef(searchInput);
             <p class="pos-entry-hint">
               {{
                 pick(
-                  'Enter adds a pack · Shift+Enter adds loose units · Bonus uses the same unit as quantity.',
-                  'Enter پیک، Shift+Enter کھلی اکائی · بونس تعداد والی اکائی میں ہے۔',
+                  'Enter opens product search · Select a pack or loose units in the search window.',
+                  'Enter سے مصنوعات تلاش کریں؛ تلاش کی ونڈو میں پیک یا کھلی اکائیاں منتخب کریں۔',
                 )
               }}
             </p>
@@ -439,8 +363,6 @@ const bindsearchInput = bindTemplateRef(searchInput);
 
       <aside class="pos-dock" :aria-label="pick('Payment and prescription', 'ادائیگی اور نسخہ')">
         <div class="pos-dock-heading">
-          <h2>{{ pick('Payment', 'ادائیگی') }}</h2>
-          <small>{{ pick('Fast checkout', 'فوری فروخت') }}</small>
           <div
             v-if="paymentMethod === 'credit' && selectedCustomer"
             class="pos-credit-status"
@@ -487,46 +409,6 @@ const bindsearchInput = bindTemplateRef(searchInput);
               )
             }}</small>
           </div>
-
-          <PosPrescriptionFields
-            :pick="pick"
-            :cart-store="cartStore"
-            :has-controlled="hasControlled"
-            :prescription-missing="prescriptionMissing"
-            v-model:patient-name="patientName"
-            v-model:doctor-name="doctorName"
-            v-model:prescription-note="prescriptionNote"
-          />
-          <label class="pos-remarks"
-            >{{ pick('Sale remarks (optional)', 'فروخت کے نوٹس (اختیاری)')
-            }}<textarea
-              v-model="saleRemarks"
-              maxlength="500"
-              rows="2"
-              :placeholder="pick('Notes saved with this invoice', 'انوائس کے ساتھ محفوظ نوٹس')"
-            ></textarea>
-          </label>
-
-          <section class="pos-payment-totals">
-            <h3>{{ pick('Bill summary', 'بل کا خلاصہ') }}</h3>
-            <div>
-              <span>{{ pick('Subtotal', 'ذیلی کل') }}</span><bdi>{{
-                formatCurrency(subtotal)
-              }}</bdi>
-            </div>
-            <div>
-              <span>{{ t('tax') }} ({{ settingsStore.settings?.tax_rate || 0 }}%)</span
-              ><bdi>{{ formatCurrency(taxAmount) }}</bdi>
-            </div>
-            <div>
-              <span>{{ pick('Invoice discount', 'انوائس رعایت') }}</span><bdi
-                >−{{ formatCurrency(cartStore.discountAmount) }}</bdi
-              >
-            </div>
-            <div class="pos-dock-grand">
-              <span>{{ t('total') }}</span><strong>{{ formatCurrency(total) }}</strong>
-            </div>
-          </section>
 
           <section v-if="selectedCustomer" class="pos-credit-info">
             <strong>{{ pick('Credit / Udhar', 'کریڈٹ / ادھار') }}</strong>
@@ -620,6 +502,19 @@ const bindsearchInput = bindTemplateRef(searchInput);
         </Button>
       </aside>
     </div>
+    <PosProductSearchDialog
+      v-if="productSearchOpen"
+      v-model:query="searchQuery"
+      v-model:highlighted-index="highlightedProductIndex"
+      :results="searchResults"
+      :loading="searchLoading"
+      :error="searchError"
+      :unit-price="cartStore.unitPrice"
+      @search="onProductSearchInput"
+      @keydown-search="handleBarcodeInput"
+      @select="(product, loose) => addToCart(product, loose)"
+      @close="resetProductSearch"
+    />
   </main>
 </template>
 

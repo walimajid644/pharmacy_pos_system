@@ -248,6 +248,9 @@ watch(
     openGroup.value = null;
   },
 );
+function onGroupPointerEnter(group: string, event: PointerEvent) {
+  if (event.pointerType === 'mouse' && openGroup.value !== null) openGroup.value = group;
+}
 function onOutsideClick(event: PointerEvent) {
   if (event.target instanceof Node && !navRoot.value?.contains(event.target))
     openGroup.value = null;
@@ -286,6 +289,7 @@ onUnmounted(() => document.removeEventListener('pointerdown', onOutsideClick));
           :class="{ active: groupActive(group) }"
           :aria-expanded="openGroup === group.en"
           :aria-controls="`nav-group-${group.en.replace(/ /g, '-')}`"
+          @pointerenter="onGroupPointerEnter(group.en, $event)"
           @click="openGroup = openGroup === group.en ? null : group.en"
         >
           {{ pick(group.en, group.ur) }}

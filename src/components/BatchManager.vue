@@ -12,6 +12,7 @@ import { formatCurrency, isNearExpiry, isExpired } from '@/lib/utils';
 import { useSettingsStore } from '@/stores/settings';
 import { useToast } from '@/composables/useToast';
 import type { Product, ProductBatch } from '@/lib/types';
+import CompactPages from '@/components/ui/CompactPages.vue';
 import Card from '@/components/ui/Card.vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
@@ -139,10 +140,10 @@ function cancelAdd() {
 <template>
   <div
     v-if="isOpen"
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    class="compact-dialog batch-dialog fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
     @click.self="emit('close')"
   >
-    <Card class="w-full max-w-4xl max-h-[90vh] flex flex-col">
+    <Card class="compact-dialog-card batch-dialog-card">
       <!-- Header -->
       <div class="p-6 border-b flex justify-between items-center">
         <div>
@@ -165,9 +166,9 @@ function cancelAdd() {
       </div>
 
       <!-- Content -->
-      <div class="flex-1 overflow-auto p-6">
+      <div class="batch-dialog-content">
         <!-- Add Batch Form -->
-        <Card v-if="showAddForm" class="p-4 mb-6 bg-blue-50">
+        <Card v-if="showAddForm" class="batch-add-form">
           <h3 class="font-semibold mb-4">Add New Batch</h3>
 
           <div class="grid grid-cols-2 gap-4 mb-4">
@@ -240,75 +241,84 @@ function cancelAdd() {
           No batches yet. Add your first batch to track stock and expiry.
         </div>
 
-        <table v-else class="w-full border-collapse">
-          <thead>
-            <tr class="border-b bg-gray-50">
-              <th class="text-left p-3 font-semibold">Batch #</th>
-              <th class="text-left p-3 font-semibold">Expiry Date</th>
-              <th class="text-right p-3 font-semibold">Stock</th>
-              <th class="text-right p-3 font-semibold">Cost Price</th>
-              <th class="text-left p-3 font-semibold">Received</th>
-              <th class="text-center p-3 font-semibold">{{ pick('Status', 'حالت') }}</th>
-              <th>{{ pick('Actions', 'کارروائیاں') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="batch in batches" :key="batch.id" class="border-b hover:bg-gray-50">
-              <td class="p-3 font-mono text-sm">{{ batch.batch_number }}</td>
-              <td class="p-3">
-                {{ new Date(batch.expiry_date).toLocaleDateString() }}
-                <span
-                  v-if="
-                    isNearExpiry(
-                      batch.expiry_date,
-                      Number(settingsStore.settings?.near_expiry_days ?? 60),
-                    )
-                  "
-                  class="text-xs text-red-600 ml-2"
-                >
-                  ({{
-                    Math.ceil(
-                      (new Date(batch.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
-                    )
-                  }}
-                  days)
-                </span>
-              </td>
-              <td class="p-3 text-right font-semibold">
-                {{ batch.quantity_in_stock }}
-                <small v-if="batch.quarantined" class="block text-red-600"
-                  >⛔ {{ batch.quarantined }} {{ pick('quarantined', 'قرنطینہ') }}</small
-                >
-              </td>
-              <td class="p-3 text-right">{{ formatCurrency(batch.cost_price_at_batch) }}</td>
-              <td class="p-3 text-sm">
-                {{ new Date(batch.received_date).toLocaleDateString() }}
-              </td>
-              <td class="p-3 text-center">
-                <span
-                  :class="['inline-block px-2 py-1 text-xs rounded', getBatchStatus(batch).class]"
-                >
-                  {{ getBatchStatus(batch).label }} </span><small
-                  v-if="batch.quarantined"
-                  class="stock-badge held"
-                  >{{ pick('Quarantined', 'قرنطینہ') }}: {{ batch.quarantined }}</small
-                >
-              </td>
-              <td>
-                <Button
-                  class="expiry-batch-action"
-                  variant="outline"
-                  size="sm"
-                  @click="
-                    emit('close');
-                    router.push({ path: '/expiry-actions', query: { batch: batch.id } });
-                  "
-                  >{{ pick('Batch actions', 'بیچ کی کارروائیاں') }}</Button
-                >
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <CompactPages
+          v-else
+          :items="batches"
+          :row-height="56"
+          :header-height="34"
+          v-slot="{ rows }"
+        >
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="border-b bg-gray-50">
+                <th class="text-left p-3 font-semibold">Batch #</th>
+                <th class="text-left p-3 font-semibold">Expiry Date</th>
+                <th class="text-right p-3 font-semibold">Stock</th>
+                <th class="text-right p-3 font-semibold">Cost Price</th>
+                <th class="text-left p-3 font-semibold">Received</th>
+                <th class="text-center p-3 font-semibold">{{ pick('Status', 'حالت') }}</th>
+                <th>{{ pick('Actions', 'کارروائیاں') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="{ item: batch } in rows" :key="batch.id" class="border-b hover:bg-gray-50">
+                <td class="p-3 font-mono text-sm">{{ batch.batch_number }}</td>
+                <td class="p-3">
+                  {{ new Date(batch.expiry_date).toLocaleDateString() }}
+                  <span
+                    v-if="
+                      isNearExpiry(
+                        batch.expiry_date,
+                        Number(settingsStore.settings?.near_expiry_days ?? 60),
+                      )
+                    "
+                    class="text-xs text-red-600 ml-2"
+                  >
+                    ({{
+                      Math.ceil(
+                        (new Date(batch.expiry_date).getTime() - Date.now()) /
+                          (1000 * 60 * 60 * 24),
+                      )
+                    }}
+                    days)
+                  </span>
+                </td>
+                <td class="p-3 text-right font-semibold">
+                  {{ batch.quantity_in_stock }}
+                  <small v-if="batch.quarantined" class="block text-red-600"
+                    >⛔ {{ batch.quarantined }} {{ pick('quarantined', 'قرنطینہ') }}</small
+                  >
+                </td>
+                <td class="p-3 text-right">{{ formatCurrency(batch.cost_price_at_batch) }}</td>
+                <td class="p-3 text-sm">
+                  {{ new Date(batch.received_date).toLocaleDateString() }}
+                </td>
+                <td class="p-3 text-center">
+                  <span
+                    :class="['inline-block px-2 py-1 text-xs rounded', getBatchStatus(batch).class]"
+                  >
+                    {{ getBatchStatus(batch).label }} </span><small
+                    v-if="batch.quarantined"
+                    class="stock-badge held"
+                    >{{ pick('Quarantined', 'قرنطینہ') }}: {{ batch.quarantined }}</small
+                  >
+                </td>
+                <td>
+                  <Button
+                    class="expiry-batch-action"
+                    variant="outline"
+                    size="sm"
+                    @click="
+                      emit('close');
+                      router.push({ path: '/expiry-actions', query: { batch: batch.id } });
+                    "
+                    >{{ pick('Batch actions', 'بیچ کی کارروائیاں') }}</Button
+                  >
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </CompactPages>
       </div>
     </Card>
   </div>

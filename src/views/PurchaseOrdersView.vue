@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import Card from '@/components/ui/Card.vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
@@ -27,7 +28,7 @@ const {
 </script>
 
 <template>
-  <div class="purchase-orders-view purchase-terminal">
+  <div class="purchase-orders-view purchase-terminal compact-workspace">
     <!-- Header -->
     <div class="view-header">
       <div>
@@ -122,16 +123,23 @@ const {
       </div>
 
       <!-- Purchase register -->
-      <PurchaseOrderRegister
+      <CompactPages
         v-else
-        :format-currency="formatCurrency"
-        :filtered-p-os="filteredPOs"
-        :get-status-variant="getStatusVariant"
-        :view-p-o="viewPO"
-        :receive-p-o="receivePO"
-        :cancel-p-o="cancelPO"
-        :format-date="formatDate"
-      />
+        :items="filteredPOs"
+        :row-height="56"
+        :header-height="34"
+        v-slot="{ rows }"
+      >
+        <PurchaseOrderRegister
+          :format-currency="formatCurrency"
+          :filtered-p-os="rows.map((row) => row.item)"
+          :get-status-variant="getStatusVariant"
+          :view-p-o="viewPO"
+          :receive-p-o="receivePO"
+          :cancel-p-o="cancelPO"
+          :format-date="formatDate"
+        />
+      </CompactPages>
     </div>
     <footer class="purchase-summary">
       <div>

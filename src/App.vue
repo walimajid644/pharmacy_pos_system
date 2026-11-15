@@ -16,7 +16,7 @@ useTheme();
 const { language } = useI18n();
 const router = useRouter();
 const auth = useAuthStore();
-const idleLimitMs = 5 * 60 * 1000;
+const idleLimitMs = 12 * 60 * 60 * 1000;
 let lastActivity = Date.now();
 let lastHeartbeat = 0;
 let idleTimer: ReturnType<typeof setInterval> | undefined;

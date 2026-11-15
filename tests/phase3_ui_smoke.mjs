@@ -116,6 +116,10 @@ try {
     await evaluate(
       "var scan=document.querySelector('#pos-product-search');scan.value='123456789';scan.dispatchEvent(new Event('input',{bubbles:true}));scan.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));",
     );
+    await until("document.querySelector('#pos-modal-product-search')!==null");
+    await evaluate(
+      "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',shiftKey:false,bubbles:true}))",
+    );
     await until("document.querySelectorAll('.pos-line-description').length===1");
     assert(
       await evaluate("document.querySelector('.pos-price-mode').textContent.includes('Retail')"),

@@ -89,6 +89,10 @@ async function scan(barcode, loose = false) {
   await evaluate(
     `document.querySelector('#pos-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',shiftKey:${loose},bubbles:true}))`,
   );
+  await until("document.querySelector('#pos-modal-product-search')!==null");
+  await evaluate(
+    `document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',shiftKey:${loose},bubbles:true}))`,
+  );
   await delay(500);
 }
 async function denied(promise, pattern) {

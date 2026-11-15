@@ -7,7 +7,7 @@ use tauri_plugin_sql::{DbInstances, DbPool};
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-const SESSION_IDLE_TIMEOUT: Duration = Duration::from_secs(5 * 60);
+const SESSION_IDLE_TIMEOUT: Duration = Duration::from_secs(12 * 60 * 60);
 
 #[derive(Default)]
 pub struct SessionState(RwLock<Option<LoginSession>>);
@@ -58,7 +58,7 @@ async fn session_user(
     if active.last_activity.elapsed() >= SESSION_IDLE_TIMEOUT {
         *guard = None;
         return Err(
-            "Session locked after five minutes of inactivity. Please sign in again".to_string(),
+            "Session locked after 12 hours of inactivity. Please sign in again".to_string(),
         );
     }
     if active.must_change_password && !allow_password_change {

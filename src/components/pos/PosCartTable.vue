@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import type { Ref } from 'vue';
+import { computed, ref, watch, type Ref } from 'vue';
+import { useElementSize } from '@vueuse/core';
 import type { usePosTerminal } from '@/composables/usePosTerminal';
 import Button from '@/components/ui/Button.vue';
 
 type ViewValue<T> = T extends Ref<infer Value> ? Value : T;
 type State = ReturnType<typeof usePosTerminal>;
-defineProps<{
+const props = defineProps<{
   t: ViewValue<State['t']>;
   pick: ViewValue<State['pick']>;
   formatNumber: ViewValue<State['formatNumber']>;
@@ -22,10 +23,32 @@ defineProps<{
   formatCurrency: ViewValue<State['formatCurrency']>;
   formatDate: ViewValue<State['formatDate']>;
 }>();
+const tableRegion = ref<HTMLElement | null>(null);
+const { height } = useElementSize(tableRegion);
+const page = ref(0);
+const pageSize = computed(() => Math.max(1, Math.floor((height.value - 56) / 50)));
+const pageCount = computed(() =>
+  Math.max(1, Math.ceil(props.cartStore.items.length / pageSize.value)),
+);
+const visibleItems = computed(() =>
+  props.cartStore.items
+    .map((item, index) => ({ item, index }))
+    .slice(page.value * pageSize.value, (page.value + 1) * pageSize.value),
+);
+watch(
+  () => props.cartStore.items.length,
+  (count, previous) => {
+    page.value = count > previous ? pageCount.value - 1 : Math.min(page.value, pageCount.value - 1);
+  },
+);
+watch(pageCount, () => {
+  page.value = Math.min(page.value, pageCount.value - 1);
+});
 </script>
 
 <template>
   <div
+    ref="tableRegion"
     class="pos-table-scroll"
     tabindex="0"
     role="region"
@@ -72,7 +95,7 @@ defineProps<{
         </tr>
       </thead>
       <tbody>
-        <tr v-for="(item, index) in cartStore.items" :key="index">
+        <tr v-for="{ item, index } in visibleItems" :key="index">
           <td class="pos-line-number">{{ formatNumber(index + 1) }}</td>
           <td class="pos-line-description">
             <strong>{{ item.product.name }}</strong>
@@ -191,5 +214,21 @@ defineProps<{
         </tr>
       </tbody>
     </table>
+    <nav
+      v-if="pageCount > 1"
+      class="pos-item-pages"
+      :aria-label="pick('Sale item pages', 'آئٹم صفحات')"
+    >
+      <button type="button" :disabled="page === 0" @click="page--">
+        ‹ {{ pick('Previous', 'پچھلا') }}
+      </button>
+      <span
+        >{{ formatNumber(page + 1) }} / {{ formatNumber(pageCount) }} ·
+        {{ formatNumber(cartStore.items.length) }} {{ t('items') }}</span
+      >
+      <button type="button" :disabled="page + 1 >= pageCount" @click="page++">
+        {{ pick('Next', 'اگلا') }} ›
+      </button>
+    </nav>
   </div>
 </template>

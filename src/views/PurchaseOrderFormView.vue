@@ -29,7 +29,7 @@ const {
 </script>
 
 <template>
-  <div class="tool-terminal po-form-view">
+  <div class="tool-terminal po-form-view compact-workspace">
     <div class="tool-header view-header">
       <div>
         <h2 class="view-title">{{ isEditing ? 'Edit' : 'Create' }} Purchase Order</h2>

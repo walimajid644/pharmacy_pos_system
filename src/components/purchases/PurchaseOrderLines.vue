@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import type { Product } from '@/lib/types';
 import type { PurchaseOrderLine } from '@/lib/purchaseOrderForm';
 import { useI18n } from '@/lib/i18n';
+import CompactPages from '@/components/ui/CompactPages.vue';
 import Card from '@/components/ui/Card.vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
@@ -48,114 +49,122 @@ function selectProduct(item: PurchaseOrderLine, product: Product) {
 </script>
 
 <template>
-  <Card class="form-section">
+  <Card class="form-section order-lines-section">
     <div class="section-header">
       <h3 class="section-title">Order Items</h3>
       <Button @click="emit('add')" variant="outline" size="sm"> + Add Item </Button>
     </div>
 
-    <div class="line-items">
-      <div v-for="(item, index) in lineItems" :key="index" class="line-item">
-        <div class="line-item-number">{{ index + 1 }}</div>
+    <CompactPages
+      :items="lineItems"
+      :row-height="58"
+      :header-height="0"
+      follow-added
+      v-slot="{ rows }"
+    >
+      <div class="line-items">
+        <div v-for="{ item, index } in rows" :key="index" class="line-item">
+          <div class="line-item-number">{{ index + 1 }}</div>
 
-        <div class="line-item-fields">
-          <!-- Product Selection -->
-          <div class="form-field">
-            <label>Product *</label>
-            <div class="product-select">
-              <Input
-                :value="item.product_name || getProductName(item.product_id)"
-                @input="onProductInput"
-                placeholder="Search product..."
-                readonly
-                @click="unlockSearch"
-              />
-              <div v-if="productSearch && filteredProducts.length > 0" class="product-dropdown">
-                <button
-                  v-for="product in filteredProducts"
-                  :key="product.id"
-                  @click="selectProduct(item, product)"
-                  class="product-option"
-                  type="button"
-                >
-                  <div class="product-option-name">{{ product.name }}</div>
-                  <div class="product-option-details">
-                    {{ product.sku }} | Cost: {{ formatCurrency(product.cost_price) }}
-                  </div>
-                </button>
+          <div class="line-item-fields">
+            <!-- Product Selection -->
+            <div class="form-field">
+              <label>Product *</label>
+              <div class="product-select">
+                <Input
+                  :model-value="item.product_name || getProductName(item.product_id)"
+                  @input="onProductInput"
+                  placeholder="Search product..."
+                  readonly
+                  @click="unlockSearch"
+                />
+                <div v-if="productSearch && filteredProducts.length > 0" class="product-dropdown">
+                  <button
+                    v-for="product in filteredProducts"
+                    :key="product.id"
+                    @click="selectProduct(item, product)"
+                    class="product-option"
+                    type="button"
+                  >
+                    <div class="product-option-name">{{ product.name }}</div>
+                    <div class="product-option-details">
+                      {{ product.sku }} | Cost: {{ formatCurrency(product.cost_price) }}
+                    </div>
+                  </button>
+                </div>
               </div>
+            </div>
+
+            <!-- Quantity -->
+            <div class="form-field">
+              <label>Quantity *</label>
+              <Input
+                v-model.number="item.quantity_ordered"
+                type="number"
+                min="1"
+                @update:model-value="emit('recalculate', item)"
+                required
+              />
+            </div>
+
+            <!-- Unit Cost -->
+            <div class="form-field">
+              <label>Unit Cost *</label>
+              <Input
+                v-model.number="item.unit_cost"
+                type="number"
+                step="0.01"
+                min="0"
+                @update:model-value="emit('recalculate', item)"
+                required
+              />
+            </div>
+
+            <!-- Tax Rate -->
+            <div class="form-field">
+              <label>Tax %</label>
+              <Input
+                v-model.number="item.tax_rate"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                @update:model-value="emit('recalculate', item)"
+              />
+            </div>
+
+            <!-- Discount -->
+            <div class="form-field">
+              <label>Discount %</label>
+              <Input
+                v-model.number="item.discount_percent"
+                type="number"
+                step="0.01"
+                min="0"
+                max="100"
+                @update:model-value="emit('recalculate', item)"
+              />
+            </div>
+
+            <!-- Line Total -->
+            <div class="form-field">
+              <label>Line Total</label>
+              <div class="line-total">{{ formatCurrency(item.line_total) }}</div>
             </div>
           </div>
 
-          <!-- Quantity -->
-          <div class="form-field">
-            <label>Quantity *</label>
-            <Input
-              v-model.number="item.quantity_ordered"
-              type="number"
-              min="1"
-              @update:model-value="emit('recalculate', item)"
-              required
-            />
-          </div>
-
-          <!-- Unit Cost -->
-          <div class="form-field">
-            <label>Unit Cost *</label>
-            <Input
-              v-model.number="item.unit_cost"
-              type="number"
-              step="0.01"
-              min="0"
-              @update:model-value="emit('recalculate', item)"
-              required
-            />
-          </div>
-
-          <!-- Tax Rate -->
-          <div class="form-field">
-            <label>Tax %</label>
-            <Input
-              v-model.number="item.tax_rate"
-              type="number"
-              step="0.01"
-              min="0"
-              max="100"
-              @update:model-value="emit('recalculate', item)"
-            />
-          </div>
-
-          <!-- Discount -->
-          <div class="form-field">
-            <label>Discount %</label>
-            <Input
-              v-model.number="item.discount_percent"
-              type="number"
-              step="0.01"
-              min="0"
-              max="100"
-              @update:model-value="emit('recalculate', item)"
-            />
-          </div>
-
-          <!-- Line Total -->
-          <div class="form-field">
-            <label>Line Total</label>
-            <div class="line-total">{{ formatCurrency(item.line_total) }}</div>
-          </div>
+          <Button
+            @click="emit('remove', index)"
+            variant="outline"
+            size="sm"
+            class="remove-button"
+            :disabled="lineItems.length === 1"
+          >
+            ×
+          </Button>
         </div>
-
-        <Button
-          @click="emit('remove', index)"
-          variant="outline"
-          size="sm"
-          class="remove-button"
-          :disabled="lineItems.length === 1"
-        >
-          ×
-        </Button>
       </div>
-    </div>
+    </CompactPages>
   </Card>
 </template>
 

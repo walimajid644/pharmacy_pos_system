@@ -180,134 +180,338 @@ function navigateTo(path: string) {
 </template>
 
 <style scoped>
+/* Match the Sales terminal's 11–12px text, short controls and tight spacing. */
 .home-view {
+  --compact-panel: var(--brand-100);
+  --compact-field: var(--brand-50);
+  --compact-rule: #86c9a3;
+  --compact-ink: var(--brand-900);
   flex: 1;
   width: 100%;
-  padding: var(--space-4) var(--space-5);
-  max-width: 1800px;
-  margin: 0 auto;
+  min-height: 0;
+  max-width: none;
+  margin: 0;
+  padding: 8px 12px;
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: 6px;
+  font:
+    12px/1.25 Arial,
+    Tahoma,
+    sans-serif;
+  font-variant-numeric: tabular-nums;
 }
-
-.welcome-header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  gap: var(--space-3);
+:global([data-theme='dark'] .home-view) {
+  --compact-panel: #123e2b;
+  --compact-field: #102e22;
+  --compact-rule: #3a7958;
+  --compact-ink: #d1fae5;
 }
-
+.home-view :deep(*) {
+  box-sizing: border-box;
+}
+.welcome-header,
+.dashboard-actions,
 .quick-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
-
-.quick-actions :deep(.btn) {
-  gap: var(--space-2);
+.welcome-header {
+  justify-content: space-between;
 }
-
 .dashboard-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: var(--space-2);
   margin-inline-start: auto;
 }
-
-.dashboard-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: 34px;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  line-height: 1.25;
-  white-space: nowrap;
+.home-view.home-view :deep(button:not(.stat-card):not(.bill-row):not(.alert-tab)) {
+  height: 28px;
+  min-height: 0;
+  width: auto;
+  padding: 3px 8px;
+  border: 1px solid var(--compact-rule);
+  border-radius: 2px;
+  background: var(--compact-field);
+  color: var(--compact-ink);
+  font:
+    11px/1.2 Arial,
+    Tahoma,
+    sans-serif;
+  box-shadow: none;
+  gap: 5px;
   cursor: pointer;
-  box-shadow: var(--shadow-sm);
-  transition: var(--transition-base);
 }
-
-.dashboard-action span {
-  font-size: 1.1rem;
+.home-view.home-view :deep(button.bg-brand-600:not(.stat-card):not(.bill-row):not(.alert-tab)) {
+  background: var(--brand-700);
+  border-color: var(--brand-600);
+  color: white;
+}
+.home-view :deep(button:disabled) {
+  opacity: 0.5;
+  cursor: default;
+}
+.home-view :deep(button:focus-visible) {
+  outline: 2px solid var(--brand-600);
+  outline-offset: 1px;
+}
+.home-view.home-view :deep(.dashboard-tasks) {
+  gap: 6px;
+}
+.home-view.home-view :deep(.task-card) {
+  min-width: 95px;
+  border-bottom: 2px solid var(--brand-600);
+}
+.home-view.home-view :deep(.task-icon) {
+  width: 16px;
+  height: 18px;
+  font-size: 14px;
+  background: transparent;
+}
+.quick-actions {
+  flex-wrap: wrap;
+}
+.quick-actions :deep(button > span),
+.dashboard-action > span {
+  font-size: 14px;
   line-height: 1;
 }
-
-.refresh-action {
-  background: var(--color-surface);
-  color: var(--color-text-primary);
+.home-view.home-view :deep(.stats-grid) {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
 }
-
-.refresh-action:hover {
+.home-view.home-view :deep(.stat-card) {
+  min-width: 0;
+  min-height: 74px;
+  padding: 6px 8px;
+  gap: 4px;
+  border-radius: 2px;
+  box-shadow: none;
+}
+.home-view.home-view :deep(.stat-card.clickable:hover) {
+  transform: none;
   background: var(--color-hover);
-  border-color: var(--color-primary);
 }
-
-.dashboard-action:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+.home-view.home-view :deep(.stat-card-header) {
+  gap: 4px;
+  align-items: start;
 }
-
-.dashboard-action:disabled {
-  opacity: 0.6;
-  cursor: wait;
+.home-view.home-view :deep(.title-en),
+.home-view.home-view :deep(.title-ur) {
+  font:
+    11px/1.25 Arial,
+    Tahoma,
+    sans-serif;
 }
-
+.home-view.home-view :deep(.stat-card-icon) {
+  font-size: 16px;
+}
+.home-view.home-view :deep(.stat-card-value) {
+  font:
+    bold 18px/1.15 Arial,
+    Tahoma,
+    sans-serif;
+  overflow-wrap: anywhere;
+}
+.home-view.home-view :deep(.stat-card-trend) {
+  font-size: 10px;
+  line-height: 1.2;
+}
 .insights-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: var(--space-3);
+  gap: 6px;
+  min-height: 0;
 }
-
-.insight-card {
-  padding: var(--space-3);
+.home-view.home-view :deep(.insight-card) {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 8px;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 2px;
+  box-shadow: none;
 }
-
-@media (max-width: 767px) {
+.home-view.home-view :deep(.insight-heading) {
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+.home-view.home-view :deep(.heading-3) {
+  font:
+    bold 12px/1.25 Arial,
+    Tahoma,
+    sans-serif;
+  margin: 0 0 3px;
+}
+.home-view.home-view :deep(.heading-4) {
+  font-size: 12px;
+}
+.home-view.home-view :deep(.body),
+.home-view.home-view :deep(.body-sm),
+.home-view.home-view :deep(.number-display-sm) {
+  font:
+    11px/1.25 Arial,
+    Tahoma,
+    sans-serif;
+}
+.home-view.home-view :deep(.number-display) {
+  font:
+    bold 18px/1.2 Arial,
+    Tahoma,
+    sans-serif;
+}
+.home-view.home-view :deep(.sales-chart) {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+}
+.home-view.home-view :deep(.insight-empty),
+.home-view.home-view :deep(.empty-state) {
+  padding: 8px;
+  font-size: 11px;
+}
+.home-view.home-view :deep(.empty-icon) {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+.home-view.home-view :deep(.bill-row) {
+  height: 36px;
+  padding: 3px 4px;
+  gap: 6px;
+  font-size: 11px;
+}
+.home-view.home-view :deep(.bill-row strong),
+.home-view.home-view :deep(.bill-row b) {
+  font-size: 12px;
+}
+.home-view.home-view :deep(.bill-row small) {
+  font-size: 10px;
+}
+.home-view.home-view :deep(.alerts-card) {
+  min-height: 0;
+  padding: 0;
+  border-radius: 2px;
+  box-shadow: none;
+}
+.home-view.home-view :deep(.alerts-header) {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  gap: 6px;
+  background: var(--compact-panel);
+  color: var(--compact-ink);
+}
+.home-view.home-view :deep(.alert-tabs) {
+  gap: 4px;
+}
+.home-view.home-view :deep(.alert-tab) {
+  min-height: 24px;
+  padding: 2px 5px;
+  border-radius: 2px;
+  font-size: 10px;
+}
+.home-view.home-view :deep(.alert-tab .bilingual-text),
+.home-view.home-view :deep(.alert-tab .bilingual-text span) {
+  font:
+    10px/1.2 Arial,
+    Tahoma,
+    sans-serif;
+}
+.home-view.home-view :deep(.alerts-content) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.home-view.home-view :deep(.alerts-table) {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+.home-view.home-view :deep(.alerts-table th) {
+  height: 32px;
+  padding: 3px 6px;
+  position: static;
+  background: var(--compact-field);
+  font:
+    11px/1.2 Arial,
+    Tahoma,
+    sans-serif;
+  border-bottom: 1px solid var(--compact-rule);
+}
+.home-view.home-view :deep(.alerts-table th:first-child) {
+  width: 28%;
+}
+.home-view.home-view :deep(.alerts-table td) {
+  height: 34px;
+  padding: 3px 6px;
+  font-size: 11px;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.home-view.home-view :deep(.alerts-table td:first-child) {
+  max-height: 34px;
+}
+.home-view.home-view :deep(.alerts-table td button) {
+  height: 24px !important;
+  padding: 2px 6px !important;
+}
+.home-view.home-view :deep(.compact-pager) {
+  height: 26px;
+  padding: 2px 6px;
+  gap: 8px;
+  color: var(--compact-ink);
+}
+.home-view.home-view :deep(.compact-pager button) {
+  height: 22px;
+}
+.home-view.home-view :deep(.skeleton) {
+  height: 26px;
+  border-radius: 2px;
+}
+.home-view > [role='alert'] {
+  padding: 5px 8px;
+  font-size: 11px;
+}
+@media (min-width: 900px) and (min-height: 500px) {
+  .home-view {
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto auto auto minmax(120px, 0.9fr) minmax(120px, 1fr);
+    overflow: hidden;
+  }
+  .home-view.has-load-error {
+    grid-template-rows: auto auto auto auto minmax(100px, 0.9fr) minmax(100px, 1fr);
+  }
+}
+@media (max-width: 899px) {
+  .home-view.home-view :deep(.stats-grid) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .insights-grid {
+    min-height: 200px;
+  }
+  .home-view.home-view :deep(.alerts-card) {
+    min-height: 220px;
+  }
+}
+@media (max-width: 600px) {
+  .home-view {
+    padding: 6px;
+  }
+  .home-view.home-view :deep(.stats-grid) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   .insights-grid {
     grid-template-columns: 1fr;
   }
-}
-
-@media (min-width: 1000px) and (min-height: 500px) {
-  .home-view {
-    height: 100%;
-    min-height: 0;
-    display: grid;
-    grid-template-rows: auto auto auto minmax(100px, 0.8fr) minmax(100px, 1fr);
+  .home-view.home-view :deep(.insight-card) {
+    min-height: 180px;
   }
-
-  .home-view.has-load-error {
-    grid-template-rows: auto auto auto auto minmax(100px, 0.8fr) minmax(100px, 1fr);
-  }
-
-  .insights-grid,
-  .insight-card {
-    min-height: 0;
-  }
-
-  .insight-card {
-    overflow: auto;
-  }
-
-  .insight-card:first-child {
-    display: flex;
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 768px) {
-  .home-view {
-    padding: var(--space-4);
+  .home-view.home-view :deep(.alerts-header) {
+    align-items: start;
   }
 }
 </style>

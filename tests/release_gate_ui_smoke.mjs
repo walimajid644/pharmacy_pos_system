@@ -120,6 +120,10 @@ try {
     await evaluate(
       "var scan=document.querySelector('#pos-product-search');scan.value='123456789';scan.dispatchEvent(new Event('input',{bubbles:true}));scan.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));",
     );
+    await until("document.querySelector('#pos-modal-product-search')!==null");
+    await evaluate(
+      "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
+    );
     await until('testCart.items.length===1');
     await evaluate(
       "testDraft.stage({supplierId:'s1',items:[{productId:'p1',quantity:10}],notes:'Unsaved'})",
@@ -127,7 +131,7 @@ try {
   }
   for (const mode of ['ok', 'fail', 'hang']) {
     await app();
-    await evaluate(`fixture.logoutMode=${JSON.stringify(mode)};fixture.clockOffset=300001`);
+    await evaluate(`fixture.logoutMode=${JSON.stringify(mode)};fixture.clockOffset=43200001`);
     await until(
       "location.pathname==='/login'&&!testAuth.isAuthenticated&&testCart.items.length===0&&testDraft.pending===null",
     );
@@ -135,26 +139,26 @@ try {
     assert(await evaluate("fixture.calls.some(c=>c.command==='logout_user')"));
     await shot('idle-' + mode);
     results.push(
-      'Five-minute lock clears cart and purchase draft and shows sign-in when native logout ' +
+      'Twelve-hour lock clears cart and purchase draft and shows sign-in when native logout ' +
         mode,
     );
   }
   await app();
   await evaluate(
-    "fixture.clockOffset=240000;window.dispatchEvent(new KeyboardEvent('keydown',{key:'a',bubbles:true}))",
+    "fixture.clockOffset=39600000;window.dispatchEvent(new KeyboardEvent('keydown',{key:'a',bubbles:true}))",
   );
   await until("fixture.calls.some(c=>c.command==='touch_session')");
-  await evaluate('fixture.clockOffset=300001');
+  await evaluate('fixture.clockOffset=43200001');
   await delay(1300);
   assert(await evaluate('testAuth.isAuthenticated&&testCart.items.length===1'));
-  await evaluate('fixture.clockOffset=540001');
+  await evaluate('fixture.clockOffset=82800001');
   await until("location.pathname==='/login'");
   results.push(
-    'Keyboard activity renews idle timeout; the session still locks five minutes after last activity',
+    'Keyboard activity renews idle timeout; the session still locks 12 hours after last activity',
   );
   await app();
   await evaluate(
-    "fixture.clockOffset=300001;window.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))",
+    "fixture.clockOffset=43200001;window.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true}))",
   );
   await until("location.pathname==='/login'&&testCart.items.length===0");
   results.push(
@@ -164,6 +168,11 @@ try {
   await open('/pos');
   await evaluate(
     "fixture.calls.length=0;fixture.productDelay=100;var s=document.querySelector('#pos-product-search');s.value='123456789';s.dispatchEvent(new Event('input',{bubbles:true}));s.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));s.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));",
+  );
+  await until("document.querySelector('#pos-modal-product-search')!==null");
+  assert(await evaluate('testCart.items.length===0'));
+  await evaluate(
+    "var search=document.querySelector('#pos-modal-product-search');search.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));search.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
   );
   await until('testCart.items.length===1');
   assert(
@@ -176,7 +185,11 @@ try {
   );
   await open('/pos');
   await evaluate(
-    "fixture.productDelay=100;var s=document.querySelector('#pos-product-search');s.value='123456789';s.dispatchEvent(new Event('input',{bubbles:true}));s.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));s.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}));",
+    "fixture.productDelay=100;var s=document.querySelector('#pos-product-search');s.value='123456789';s.dispatchEvent(new Event('input',{bubbles:true}));s.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));",
+  );
+  await until("document.querySelector('#pos-modal-product-search')!==null");
+  await evaluate(
+    "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))",
   );
   await delay(300);
   assert(
@@ -189,7 +202,7 @@ try {
   await evaluate(
     "fixture.failProductSearch=true;var s=document.querySelector('#pos-product-search');s.value='123456789';s.dispatchEvent(new Event('input',{bubbles:true}));s.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));",
   );
-  await until("document.querySelector('.pos-result-message.pos-error')!==null");
+  await until("document.querySelector('.pos-search-dialog [role=alert]')!==null");
   assert(await evaluate('testCart.items.length===0'));
   results.push('Failed shared barcode search displays an error and leaves cart unchanged');
   await writeFile(path.join(out, 'results.json'), JSON.stringify(results, null, 2));

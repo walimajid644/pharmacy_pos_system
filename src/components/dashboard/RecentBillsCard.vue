@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from '@/lib/i18n';
 import type { RecentBill } from '@/lib/dashboardTypes';
+import CompactPages from '@/components/ui/CompactPages.vue';
 import Card from '@/components/ui/Card.vue';
 
 defineProps<{ loading: boolean; recentBills: RecentBill[]; canViewSalesHistory: boolean }>();
@@ -22,10 +23,10 @@ const { t, pick, formatCurrency, formatDate } = useI18n();
     <div v-else-if="!recentBills.length" class="insight-empty">
       {{ pick('No bills yet', 'ابھی کوئی بل نہیں') }}
     </div>
-    <template v-else>
+    <CompactPages v-else :items="recentBills" :row-height="36" :header-height="0" v-slot="{ rows }">
       <component
         :is="canViewSalesHistory ? 'button' : 'div'"
-        v-for="bill in recentBills"
+        v-for="{ item: bill } in rows"
         :key="bill.id"
         :type="canViewSalesHistory ? 'button' : undefined"
         class="bill-row"
@@ -43,7 +44,7 @@ const { t, pick, formatCurrency, formatDate } = useI18n();
         >
         <b class="number-display-sm text-brand-600">{{ formatCurrency(bill.net_amount) }}</b>
       </component>
-    </template>
+    </CompactPages>
   </Card>
 </template>
 

@@ -29,11 +29,11 @@ const prescriptionNote = defineModel<ViewValue<State['prescriptionNote']>>('pres
       }}
     </p>
     <label
-      >{{ pick('Patient name (optional)', 'مریض کا نام (اختیاری)')
-      }}<input v-model="patientName" maxlength="100" type="text" /></label
+      ><span>{{ pick('Client', 'مریض') }}</span
+      ><input v-model="patientName" maxlength="100" type="text" /></label
     ><label
-      >{{ pick('Prescribing doctor (optional)', 'نسخہ لکھنے والا ڈاکٹر (اختیاری)')
-      }}<input v-model="doctorName" maxlength="100" type="text"
+      ><span>{{ pick('Doctor', 'ڈاکٹر') }}</span
+      ><input v-model="doctorName" maxlength="100" type="text"
     /></label>
     <p
       v-if="cartStore.items.some((item) => item.product.controlled_substance)"

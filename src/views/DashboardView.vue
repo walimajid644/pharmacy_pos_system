@@ -198,11 +198,50 @@ const bindworkspaceDialog = bindTemplateRef(workspaceDialog);
   box-shadow: var(--shadow-sm);
 }
 .header-content {
-  padding: 0.25rem 1.5rem 0.5rem;
+  padding: 3px 12px;
 }
 .nav-row {
   min-width: 0;
 }
+.dashboard-header :deep(.nav-button) {
+  min-height: 22px;
+  padding: 2px 6px;
+  gap: 4px;
+  border-radius: 2px;
+  font:
+    11px/1.2 Arial,
+    Tahoma,
+    sans-serif;
+}
+.dashboard-header :deep(.nav-menu) {
+  padding: 4px;
+  border-radius: 3px;
+}
+.dashboard-header :deep(.nav-menu-item) {
+  min-height: 26px;
+  padding: 4px 7px;
+  gap: 6px;
+  border-radius: 2px;
+  font:
+    11px/1.2 Arial,
+    Tahoma,
+    sans-serif;
+}
+.dashboard-header :deep(.account-summary) {
+  padding: 5px 7px;
+  gap: 6px;
+}
+.dashboard-header :deep(.account-avatar) {
+  width: 26px;
+  height: 26px;
+}
+.dashboard-header :deep(.account-summary strong) {
+  font-size: 12px;
+}
+.dashboard-header :deep(.account-summary small) {
+  font-size: 10px;
+}
+
 .dashboard-main {
   flex: 1;
   min-width: 0;

@@ -117,6 +117,10 @@ try {
   await evaluate(
     "var scan=document.querySelector('#pos-product-search');scan.value='123456789';scan.dispatchEvent(new Event('input',{bubbles:true}));scan.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));window.print=()=>{window.printedText=document.querySelector('.saved-sale-print')?.innerText;window.dispatchEvent(new Event('afterprint'))};",
   );
+  await until("document.querySelector('#pos-modal-product-search')!==null");
+  await evaluate(
+    "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',shiftKey:false,bubbles:true}))",
+  );
   await until("document.querySelectorAll('.pos-line-description').length===1");
   await evaluate("document.querySelector('.pos-last-reprint').click()");
   await until("window.printedText?.includes('Saved Medicine')");

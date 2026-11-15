@@ -55,7 +55,7 @@ function openLabel(product: Product) {
 </script>
 
 <template>
-  <div class="inventory-terminal">
+  <div class="inventory-terminal compact-workspace">
     <Card class="inventory-panel">
       <!-- Header -->
       <div class="inventory-header">

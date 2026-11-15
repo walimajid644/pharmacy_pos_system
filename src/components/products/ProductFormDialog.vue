@@ -32,10 +32,10 @@ useDialogKeyboard(formDialog, () => {
     aria-modal="true"
     tabindex="-1"
     :aria-label="pick('Product', 'مصنوعات')"
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+    class="compact-dialog product-dialog fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
     @click.self="emit('close')"
   >
-    <Card class="w-full max-w-2xl max-h-[90vh] overflow-auto">
+    <Card class="compact-dialog-card product-dialog-card">
       <div class="p-6 border-b">
         <h2 class="text-xl font-bold">
           {{
@@ -46,7 +46,7 @@ useDialogKeyboard(formDialog, () => {
         </h2>
       </div>
 
-      <div class="p-6 space-y-4">
+      <div class="product-form-grid">
         <!-- Row 1 -->
         <div class="grid grid-cols-2 gap-4">
           <div>

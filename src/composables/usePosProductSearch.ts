@@ -1,5 +1,5 @@
 import { reportDiagnostic } from '@/lib/diagnostics';
-import { ref, nextTick, onUnmounted } from 'vue';
+import { ref, onUnmounted } from 'vue';
 import { executeQuery } from '@/lib/database';
 import { useToast } from '@/composables/useToast';
 import type { Product, ProductBatch } from '@/lib/types';
@@ -9,6 +9,7 @@ import Input from '@/components/ui/Input.vue';
 export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean) => void) {
   const toast = useToast();
   const searchQuery = ref('');
+  const productSearchOpen = ref(false);
 
   const searchResults = ref<Array<Product & { batches: ProductBatch[] }>>([]);
 
@@ -41,7 +42,7 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
     searchError.value = false;
     highlightedProductIndex.value = 0;
     const term = searchQuery.value.trim();
-    if (term.length >= 2) {
+    if (productSearchOpen.value && term.length >= 2) {
       searchLoading.value = true;
       // Check if this looks like an exact barcode (no wildcards needed)
       // For exact matches, search immediately without debounce
@@ -119,30 +120,21 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
     }));
   }
 
-  // Product search keyboard handler - optimized for speed:
+  // Keyboard selection inside the product-search dialog:
   // Enter key: Fast-path adds highlighted item immediately without additional search
   // Shift+Enter: Same but for loose units
-  // Arrow keys: Navigate results with smooth scrolling
+  // Arrow keys: Navigate results; the dialog follows the selected page.
   function handleBarcodeInput(event: KeyboardEvent) {
+    if (event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
     if (event.key === 'ArrowDown' && searchResults.value.length) {
       event.preventDefault();
       highlightedProductIndex.value =
         (highlightedProductIndex.value + 1) % searchResults.value.length;
-      void nextTick(() =>
-        document
-          .querySelector('.pos-product-row.highlighted')
-          ?.scrollIntoView({ block: 'nearest' }),
-      );
     } else if (event.key === 'ArrowUp' && searchResults.value.length) {
       event.preventDefault();
       highlightedProductIndex.value =
         (highlightedProductIndex.value - 1 + searchResults.value.length) %
         searchResults.value.length;
-      void nextTick(() =>
-        document
-          .querySelector('.pos-product-row.highlighted')
-          ?.scrollIntoView({ block: 'nearest' }),
-      );
     } else if (event.key === 'Enter') {
       event.preventDefault();
       if (productSearchTimer) clearTimeout(productSearchTimer);
@@ -170,7 +162,28 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
       productQueryId++;
     }
   }
+  function openProductSearch(event?: KeyboardEvent) {
+    if (
+      event &&
+      (event.key !== 'Enter' ||
+        event.repeat ||
+        event.isComposing ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey)
+    )
+      return;
+    event?.preventDefault();
+    event?.stopPropagation();
+    if (productSearchOpen.value) return;
+    productSearchOpen.value = true;
+    if (searchQuery.value.trim().length >= 2) void searchProducts();
+  }
   function resetProductSearch() {
+    if (productSearchTimer) clearTimeout(productSearchTimer);
+    productSearchTimer = null;
+    productSearchOpen.value = false;
+    productLookup = null;
     searchQuery.value = '';
     searchResults.value = [];
     searchLoading.value = false;
@@ -184,6 +197,9 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
 
   return {
     searchQuery,
+    productSearchOpen,
+    openProductSearch,
+    resetProductSearch,
     searchResults,
     searchLoading,
     searchError,
@@ -191,6 +207,5 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
     searchInput,
     onProductSearchInput,
     handleBarcodeInput,
-    resetProductSearch,
   };
 }

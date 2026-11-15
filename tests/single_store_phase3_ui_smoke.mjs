@@ -225,6 +225,10 @@ try {
   await evaluate(
     "var s=document.querySelector('#pos-product-search');s.value='123456789';s.dispatchEvent(new Event('input',{bubbles:true}));s.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));",
   );
+  await until("document.querySelector('#pos-modal-product-search')!==null");
+  await evaluate(
+    "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',shiftKey:false,bubbles:true}))",
+  );
   await until("document.querySelector('.pos-prescription-note')!==null");
   assert(await evaluate("document.querySelector('.pos-complete').disabled"));
   inside(await evaluate(rect('.pos-complete')), 'controlled checkout');
@@ -250,6 +254,10 @@ try {
   await scenario('/pos', 'admin', { controlled: '1' });
   await evaluate(
     "var s=document.querySelector('#pos-product-search');s.value='Test generic';s.dispatchEvent(new Event('input',{bubbles:true}));s.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
+  );
+  await until("document.querySelector('#pos-modal-product-search')!==null");
+  await evaluate(
+    "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',shiftKey:false,bubbles:true}))",
   );
   await until("document.querySelector('.pos-prescription-note')!==null");
   assert(await evaluate("fixture.calls.some(c=>c.query?.includes('generic_name LIKE'))"));

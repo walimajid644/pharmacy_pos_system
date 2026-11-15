@@ -323,6 +323,17 @@ async fn plaintext_account_is_upgraded_after_successful_login() {
 }
 
 #[tokio::test]
+async fn idle_session_is_still_active_just_before_twelve_hours() {
+    let session = SessionState(RwLock::new(Some(LoginSession {
+        user_id: "cashier".to_string(),
+        must_change_password: false,
+        last_activity: Instant::now() - Duration::from_secs(12 * 60 * 60 - 60),
+    })));
+    assert_eq!(current_actor(&session).await.unwrap(), "cashier");
+    assert!(session.0.read().await.is_some());
+}
+
+#[tokio::test]
 async fn idle_session_expires_and_cannot_access_commands() {
     let session = SessionState(RwLock::new(Some(LoginSession {
         user_id: "cashier".to_string(),

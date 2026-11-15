@@ -121,6 +121,44 @@ try {
   assert.equal(await evaluate("document.querySelectorAll('.quick-actions button').length"), 4);
   await shot('dashboard-1024x600');
   results.push('Dashboard metric/quick-action/alert panels fit 1024x600');
+  await evaluate(
+    "document.querySelector('.nav-group .nav-button').dispatchEvent(new PointerEvent('pointerenter',{pointerType:'mouse'}))",
+  );
+  assert.equal(await evaluate("document.querySelectorAll('.nav-menu').length"), 0);
+  await evaluate("document.querySelector('.nav-group .nav-button').click()");
+  for (let index = 1; index < 6; index++) {
+    await evaluate(
+      `document.querySelectorAll('.nav-group .nav-button')[${index}].dispatchEvent(new PointerEvent('pointerenter',{pointerType:'mouse'}))`,
+    );
+    assert.equal(
+      await evaluate(
+        `document.querySelectorAll('.nav-group .nav-button')[${index}].getAttribute('aria-expanded')`,
+      ),
+      'true',
+    );
+    assert.equal(await evaluate("document.querySelectorAll('.nav-menu').length"), 1);
+  }
+  await evaluate(
+    "document.querySelector('.desktop-nav').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))",
+  );
+  assert.equal(await evaluate("document.querySelectorAll('.nav-menu').length"), 0);
+  await evaluate(
+    "document.querySelector('.nav-group .nav-button').click();document.querySelectorAll('.nav-group .nav-button')[1].dispatchEvent(new PointerEvent('pointerenter',{pointerType:'touch'}))",
+  );
+  assert.equal(
+    await evaluate(
+      "document.querySelector('.nav-group .nav-button').getAttribute('aria-expanded')",
+    ),
+    'true',
+  );
+  await evaluate(
+    "document.querySelector('.welcome-header').dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerType:'mouse'}))",
+  );
+  assert.equal(await evaluate("document.querySelectorAll('.nav-menu').length"), 0);
+  results.push(
+    'Click opens the desktop menu; mouse hover switches all headings; Escape/outside click close it; touch hover does not switch',
+  );
+
   await evaluate("document.querySelectorAll('.quick-actions button')[1].click()");
   await until(
     "document.querySelector('.purchase-terminal .status-tab-active')?.textContent.includes('Receivable')",
@@ -145,7 +183,36 @@ try {
     );
   }
   await evaluate(
+    "document.querySelector('#pos-product-search').focus();document.querySelector('#pos-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
+  );
+  await until("document.activeElement?.id==='pos-modal-product-search'");
+  inside(await evaluate(rect('.pos-search-dialog')), 'product search modal');
+  assert.equal(await evaluate("document.querySelectorAll('.pos-product-results').length"), 0);
+  await evaluate(
+    "var query=document.querySelector('#pos-modal-product-search');query.value='Test generic';query.dispatchEvent(new Event('input',{bubbles:true}))",
+  );
+  await until("document.querySelector('.pos-search-dialog .pos-product-row')!==null");
+  assert(await evaluate('testCart.items.length===0'));
+  await shot('product-search-modal-1024x600');
+  await evaluate("document.querySelector('.pos-search-dialog-footer > button').focus()");
+  await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', windowsVirtualKeyCode: 9 });
+  await cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', windowsVirtualKeyCode: 9 });
+  assert.equal(await evaluate('document.activeElement?.id'), 'pos-modal-product-search');
+  await evaluate(
+    "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))",
+  );
+  await until("!document.querySelector('.pos-search-dialog')");
+  assert.equal(await evaluate('document.activeElement?.id'), 'pos-product-search');
+  assert(await evaluate('testCart.items.length===0'));
+  results.push(
+    'Enter opens a separate product-search dialog; generic search, Tab trapping, Escape cancellation and trigger focus restoration work',
+  );
+  await evaluate(
     "fixture.calls.length=0;var input=document.querySelector('#pos-product-search');input.value='123456789';input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));",
+  );
+  await until("document.querySelector('#pos-modal-product-search')!==null");
+  await evaluate(
+    "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',shiftKey:false,bubbles:true}))",
   );
   await until("document.querySelectorAll('.pos-line-description').length===1");
   assert.equal(
@@ -156,6 +223,40 @@ try {
   );
   inside(await evaluate(rect('.pos-complete')), 'populated checkout');
   await shot('pos-light-1024x600');
+  await evaluate(`window.originalSaleItem = testCart.items[0];
+    testCart.items = Array.from({length: 40}, (_, index) => ({
+      ...window.originalSaleItem,
+      product: {...window.originalSaleItem.product, name: 'Medicine ' + (index + 1)}
+    }));`);
+  await until("document.querySelector('.pos-item-pages') !== null");
+  await delay(250);
+  assert(
+    await evaluate(`(() => {
+    const grid = document.querySelector('.pos-table-scroll');
+    const workspace = document.querySelector('.workspace-body');
+    return grid.scrollWidth <= grid.clientWidth && grid.scrollHeight <= grid.clientHeight
+      && workspace.scrollWidth <= workspace.clientWidth && workspace.scrollHeight <= workspace.clientHeight;
+  })()`),
+    'Long sales fit without horizontal or vertical scrolling',
+  );
+  assert(
+    await evaluate(
+      "[...document.querySelectorAll('.pos-line-description')].some(row => row.textContent.includes('Medicine 40'))",
+    ),
+  );
+  await evaluate("document.querySelector('.pos-item-pages button').click()");
+  await delay(100);
+  assert(
+    await evaluate(
+      "![...document.querySelectorAll('.pos-line-description')].some(row => row.textContent.includes('Medicine 40'))",
+    ),
+  );
+  await evaluate('testCart.items = [window.originalSaleItem]');
+  await until("document.querySelector('.pos-item-pages') === null");
+  results.push(
+    'Long sales use item pages; grid and workspace have no horizontal or vertical overflow',
+  );
+
   await evaluate(
     "document.documentElement.dataset.theme='dark';document.documentElement.classList.add('dark')",
   );
@@ -167,7 +268,7 @@ try {
   );
   assert.equal(
     await evaluate("getComputedStyle(document.querySelector('.pos-summary-total strong')).color"),
-    'rgb(94, 234, 212)',
+    'rgb(110, 231, 183)',
   );
   await shot('pos-dark-1024x600');
   results.push(
@@ -176,6 +277,10 @@ try {
   await open('/pos');
   await evaluate(
     "fixture.openUnits=0;window.confirm=()=>true;var scan=document.querySelector('#pos-product-search');scan.value='123456789';scan.dispatchEvent(new Event('input',{bubbles:true}));scan.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',shiftKey:true,bubbles:true}));",
+  );
+  await until("document.querySelector('#pos-modal-product-search')!==null");
+  await evaluate(
+    "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',shiftKey:true,bubbles:true}))",
   );
   await until(
     "document.querySelector('.pos-break-pill')?.textContent.includes('Strip opening confirmed')",

@@ -37,6 +37,7 @@ try {
   if (!ready) throw new Error('Fixture server did not become ready');
   const suites = [
     'phase1',
+    'compact',
     'phase2',
     'phase3',
     'release_gate',

@@ -61,14 +61,14 @@ async function printLabels() {
 
 <template>
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
+    class="compact-dialog barcode-dialog fixed inset-0 z-50 flex items-center justify-center bg-black/60"
     @click.self="emit('close')"
   >
     <section
       role="dialog"
       aria-modal="true"
       aria-label="Print barcode labels"
-      class="w-[30rem] rounded-lg border bg-background p-6 shadow-xl"
+      class="compact-dialog-card barcode-dialog-card"
     >
       <h2 class="text-xl font-semibold">Print barcode labels</h2>
       <p class="mt-2 text-sm">{{ product.name }} · {{ product.barcode }}</p>

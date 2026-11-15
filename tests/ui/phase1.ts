@@ -377,6 +377,70 @@ Object.assign(window, {
         };
       if (command === 'database_select') {
         const q = (args.query || '').toLowerCase();
+        if (params.get('compact') === '1') {
+          if (q.includes('count(')) return [{ count: 40, total: 600 }];
+          if (q.includes('from sales_dashboard')) {
+            if (q.includes('sum(')) return [{ total: 600 }];
+            return Array.from({ length: 6 }, (_, index) => ({
+              id: 'bill-' + index,
+              invoice_number: 'INV-' + (index + 1),
+              invoice_date: stamp,
+              net_amount: 100,
+              payment_method: 'cash',
+              customer_name: 'Test Customer ' + (index + 1),
+            }));
+          }
+
+          if (q.includes('from purchase_orders')) {
+            const order = {
+              id: 'po-existing',
+              po_number: 'PO-EXISTING',
+              supplier_id: 's1',
+              supplier_name: 'Test Supplier',
+              order_date: '2026-01-02',
+              expected_delivery_date: '2026-01-10',
+              status: 'sent',
+              discount_amount: 0,
+              shipping_cost: 0,
+              total_amount: 15,
+              notes: 'Compact fixture',
+            };
+            return q.includes('where')
+              ? [order]
+              : Array.from({ length: 40 }, (_, index) => ({
+                  ...order,
+                  id: 'po-' + index,
+                  po_number: 'PO-' + (index + 1),
+                }));
+          }
+          if (q.includes('from purchase_order_items'))
+            return Array.from({ length: 40 }, (_, index) => ({
+              id: 'line-' + index,
+              product_id: 'p1',
+              product_name: 'Medicine ' + (index + 1),
+              quantity_ordered: 3,
+              quantity_received: 0,
+              unit_cost: 5,
+              tax_rate: 0,
+              discount_percent: 0,
+              line_total: 15,
+            }));
+          if (q.includes('from products'))
+            return Array.from({ length: 40 }, (_, index) => ({
+              ...product,
+              id: 'p' + (index + 1),
+              sku: 'MED-' + (index + 1),
+              name: 'Medicine ' + (index + 1),
+            }));
+          if (q.includes('from product_batches'))
+            return Array.from({ length: 40 }, (_, index) => ({
+              ...batch,
+              id: 'b' + index,
+              batch_number: 'BATCH-' + (index + 1),
+              quarantined: 0,
+            }));
+        }
+
         if (q.includes('from purchase_orders') && q.includes('where id = ?'))
           return [
             {

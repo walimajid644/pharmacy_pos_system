@@ -1,4 +1,5 @@
 @import './workspaces.css';
+@import './compact-operational.css';
 
 @tailwind base;
 @tailwind components;
