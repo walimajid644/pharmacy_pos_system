@@ -29,7 +29,7 @@ const {
 </script>
 
 <template>
-  <div class="tool-terminal suppliers-view">
+  <div class="tool-terminal compact-workspace suppliers-view">
     <!-- Header -->
     <div class="tool-header view-header">
       <div>

@@ -1,11 +1,11 @@
 /* Shared reference-sized controls for inventory and purchasing only. */
 .compact-workspace,
 .compact-dialog {
-  --compact-ink: var(--brand-900);
-  --compact-panel: var(--brand-100);
-  --compact-entry: var(--brand-200);
-  --compact-field: var(--brand-50);
-  --compact-rule: #86c9a3;
+  --compact-ink: var(--color-primary-800);
+  --compact-panel: var(--color-primary-50);
+  --compact-entry: var(--color-primary-100);
+  --compact-field: var(--surface-card);
+  --compact-rule: var(--color-primary-400);
   font:
     12px/1.25 Arial,
     Tahoma,
@@ -14,11 +14,11 @@
   color: var(--compact-ink);
 }
 [data-theme='dark'] :is(.compact-workspace, .compact-dialog) {
-  --compact-ink: #d1fae5;
-  --compact-panel: #123e2b;
-  --compact-entry: #14532d;
-  --compact-field: #102e22;
-  --compact-rule: #3a7958;
+  --compact-ink: var(--text-primary);
+  --compact-panel: var(--color-primary-50);
+  --compact-entry: var(--color-primary-800);
+  --compact-field: var(--surface-card);
+  --compact-rule: var(--color-primary-600);
 }
 .compact-workspace *,
 .compact-dialog * {
@@ -82,12 +82,12 @@
 .workspace-body .compact-workspace.compact-workspace button.receive-goods {
   background: var(--brand-700);
   border-color: var(--brand-600);
-  color: #fff;
+  color: var(--text-inverse);
 }
 .workspace-body .compact-workspace.compact-workspace button:is(.cancel-order, .bg-danger-600),
 .compact-dialog button.bg-danger-600 {
-  color: #b42318;
-  border-color: #d99893;
+  color: var(--color-danger);
+  border-color: var(--color-danger-bg);
 }
 .workspace-body
   .compact-workspace.compact-workspace
@@ -174,7 +174,7 @@
 }
 .workspace-body .compact-workspace.compact-workspace .status-tab-active {
   background: var(--brand-700);
-  color: #fff;
+  color: var(--text-inverse);
 }
 .compact-workspace .status-count {
   font-size: 10px;
@@ -708,13 +708,13 @@
   flex: 1;
   min-width: 0;
 }
-.compact-workspace.documents-terminal table th:first-child {
+.compact-workspace.suggestions-terminal table th:first-child {
   width: 30px;
 }
-.compact-workspace.documents-terminal table th:nth-child(2) {
+.compact-workspace.suggestions-terminal table th:nth-child(2) {
   width: 25%;
 }
-.compact-workspace.documents-terminal table tbody tr {
+.compact-workspace.suggestions-terminal table tbody tr {
   height: 100px;
 }
 .workspace-body .tool-terminal.compact-workspace .line-items {
@@ -739,4 +739,517 @@
 }
 .workspace-body .compact-workspace.compact-workspace .product-name {
   font-size: 12px;
+}
+/* Every desktop tool shares the Sales sizing; data lists use CompactPages. */
+.workspace-body {
+  overflow: hidden;
+}
+.workspace-body .tool-terminal.compact-workspace.compact-workspace {
+  gap: 5px;
+  font:
+    12px/1.25 Arial,
+    Tahoma,
+    sans-serif;
+  overflow: hidden;
+}
+.workspace-body .tool-terminal.compact-workspace > :not(.tool-header):not(.fixed):not(.tool-panel) {
+  margin: 0 10px;
+}
+.workspace-body .tool-terminal.compact-workspace > :last-child:not(.fixed):not(.tool-panel) {
+  margin-bottom: 6px;
+}
+.workspace-body .tool-terminal.compact-workspace .tool-panel {
+  padding: 0;
+  overflow: hidden;
+}
+.workspace-body
+  .tool-terminal.compact-workspace
+  :is(.tool-table-scroll, .commercial-table-scroll, .paged-table-host) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+}
+.workspace-body .tool-terminal.compact-workspace .paged-table-host .compact-page-content {
+  min-height: 0;
+}
+.workspace-body .tool-terminal.compact-workspace table {
+  min-width: 0;
+}
+.workspace-body .tool-terminal.compact-workspace table tbody tr {
+  height: 56px;
+}
+.workspace-body .tool-terminal.compact-workspace table td {
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: normal;
+}
+.workspace-body
+  .tool-terminal.compact-workspace
+  table
+  td
+  :is(small, .body, .body-sm, .number-display-sm) {
+  font-size: 11px;
+  line-height: 1.2;
+}
+.workspace-body .tool-terminal.compact-workspace table td small {
+  max-height: none;
+}
+.workspace-body .tool-terminal.compact-workspace table :is(thead, tfoot) {
+  flex-shrink: 0;
+}
+.workspace-body .tool-terminal.compact-workspace table tfoot td {
+  height: 34px;
+}
+.workspace-body .tool-terminal.compact-workspace :is(h2, h3, h4) {
+  font-size: 13px;
+  line-height: 1.25;
+}
+.workspace-body .tool-terminal.compact-workspace :is(p, small, label, .text-sm, .body-sm) {
+  font-size: 11px;
+  line-height: 1.3;
+}
+.workspace-body .tool-terminal.compact-workspace :is(.p-6, .p-5, .p-4) {
+  padding: 8px 10px;
+}
+.workspace-body .tool-terminal.compact-workspace :is(.gap-6, .gap-5, .gap-4) {
+  gap: 8px;
+}
+.workspace-body
+  .tool-terminal.compact-workspace
+  :is(.space-y-6, .space-y-5, .space-y-4, .space-y-3)
+  > :not([hidden])
+  ~ :not([hidden]) {
+  margin-top: 6px;
+  margin-bottom: 0;
+}
+.workspace-body .tool-terminal.compact-workspace :is(.mb-6, .mb-4, .mb-3, .mt-6, .mt-4) {
+  margin-block: 5px;
+}
+.workspace-body .tool-terminal.compact-workspace :is(.text-2xl, .text-xl, .number-display) {
+  font-size: 18px;
+}
+.workspace-body
+  .tool-terminal.compact-workspace
+  :is(.tool-toolbar, .commercial-filters, .advanced-search-filters) {
+  padding: 5px 10px;
+  gap: 6px;
+  background: var(--compact-entry);
+}
+.workspace-body .tool-terminal.compact-workspace .commercial-split {
+  margin: 0;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  overflow: hidden;
+}
+.workspace-body .tool-terminal.compact-workspace .commercial-dock {
+  overflow: hidden;
+  padding: 7px;
+}
+.workspace-body .tool-terminal.compact-workspace .commercial-dock form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.workspace-body
+  .tool-terminal.compact-workspace
+  .commercial-dock
+  :is(h2, h3, form > button, form > p, label:has(textarea)) {
+  grid-column: 1/-1;
+}
+.workspace-body .tool-terminal.compact-workspace .commercial-dock label {
+  min-width: 0;
+}
+.workspace-body .tool-terminal.compact-workspace .commercial-dock :is(input, select, textarea) {
+  max-width: 100%;
+}
+.workspace-body .tool-terminal.compact-workspace .tool-summary {
+  min-height: 42px;
+  padding: 5px 10px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.workspace-body .tool-terminal.compact-workspace .tool-summary strong {
+  font-size: 13px;
+}
+.workspace-body .tool-terminal.compact-workspace .tool-report-grid {
+  margin: 0;
+  grid-template-columns: 230px minmax(0, 1fr);
+  gap: 6px;
+  overflow: hidden;
+}
+.workspace-body .tool-terminal.compact-workspace .tool-report-grid > div {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+.workspace-body .tool-terminal.compact-workspace .tool-report-grid > div > div {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 7px;
+}
+.workspace-body .tool-terminal.compact-workspace .tool-report-grid > div:last-child > div {
+  min-height: 0;
+}
+.workspace-body .tool-terminal.compact-workspace .tool-report-grid button {
+  min-height: 26px;
+  height: 26px;
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+.workspace-body .tool-terminal.compact-workspace .tool-report-grid .mb-6 {
+  margin-bottom: 6px;
+}
+.workspace-body .tool-terminal.compact-workspace .tool-report-grid :is(h2, h3) {
+  margin: 4px 0;
+}
+.workspace-body .tool-terminal.compact-workspace .tool-report-grid :is(.border-b, .border-t) {
+  flex-shrink: 0;
+  padding: 6px 8px;
+}
+/* Standard editor dialogs get a wider field grid instead of a scrolling body. */
+.workspace-body .tool-terminal.compact-workspace .fixed {
+  padding: 16px;
+}
+.workspace-body .tool-terminal.compact-workspace .fixed > :is(div, form, section) {
+  max-height: calc(100dvh - 32px);
+  max-width: min(960px, 100%);
+  overflow: hidden;
+  border-radius: 3px;
+  padding: 8px 10px;
+}
+.workspace-body .tool-terminal.compact-workspace .fixed > div:has(> .border-b) {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+.workspace-body .tool-terminal.compact-workspace .fixed > div > :is(.border-b, .border-t) {
+  flex-shrink: 0;
+  padding: 7px 10px;
+  background: var(--compact-panel);
+  color: var(--compact-ink);
+}
+.workspace-body .tool-terminal.compact-workspace .fixed > div > .space-y-4 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px 12px;
+  padding: 10px;
+  background: var(--compact-entry);
+}
+.workspace-body .tool-terminal.compact-workspace .fixed > div > .space-y-4 > * {
+  margin: 0;
+  min-width: 0;
+}
+.workspace-body .tool-terminal.compact-workspace .fixed > div > .space-y-4 > .grid {
+  display: contents;
+}
+.workspace-body .tool-terminal.compact-workspace .fixed > div > .space-y-4 > .flex {
+  grid-column: 1/-1;
+}
+.workspace-body .tool-terminal.compact-workspace .fixed > div > .space-y-4 > p {
+  grid-column: 1/-1;
+}
+.workspace-body .tool-terminal.compact-workspace .fixed > div > .paged-table-host {
+  flex: 1;
+  padding: 0;
+}
+.workspace-body .tool-terminal.compact-workspace .commercial-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(960px, 100%);
+  gap: 6px;
+}
+.workspace-body
+  .tool-terminal.compact-workspace
+  .commercial-dialog
+  > :not(.paged-table-host):not(.compact-pages) {
+  flex-shrink: 0;
+}
+.workspace-body .tool-terminal.compact-workspace .commercial-document-editor {
+  height: min(600px, calc(100dvh - 32px));
+}
+.workspace-body .tool-terminal.compact-workspace .commercial-editor-lines {
+  max-height: none;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0;
+}
+.workspace-body .tool-terminal.compact-workspace .commercial-editor-lines input {
+  width: 100%;
+  max-width: 100%;
+}
+.workspace-body .tool-terminal.compact-workspace .commercial-editor-lines tbody tr {
+  height: 64px;
+}
+.workspace-body .tool-terminal.compact-workspace .commercial-dialog :is(h2, p) {
+  margin: 0;
+}
+/* Settings already have category tabs; each tab fits in a compact field grid. */
+.workspace-body .tool-terminal.compact-workspace .tool-table-scroll:has(> .settings-fields) {
+  padding: 8px 10px;
+}
+.workspace-body .tool-terminal.compact-workspace .settings-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: start;
+  gap: 8px 12px;
+  width: 100%;
+  max-width: none;
+}
+.workspace-body .tool-terminal.compact-workspace .settings-fields > * {
+  margin: 0;
+  min-width: 0;
+}
+.workspace-body .tool-terminal.compact-workspace .settings-fields > p {
+  grid-column: 1/-1;
+}
+.workspace-body .tool-terminal.compact-workspace .settings-fields label {
+  display: block;
+}
+.workspace-body .tool-terminal.compact-workspace .settings-fields :is(input, select, textarea) {
+  margin-top: 3px;
+}
+.workspace-body .tool-terminal.compact-workspace .text-primary-600 {
+  color: var(--color-primary-600);
+}
+/* Compact icon and header text never force their buttons beyond the available height. */
+.workspace-body .tool-terminal.compact-workspace button :is(.text-lg, .button-icon) {
+  font-size: 14px;
+  line-height: 1;
+  margin: 0;
+}
+.workspace-body .tool-terminal.compact-workspace button.bg-primary {
+  min-height: 28px;
+  height: auto;
+}
+.workspace-body .tool-terminal.compact-workspace .text-6xl {
+  font-size: 32px;
+  line-height: 1.1;
+}
+.workspace-body .tool-terminal.compact-workspace.suppliers-view .suppliers-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.workspace-body .tool-terminal.compact-workspace.suppliers-view .supplier-card {
+  height: 146px;
+  padding: 7px 10px;
+  flex-shrink: 0;
+}
+.workspace-body .tool-terminal.compact-workspace.suppliers-view .supplier-header {
+  margin: 0 0 5px;
+  padding: 0 0 4px;
+}
+.workspace-body .tool-terminal.compact-workspace.suppliers-view .supplier-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 12px;
+  margin: 0 0 5px;
+}
+.workspace-body .tool-terminal.compact-workspace.suppliers-view .supplier-details .detail-row {
+  margin: 0;
+  font-size: 11px;
+}
+.workspace-body .tool-terminal.compact-workspace.suppliers-view .supplier-actions {
+  padding: 4px 0 0;
+  gap: 5px;
+}
+.workspace-body .tool-terminal.compact-workspace.ledger-page .ledger-summary {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  margin: 0 10px;
+  gap: 6px;
+}
+.workspace-body .tool-terminal.compact-workspace.ledger-page .ledger-summary > div {
+  padding: 5px 6px;
+  border-radius: 2px;
+}
+.workspace-body .tool-terminal.compact-workspace.ledger-page .ledger-summary strong {
+  font-size: 14px;
+  margin-top: 2px;
+}
+.workspace-body .tool-terminal.compact-workspace.ledger-page .ledger-table-wrap {
+  margin: 0 10px 5px;
+}
+.workspace-body .tool-terminal.compact-workspace.ledger-page .ledger-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  padding: 8px;
+  margin: 0 10px;
+}
+.workspace-body .tool-terminal.compact-workspace.ledger-page .ledger-form h3 {
+  grid-column: 1/-1;
+}
+.workspace-body .tool-terminal.compact-workspace .review-detail-dialog {
+  display: flex;
+  flex-direction: column;
+  height: min(510px, calc(100dvh - 32px));
+}
+.workspace-body .tool-terminal.compact-workspace .review-detail-dialog > :not(.review-list-pages) {
+  flex-shrink: 0;
+}
+.workspace-body .tool-terminal.compact-workspace .review-list-pages {
+  min-height: 80px;
+}
+.workspace-body .tool-terminal.compact-workspace .review-list-pages ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.workspace-body .tool-terminal.compact-workspace .review-list-pages li {
+  min-height: 38px;
+  padding: 4px 6px;
+  font-size: 11px;
+}
+.workspace-body .tool-terminal.compact-workspace .commercial-dialog > .review-list-pages {
+  height: 140px;
+  flex: none;
+}
+.workspace-body .tool-terminal.adjustment-editor > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  padding: 8px;
+}
+.workspace-body .tool-terminal.adjustment-editor .adjustment-lines {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.workspace-body .tool-terminal.adjustment-editor .adjustment-lines .grid {
+  margin: 0;
+  height: 36px;
+  align-items: center;
+}
+.workspace-body .tool-terminal.compact-workspace button > span {
+  line-height: 1.15;
+}
+.home-view.home-view .task-icon {
+  width: 20px;
+}
+.workspace-body .compact-workspace button {
+  line-height: 1.15;
+  padding-block: 3px;
+}
+.workspace-body .compact-workspace .button-icon {
+  font-size: 14px;
+  line-height: 1;
+  margin: 0;
+}
+.workspace-body .suppliers-view.compact-workspace .modal-content {
+  width: min(960px, calc(100vw - 32px));
+  max-width: 960px;
+  padding: 10px;
+  overflow: hidden;
+}
+.workspace-body .suppliers-view.compact-workspace :is(.modal-form, .form-grid) {
+  gap: 7px 12px;
+}
+.workspace-body .suppliers-view.compact-workspace .form-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.workspace-body .suppliers-view.compact-workspace :is(.modal-title, .modal-actions) {
+  margin: 0;
+  padding-block: 6px;
+}
+.workspace-body .tool-terminal.compact-workspace .invoice-detail-panel {
+  height: calc(100dvh - 32px);
+}
+.workspace-body .tool-terminal.compact-workspace .invoice-detail-panel > :not(.paged-table-host) {
+  flex-shrink: 0;
+}
+.workspace-body .tool-terminal.compact-workspace .invoice-detail-panel .receipt-panel {
+  flex: 1;
+  min-height: 0;
+}
+.workspace-body .tool-terminal.return-editor > form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.workspace-body .tool-terminal.return-editor > form > :not(.paged-table-host) {
+  flex-shrink: 0;
+}
+.workspace-body .pos-terminal .pos-customer-results {
+  display: flex;
+  flex-direction: column;
+  height: 230px;
+  overflow: hidden;
+}
+.workspace-body .pos-terminal .pos-customer-results > button {
+  flex-shrink: 0;
+}
+.workspace-body .purchase-terminal .product-dropdown {
+  display: flex;
+  flex-direction: column;
+  height: 200px;
+  overflow: hidden;
+}
+.workspace-body .purchase-terminal .product-dropdown .product-option {
+  height: 46px;
+}
+.workspace-body .tool-terminal.compact-workspace table button {
+  height: auto;
+  min-height: 26px;
+  white-space: normal;
+}
+.workspace-body .tool-terminal.compact-workspace .tool-report-grid table button {
+  height: auto;
+  min-height: 26px;
+}
+.workspace-body .tool-terminal.compact-workspace .tool-report-grid .border-b > button {
+  flex-shrink: 0;
+  min-width: 110px;
+  height: auto;
+  min-height: 26px;
+}
+.workspace-body .tool-terminal.compact-workspace .commercial-dialog:has(> .compact-pages) {
+  height: min(510px, calc(100dvh - 32px));
+}
+.workspace-body .tool-terminal.compact-workspace > section:has(> .paged-table-host) {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+.workspace-body .tool-terminal.compact-workspace section > form.mt-5 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: none;
+  gap: 6px;
+  align-items: end;
+  margin-top: 6px;
+}
+.workspace-body .tool-terminal.compact-workspace section > form.mt-5 > * {
+  margin: 0;
+}
+.workspace-body .tool-terminal.compact-workspace :is(.supplier-card, .commercial-dialog) {
+  color: var(--compact-ink);
+}
+.workspace-body .tool-terminal.compact-workspace .fixed :is(h2, .text-gray-500) {
+  color: var(--compact-ink);
+}
+.workspace-body
+  .tool-terminal.compact-workspace
+  .fixed
+  > div
+  > .border-b:first-child
+  :is(h1, h2, h3) {
+  color: var(--compact-ink);
+}
+.workspace-body .pos-terminal .pos-kbd {
+  opacity: 1;
+}
+.workspace-body .pos-terminal .saved-sale-actions strong {
+  color: var(--pos-ink);
 }

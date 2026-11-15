@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { bindTemplateRef } from '@/lib/templateRefs';
 import SupplierLedgerView from './SupplierLedgerView.vue';
 import { useFinance } from '@/composables/useFinance';
@@ -35,7 +36,7 @@ const {
 const bindvoidDialog = bindTemplateRef(voidDialog);
 </script>
 <template>
-  <div class="tool-terminal finance-terminal">
+  <div class="tool-terminal compact-workspace finance-terminal">
     <header class="tool-header">
       <div>
         <h1>{{ expense ? label('Expenses') : label('Payments & Receipts') }}</h1>
@@ -86,55 +87,63 @@ const bindvoidDialog = bindTemplateRef(voidDialog);
             {{ label('Clear') }}
           </button>
         </div>
-        <div class="commercial-table-scroll">
+        <div class="paged-table-host commercial-table-scroll">
           <p v-if="loading" role="status">Loading entries…</p>
-          <table v-else>
-            <thead>
-              <tr>
-                <th>{{ label('Voucher / date') }}</th>
-                <th>{{ label('Party / description') }}</th>
-                <th>{{ label('Type') }}</th>
-                <th>{{ label('Method') }}</th>
-                <th>{{ label('Amount') }}</th>
-                <th>{{ label('Status') }}</th>
-                <th>{{ label('Actions') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="e in visible" :key="e.kind + e.id">
-                <td>
-                  {{ e.number }}<small>{{ e.entry_date.slice(0, 10) }}</small>
-                </td>
-                <td>
-                  {{ e.party
-                  }}<small>{{ e.category }} · {{ e.description }} {{ e.reference }}</small
-                  ><small v-if="e.void_reason">Voided: {{ e.void_reason }}</small>
-                </td>
-                <td>{{ e.kind }}</td>
-                <td>{{ e.method }}</td>
-                <td>{{ formatCurrency(e.amount_cents / 100) }}</td>
-                <td>{{ e.status }}</td>
-                <td>
-                  <button @click="printEntry(e)">{{ label('Print') }}</button>
-                  <button
-                    v-if="['receipt', 'expense'].includes(e.kind) && e.status === 'posted'"
-                    @click="
-                      selected = e;
-                      reason = '';
-                      voidError = '';
-                    "
-                  >
-                    {{ label('Void') }}
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="!visible.length">
-                <td colspan="7" class="commercial-empty">
-                  {{ label('No entries match these filters.') }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <CompactPages
+            v-else
+            :items="visible"
+            :row-height="56"
+            :header-height="36"
+            v-slot="{ rows: pageRows }"
+          >
+            <table>
+              <thead>
+                <tr>
+                  <th>{{ label('Voucher / date') }}</th>
+                  <th>{{ label('Party / description') }}</th>
+                  <th>{{ label('Type') }}</th>
+                  <th>{{ label('Method') }}</th>
+                  <th>{{ label('Amount') }}</th>
+                  <th>{{ label('Status') }}</th>
+                  <th>{{ label('Actions') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="{ item: e } in pageRows" :key="e.kind + e.id">
+                  <td>
+                    {{ e.number }}<small>{{ e.entry_date.slice(0, 10) }}</small>
+                  </td>
+                  <td>
+                    {{ e.party
+                    }}<small>{{ e.category }} · {{ e.description }} {{ e.reference }}</small
+                    ><small v-if="e.void_reason">Voided: {{ e.void_reason }}</small>
+                  </td>
+                  <td>{{ e.kind }}</td>
+                  <td>{{ e.method }}</td>
+                  <td>{{ formatCurrency(e.amount_cents / 100) }}</td>
+                  <td>{{ e.status }}</td>
+                  <td>
+                    <button @click="printEntry(e)">{{ label('Print') }}</button>
+                    <button
+                      v-if="['receipt', 'expense'].includes(e.kind) && e.status === 'posted'"
+                      @click="
+                        selected = e;
+                        reason = '';
+                        voidError = '';
+                      "
+                    >
+                      {{ label('Void') }}
+                    </button>
+                  </td>
+                </tr>
+                <tr v-if="!visible.length">
+                  <td colspan="7" class="commercial-empty">
+                    {{ label('No entries match these filters.') }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </CompactPages>
         </div>
         <footer class="tool-summary">
           <div>

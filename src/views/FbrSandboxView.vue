@@ -38,7 +38,7 @@ async function validate() {
 }
 </script>
 <template>
-  <div class="tool-terminal documents-terminal">
+  <div class="tool-terminal compact-workspace documents-terminal">
     <header class="tool-header">
       <div>
         <h1>{{ pick('FBR DI Sandbox Check', 'FBR DI سینڈ باکس جانچ') }}</h1>
@@ -128,7 +128,13 @@ async function validate() {
     <section v-if="result" class="commercial-hint">
       <strong>{{ result.status }}</strong>
       <p>{{ result.message }}</p>
-      <pre style="white-space: pre-wrap; overflow-wrap: anywhere">{{ result.response }}</pre>
+      <textarea
+        class="w-full"
+        rows="4"
+        readonly
+        :value="result.response"
+        :aria-label="pick('Validation response', 'جانچ کا جواب')"
+      />
     </section>
   </div>
 </template>

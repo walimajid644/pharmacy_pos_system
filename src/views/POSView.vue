@@ -2,6 +2,7 @@
 import { bindTemplateRef } from '@/lib/templateRefs';
 import SavedSaleActions from '@/components/SavedSaleActions.vue';
 import Button from '@/components/ui/Button.vue';
+import CompactPages from '@/components/ui/CompactPages.vue';
 import Input from '@/components/ui/Input.vue';
 import PosProductSearchDialog from '@/components/pos/PosProductSearchDialog.vue';
 import PosCartTable from '@/components/pos/PosCartTable.vue';
@@ -243,23 +244,31 @@ const bindsearchInput = bindTemplateRef(searchInput);
                 >
                   {{ pick('Walk-in sale — no customer', 'عام فروخت — گاہک کے بغیر') }}
                 </button>
-                <button
-                  v-for="(customer, index) in customerOptions"
-                  :key="customer.id"
-                  type="button"
-                  role="option"
-                  :aria-selected="highlightedCustomerIndex === index + 1"
-                  :class="{ selected: highlightedCustomerIndex === index + 1 }"
-                  @mousedown.prevent="chooseCustomer(customer)"
+                <CompactPages
+                  :items="customerOptions"
+                  :active-index="highlightedCustomerIndex - 1"
+                  :row-height="42"
+                  :header-height="0"
+                  v-slot="{ rows }"
                 >
-                  <strong>{{ customer.first_name }} {{ customer.last_name }}</strong
-                  ><small
-                    ><bdi>{{ customer.customer_code }}</bdi
-                    ><span v-if="customer.phone_number">
-                      · <bdi>{{ customer.phone_number }}</bdi></span
-                    ></small
+                  <button
+                    v-for="{ item: customer, index } in rows"
+                    :key="customer.id"
+                    type="button"
+                    role="option"
+                    :aria-selected="highlightedCustomerIndex === index + 1"
+                    :class="{ selected: highlightedCustomerIndex === index + 1 }"
+                    @mousedown.prevent="chooseCustomer(customer)"
                   >
-                </button>
+                    <strong>{{ customer.first_name }} {{ customer.last_name }}</strong
+                    ><small
+                      ><bdi>{{ customer.customer_code }}</bdi
+                      ><span v-if="customer.phone_number">
+                        · <bdi>{{ customer.phone_number }}</bdi></span
+                      ></small
+                    >
+                  </button>
+                </CompactPages>
                 <p v-if="customerLoading" role="status">
                   {{ pick('Searching clients…', 'گاہک تلاش ہو رہے ہیں…') }}
                 </p>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { ref } from 'vue';
 import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import { bindTemplateRef } from '@/lib/templateRefs';
@@ -34,7 +35,7 @@ useDialogKeyboard(formDialog, () => {
 </script>
 
 <template>
-  <div class="tool-terminal p-6 h-full flex flex-col">
+  <div class="tool-terminal compact-workspace p-6 h-full flex flex-col">
     <Card class="tool-panel flex-1 flex flex-col">
       <!-- Header -->
       <div class="tool-header p-6 border-b flex justify-between items-center">
@@ -54,7 +55,7 @@ useDialogKeyboard(formDialog, () => {
       </div>
 
       <!-- Table -->
-      <div class="tool-table-scroll flex-1 overflow-auto p-6">
+      <div class="paged-table-host tool-table-scroll flex-1 overflow-auto p-6">
         <div v-if="loading && customers.length === 0" class="text-center py-12 text-gray-500">
           {{ pick('Loading customers...', 'گاہک لوڈ ہو رہے ہیں...') }}
         </div>
@@ -70,103 +71,111 @@ useDialogKeyboard(formDialog, () => {
           }}
         </div>
 
-        <table v-else class="w-full border-collapse">
-          <thead>
-            <tr class="border-b bg-gray-50">
-              <th class="text-left p-3 font-semibold">{{ pick('Code', 'کوڈ') }}</th>
-              <th class="text-left p-3 font-semibold">{{ pick('Name', 'نام') }}</th>
-              <th class="text-left p-3 font-semibold">{{ pick('Phone', 'فون') }}</th>
-              <th class="text-left p-3 font-semibold">{{ pick('Type', 'قسم') }}</th>
-              <th class="text-right p-3 font-semibold">{{ pick('Balance', 'بقایا') }}</th>
-              <th class="text-right p-3 font-semibold">{{ t('credit_limit') }}</th>
-              <th class="text-center p-3 font-semibold">{{ t('status') }}</th>
-              <th class="text-center p-3 font-semibold">{{ pick('Actions', 'اقدامات') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="customer in filteredCustomers"
-              :key="customer.id"
-              class="border-b hover:bg-gray-50"
-            >
-              <td class="p-3 font-mono text-sm">{{ customer.customer_code }}</td>
-              <td class="p-3">
-                <div class="font-medium">{{ customer.first_name }} {{ customer.last_name }}</div>
-                <div v-if="customer.address" class="text-sm text-gray-600 truncate max-w-xs">
-                  {{ customer.address }}
-                </div>
-              </td>
-              <td class="p-3 text-sm">{{ customer.phone_number || '-' }}</td>
-              <td class="p-3">
-                <span
-                  :class="[
-                    'inline-block px-2 py-1 text-xs rounded capitalize',
-                    customer.customer_type === 'wholesale'
-                      ? 'bg-blue-100 text-blue-800'
-                      : 'bg-green-100 text-green-800',
-                  ]"
-                >
-                  {{ t(customer.customer_type) }}
-                </span>
-              </td>
-              <td class="p-3 text-right">
-                <span
-                  class="customer-balance-badge"
-                  :class="
-                    customer.current_balance < 0
-                      ? 'credit'
-                      : customer.current_balance > customer.credit_limit
-                        ? 'over-limit'
-                        : customer.current_balance > 0
-                          ? 'owed'
-                          : 'settled'
-                  "
-                  >{{ formatCurrency(customer.current_balance)
-                  }}<small>{{
-                    customer.current_balance < 0
-                      ? pick('Account credit', 'کھاتے کا کریڈٹ')
-                      : customer.current_balance > customer.credit_limit
-                        ? pick('Over limit', 'حد سے زیادہ')
-                        : customer.current_balance > 0
-                          ? pick('Outstanding', 'واجب الادا')
-                          : pick('Settled', 'بقایا صفر')
-                  }}</small></span
-                >
-              </td>
-              <td class="p-3 text-right text-gray-600">
-                {{ formatCurrency(customer.credit_limit) }}
-              </td>
-              <td class="p-3 text-center">
-                <span
-                  :class="[
-                    'inline-block px-2 py-1 text-xs rounded',
-                    customer.is_active
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800',
-                  ]"
-                >
-                  {{ customer.is_active ? t('active') : t('inactive') }}
-                </span>
-              </td>
-              <td class="p-3 text-center">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  @click="
-                    router.push({ path: '/customer-ledger', query: { customer: customer.id } })
-                  "
-                  >{{ pick('Ledger', 'کھاتہ') }}</Button
-                >
-                <Button variant="outline" size="sm" @click="openEditModal(customer)" class="mr-2">
-                  {{ t('edit') }}
-                </Button>
-                <Button variant="destructive" size="sm" @click="deleteCustomer(customer)">
-                  {{ t('delete') }}
-                </Button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        <CompactPages
+          v-else
+          :items="filteredCustomers"
+          :row-height="56"
+          :header-height="36"
+          v-slot="{ rows: pageRows }"
+        >
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="border-b bg-gray-50">
+                <th class="text-left p-3 font-semibold">{{ pick('Code', 'کوڈ') }}</th>
+                <th class="text-left p-3 font-semibold">{{ pick('Name', 'نام') }}</th>
+                <th class="text-left p-3 font-semibold">{{ pick('Phone', 'فون') }}</th>
+                <th class="text-left p-3 font-semibold">{{ pick('Type', 'قسم') }}</th>
+                <th class="text-right p-3 font-semibold">{{ pick('Balance', 'بقایا') }}</th>
+                <th class="text-right p-3 font-semibold">{{ t('credit_limit') }}</th>
+                <th class="text-center p-3 font-semibold">{{ t('status') }}</th>
+                <th class="text-center p-3 font-semibold">{{ pick('Actions', 'اقدامات') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="{ item: customer } in pageRows"
+                :key="customer.id"
+                class="border-b hover:bg-gray-50"
+              >
+                <td class="p-3 font-mono text-sm">{{ customer.customer_code }}</td>
+                <td class="p-3">
+                  <div class="font-medium">{{ customer.first_name }} {{ customer.last_name }}</div>
+                  <div v-if="customer.address" class="text-sm text-gray-600 truncate max-w-xs">
+                    {{ customer.address }}
+                  </div>
+                </td>
+                <td class="p-3 text-sm">{{ customer.phone_number || '-' }}</td>
+                <td class="p-3">
+                  <span
+                    :class="[
+                      'inline-block px-2 py-1 text-xs rounded capitalize',
+                      customer.customer_type === 'wholesale'
+                        ? 'bg-info-bg text-info-text'
+                        : 'bg-success-bg text-success-text',
+                    ]"
+                  >
+                    {{ t(customer.customer_type) }}
+                  </span>
+                </td>
+                <td class="p-3 text-right">
+                  <span
+                    class="customer-balance-badge"
+                    :class="
+                      customer.current_balance < 0
+                        ? 'credit'
+                        : customer.current_balance > customer.credit_limit
+                          ? 'over-limit'
+                          : customer.current_balance > 0
+                            ? 'owed'
+                            : 'settled'
+                    "
+                    >{{ formatCurrency(customer.current_balance)
+                    }}<small>{{
+                      customer.current_balance < 0
+                        ? pick('Account credit', 'کھاتے کا کریڈٹ')
+                        : customer.current_balance > customer.credit_limit
+                          ? pick('Over limit', 'حد سے زیادہ')
+                          : customer.current_balance > 0
+                            ? pick('Outstanding', 'واجب الادا')
+                            : pick('Settled', 'بقایا صفر')
+                    }}</small></span
+                  >
+                </td>
+                <td class="p-3 text-right text-secondary">
+                  {{ formatCurrency(customer.credit_limit) }}
+                </td>
+                <td class="p-3 text-center">
+                  <span
+                    :class="[
+                      'inline-block px-2 py-1 text-xs rounded',
+                      customer.is_active
+                        ? 'bg-success-bg text-success-text'
+                        : 'bg-surface-page text-muted',
+                    ]"
+                  >
+                    {{ customer.is_active ? t('active') : t('inactive') }}
+                  </span>
+                </td>
+                <td class="p-3 text-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    @click="
+                      router.push({ path: '/customer-ledger', query: { customer: customer.id } })
+                    "
+                    >{{ pick('Ledger', 'کھاتہ') }}</Button
+                  >
+                  <Button variant="outline" size="sm" @click="openEditModal(customer)" class="mr-2">
+                    {{ t('edit') }}
+                  </Button>
+                  <Button variant="destructive" size="sm" @click="deleteCustomer(customer)">
+                    {{ t('delete') }}
+                  </Button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </CompactPages>
       </div>
       <footer class="tool-summary">
         <div>
@@ -283,7 +292,7 @@ useDialogKeyboard(formDialog, () => {
             </div>
           </div>
 
-          <div v-if="!editingCustomer" class="text-sm text-gray-600 bg-blue-50 p-3 rounded">
+          <div v-if="!editingCustomer" class="text-sm text-info-text bg-info-bg p-3 rounded">
             {{
               pick(
                 'Customer code will be auto-generated (e.g., C001, C002...)',

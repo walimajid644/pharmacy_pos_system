@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { useCustomerLedger } from '@/composables/useCustomerLedger';
 
 const {
@@ -23,7 +24,7 @@ const {
 } = useCustomerLedger();
 </script>
 <template>
-  <div class="tool-terminal documents-terminal">
+  <div class="tool-terminal compact-workspace documents-terminal">
     <header class="tool-header">
       <div>
         <h1>{{ pick('Customer Credit / Udhar Ledger', 'گاہک کا کریڈٹ / ادھار کھاتہ') }}</h1>
@@ -116,45 +117,47 @@ const {
         )
       }}
     </p>
-    <div class="commercial-table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ pick('Date / reference', 'تاریخ / حوالہ') }}</th>
-            <th>{{ pick('Type / description', 'قسم / تفصیل') }}</th>
-            <th>{{ pick('Debit', 'ادھار') }}</th>
-            <th>{{ pick('Credit', 'وصولی') }}</th>
-            <th>{{ pick('Balance', 'بقایا') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-if="statement">
-            <td colspan="4">{{ pick('Balance brought forward', 'پچھلا بقایا') }}</td>
-            <td>{{ formatCurrency(broughtForward / 100) }}</td>
-          </tr>
-          <tr v-for="e in rows" :key="e.id">
-            <td>
-              {{ formatDateTime(e.occurred_at) }}<small>{{ e.reference }}</small>
-            </td>
-            <td>
-              {{ kind(e.kind) }}<small>{{ e.description }}</small>
-            </td>
-            <td>{{ e.amount_cents > 0 ? formatCurrency(e.amount_cents / 100) : '—' }}</td>
-            <td>{{ e.amount_cents < 0 ? formatCurrency(-e.amount_cents / 100) : '—' }}</td>
-            <td>{{ formatCurrency(e.balance / 100) }}</td>
-          </tr>
-          <tr v-if="!rows.length">
-            <td colspan="5" class="commercial-empty">
-              {{
-                pick(
-                  'No ledger entries for this selection.',
-                  'اس انتخاب کے لیے کھاتے میں کوئی اندراج نہیں۔',
-                )
-              }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="paged-table-host commercial-table-scroll">
+      <CompactPages :items="rows" :row-height="56" :header-height="36" v-slot="{ rows: pageRows }">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ pick('Date / reference', 'تاریخ / حوالہ') }}</th>
+              <th>{{ pick('Type / description', 'قسم / تفصیل') }}</th>
+              <th>{{ pick('Debit', 'ادھار') }}</th>
+              <th>{{ pick('Credit', 'وصولی') }}</th>
+              <th>{{ pick('Balance', 'بقایا') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-if="statement">
+              <td colspan="4">{{ pick('Balance brought forward', 'پچھلا بقایا') }}</td>
+              <td>{{ formatCurrency(broughtForward / 100) }}</td>
+            </tr>
+            <tr v-for="{ item: e } in pageRows" :key="e.id">
+              <td>
+                {{ formatDateTime(e.occurred_at) }}<small>{{ e.reference }}</small>
+              </td>
+              <td>
+                {{ kind(e.kind) }}<small>{{ e.description }}</small>
+              </td>
+              <td>{{ e.amount_cents > 0 ? formatCurrency(e.amount_cents / 100) : '—' }}</td>
+              <td>{{ e.amount_cents < 0 ? formatCurrency(-e.amount_cents / 100) : '—' }}</td>
+              <td>{{ formatCurrency(e.balance / 100) }}</td>
+            </tr>
+            <tr v-if="!rows.length">
+              <td colspan="5" class="commercial-empty">
+                {{
+                  pick(
+                    'No ledger entries for this selection.',
+                    'اس انتخاب کے لیے کھاتے میں کوئی اندراج نہیں۔',
+                  )
+                }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </CompactPages>
     </div>
     <footer class="tool-summary">
       <small>{{

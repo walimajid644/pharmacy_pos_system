@@ -79,18 +79,25 @@ function selectProduct(item: PurchaseOrderLine, product: Product) {
                   @click="unlockSearch"
                 />
                 <div v-if="productSearch && filteredProducts.length > 0" class="product-dropdown">
-                  <button
-                    v-for="product in filteredProducts"
-                    :key="product.id"
-                    @click="selectProduct(item, product)"
-                    class="product-option"
-                    type="button"
+                  <CompactPages
+                    :items="filteredProducts"
+                    :row-height="46"
+                    :header-height="0"
+                    v-slot="{ rows: choices }"
                   >
-                    <div class="product-option-name">{{ product.name }}</div>
-                    <div class="product-option-details">
-                      {{ product.sku }} | Cost: {{ formatCurrency(product.cost_price) }}
-                    </div>
-                  </button>
+                    <button
+                      v-for="{ item: product } in choices"
+                      :key="product.id"
+                      @click="selectProduct(item, product)"
+                      class="product-option"
+                      type="button"
+                    >
+                      <div class="product-option-name">{{ product.name }}</div>
+                      <div class="product-option-details">
+                        {{ product.sku }} | Cost: {{ formatCurrency(product.cost_price) }}
+                      </div>
+                    </button>
+                  </CompactPages>
                 </div>
               </div>
             </div>

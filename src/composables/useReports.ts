@@ -297,10 +297,10 @@ export function useReports() {
   }
 
   function getDaysClass(days: number) {
-    if (days < 0) return 'text-red-600 font-bold';
-    if (days <= 30) return 'text-red-600';
-    if (days <= 60) return 'text-yellow-600';
-    return 'text-gray-600';
+    if (days < 0) return 'text-danger font-bold';
+    if (days <= 30) return 'text-danger';
+    if (days <= 60) return 'text-warning';
+    return 'text-secondary';
   }
 
   return {

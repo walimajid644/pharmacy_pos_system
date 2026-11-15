@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { onMounted, ref } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { executeQuery } from '@/lib/database';
@@ -107,7 +108,7 @@ onMounted(load);
 </script>
 
 <template>
-  <main class="tool-terminal mx-auto max-w-6xl space-y-5 p-6">
+  <main class="tool-terminal compact-workspace mx-auto max-w-6xl space-y-5 p-6">
     <header class="tool-header flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold">{{ pick('Cash Drawer & Shifts', 'کیش دراز اور شفٹیں') }}</h1>
@@ -124,7 +125,7 @@ onMounted(load);
         {{ pick('Refresh', 'تازہ کریں') }}
       </button>
     </header>
-    <p v-if="error" role="alert" class="rounded border border-red-400 p-3 text-red-700">
+    <p v-if="error" role="alert" class="rounded border border-danger bg-danger-bg p-3 text-danger-text">
       {{ error }}
     </p>
     <section v-if="current" class="rounded-xl border bg-card p-5 shadow-sm">
@@ -180,7 +181,7 @@ onMounted(load);
         </button>
       </form>
     </section>
-    <section v-if="result" class="rounded-xl border border-green-500 bg-card p-5" role="status">
+    <section v-if="result" class="rounded-xl border border-success bg-card p-5" role="status">
       <h2 class="font-semibold">{{ pick('Shift closed', 'شفٹ بند ہوگئی') }}</h2>
       <p>
         {{ pick('Expected cash', 'متوقع نقد رقم') }}:
@@ -197,50 +198,59 @@ onMounted(load);
       <p v-if="!history.length" class="text-sm text-muted-foreground">
         {{ pick('No shifts recorded yet.', 'ابھی کوئی شفٹ درج نہیں ہوئی۔') }}
       </p>
-      <div v-else class="overflow-x-auto">
-        <table class="w-full min-w-[850px] text-sm">
-          <thead>
-            <tr class="border-b text-left">
-              <th class="p-2">{{ pick('Cashier', 'کیشئر') }}</th>
-              <th class="p-2">{{ pick('Opened', 'کھولی گئی') }}</th>
-              <th class="p-2">{{ pick('Closed by', 'بند کرنے والا') }}</th>
-              <th class="p-2">{{ pick('Status', 'حیثیت') }}</th>
-              <th class="p-2 text-right">{{ pick('Expected', 'متوقع') }}</th>
-              <th class="p-2 text-right">{{ pick('Counted', 'گنی گئی') }}</th>
-              <th class="p-2 text-right">{{ pick('Variance', 'فرق') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="shift in history" :key="shift.id" class="border-b">
-              <td class="p-2">{{ shift.cashierName }}</td>
-              <td class="p-2">{{ formatDateTime(shift.openedAt) }}</td>
-              <td class="p-2">
-                {{ shift.closedByName || '—'
-                }}<small v-if="shift.notes" class="block text-muted-foreground">{{
-                  shift.notes
-                }}</small>
-              </td>
-              <td class="p-2">{{ shift.status }}</td>
-              <td class="p-2 text-right">
-                {{
-                  shift.expectedCashCents === null
-                    ? '—'
-                    : formatCurrency(shift.expectedCashCents / 100)
-                }}
-              </td>
-              <td class="p-2 text-right">
-                {{
-                  shift.countedCashCents === null
-                    ? '—'
-                    : formatCurrency(shift.countedCashCents / 100)
-                }}
-              </td>
-              <td class="p-2 text-right">
-                {{ shift.varianceCents === null ? '—' : formatCurrency(shift.varianceCents / 100) }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div v-else class="paged-table-host overflow-x-auto">
+        <CompactPages
+          :items="history"
+          :row-height="56"
+          :header-height="36"
+          v-slot="{ rows: pageRows }"
+        >
+          <table class="w-full min-w-[850px] text-sm">
+            <thead>
+              <tr class="border-b text-left">
+                <th class="p-2">{{ pick('Cashier', 'کیشئر') }}</th>
+                <th class="p-2">{{ pick('Opened', 'کھولی گئی') }}</th>
+                <th class="p-2">{{ pick('Closed by', 'بند کرنے والا') }}</th>
+                <th class="p-2">{{ pick('Status', 'حیثیت') }}</th>
+                <th class="p-2 text-right">{{ pick('Expected', 'متوقع') }}</th>
+                <th class="p-2 text-right">{{ pick('Counted', 'گنی گئی') }}</th>
+                <th class="p-2 text-right">{{ pick('Variance', 'فرق') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="{ item: shift } in pageRows" :key="shift.id" class="border-b">
+                <td class="p-2">{{ shift.cashierName }}</td>
+                <td class="p-2">{{ formatDateTime(shift.openedAt) }}</td>
+                <td class="p-2">
+                  {{ shift.closedByName || '—'
+                  }}<small v-if="shift.notes" class="block text-muted-foreground">{{
+                    shift.notes
+                  }}</small>
+                </td>
+                <td class="p-2">{{ shift.status }}</td>
+                <td class="p-2 text-right">
+                  {{
+                    shift.expectedCashCents === null
+                      ? '—'
+                      : formatCurrency(shift.expectedCashCents / 100)
+                  }}
+                </td>
+                <td class="p-2 text-right">
+                  {{
+                    shift.countedCashCents === null
+                      ? '—'
+                      : formatCurrency(shift.countedCashCents / 100)
+                  }}
+                </td>
+                <td class="p-2 text-right">
+                  {{
+                    shift.varianceCents === null ? '—' : formatCurrency(shift.varianceCents / 100)
+                  }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </CompactPages>
       </div>
     </section>
   </main>

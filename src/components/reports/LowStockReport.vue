@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import type { Ref } from 'vue';
 import type { useReports } from '@/composables/useReports';
 import Button from '@/components/ui/Button.vue';
@@ -25,27 +26,34 @@ defineProps<{
       </Button>
     </div>
 
-    <div class="flex-1 overflow-auto p-6">
-      <table class="w-full border-collapse">
-        <thead>
-          <tr class="border-b bg-gray-50">
-            <th class="text-left p-3">{{ label('Product') }}</th>
-            <th class="text-left p-3">SKU</th>
-            <th class="text-right p-3">Current Stock</th>
-            <th class="text-right p-3">Reorder Level</th>
-            <th class="text-right p-3">Value</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in lowStockData" :key="row.sku" class="border-b hover:bg-gray-50">
-            <td class="p-3">{{ row.product_name }}</td>
-            <td class="p-3 font-mono text-sm">{{ row.sku }}</td>
-            <td class="p-3 text-right font-bold text-red-600">{{ row.current_stock }}</td>
-            <td class="p-3 text-right">{{ row.reorder_level }}</td>
-            <td class="p-3 text-right">{{ formatCurrency(row.stock_value) }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="paged-table-host flex-1 overflow-auto p-6">
+      <CompactPages
+        :items="lowStockData"
+        :row-height="56"
+        :header-height="36"
+        v-slot="{ rows: pageRows }"
+      >
+        <table class="w-full border-collapse">
+          <thead>
+            <tr class="border-b bg-gray-50">
+              <th class="text-left p-3">{{ label('Product') }}</th>
+              <th class="text-left p-3">SKU</th>
+              <th class="text-right p-3">Current Stock</th>
+              <th class="text-right p-3">Reorder Level</th>
+              <th class="text-right p-3">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="{ item: row } in pageRows" :key="row.sku" class="border-b hover:bg-surface-page">
+              <td class="p-3">{{ row.product_name }}</td>
+              <td class="p-3 font-mono text-sm">{{ row.sku }}</td>
+              <td class="p-3 text-right font-bold text-warning">{{ row.current_stock }}</td>
+              <td class="p-3 text-right">{{ row.reorder_level }}</td>
+              <td class="p-3 text-right">{{ formatCurrency(row.stock_value) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </CompactPages>
     </div>
   </div>
 </template>

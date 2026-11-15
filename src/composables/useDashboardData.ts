@@ -23,9 +23,13 @@ export function useDashboardData() {
 
   const loading = ref(true);
   const loadError = ref(false);
-  async function loadDashboardData() {
-    loading.value = true;
-    loadError.value = false;
+  let hasLoaded = false;
+  let loadVersion = 0;
+  async function loadDashboardData(options: { background?: boolean } = {}) {
+    const version = ++loadVersion;
+    const silent = options.background === true && hasLoaded;
+    loading.value = !silent;
+    if (!silent) loadError.value = false;
     try {
       const [dayStart, dayEnd] = localDayBounds(localDateKey());
       const todayInvoices = await executeQuery<{ invoice_date: string; net_amount: number }>(
@@ -33,7 +37,7 @@ export function useDashboardData() {
          WHERE invoice_date >= ? AND invoice_date < ? AND status = 'completed'`,
         [dayStart, dayEnd],
       );
-      todaysSales.value = todayInvoices.reduce(
+      const nextTodaysSales = todayInvoices.reduce(
         (sum, invoice) => sum + Number(invoice.net_amount),
         0,
       );
@@ -44,17 +48,15 @@ export function useDashboardData() {
         `SELECT COALESCE(SUM(net_amount), 0) AS total FROM sales_dashboard WHERE invoice_date >= ? AND invoice_date < ? AND status = 'completed'`,
         [yesterdayStart, yesterdayEnd],
       );
-      yesterdaySales.value = Number(previous?.total || 0);
+      const nextYesterdaySales = Number(previous?.total || 0);
       const [customers] = await executeQuery<{ count: number }>(
         `SELECT COUNT(*) AS count FROM customers WHERE deleted_at IS NULL`,
       );
-      activeCustomers.value = Number(customers?.count || 0);
-      billsToday.value = todayInvoices.length;
+      const nextActiveCustomers = Number(customers?.count || 0);
       const hours = Array(24).fill(0) as number[];
       for (const invoice of todayInvoices)
         hours[new Date(invoice.invoice_date).getHours()] += Number(invoice.net_amount);
-      hourlySales.value = hours;
-      recentBills.value = await executeQuery<RecentBill>(
+      const nextRecentBills = await executeQuery<RecentBill>(
         `SELECT si.id, si.invoice_number, si.invoice_date, si.net_amount, si.payment_method,
                 TRIM(COALESCE(c.first_name, '') || ' ' || COALESCE(c.last_name, '')) AS customer_name
          FROM sales_dashboard si LEFT JOIN customers c ON c.id = si.customer_id
@@ -65,10 +67,10 @@ export function useDashboardData() {
       const productsResult = await executeQuery<{ count: number }>(
         'SELECT COUNT(*) as count FROM products WHERE deleted_at IS NULL AND is_active = 1',
       );
-      totalProducts.value = productsResult[0]?.count || 0;
+      const nextTotalProducts = productsResult[0]?.count || 0;
 
       // Get low stock items
-      lowStockItems.value = await executeQuery<LowStockItem>(
+      const nextLowStockItems = await executeQuery<LowStockItem>(
         `SELECT p.*, 
                 COALESCE(SUM(pb.quantity_in_stock), 0) as current_stock
          FROM products p
@@ -85,14 +87,14 @@ export function useDashboardData() {
            WHERE p.deleted_at IS NULL AND p.is_active = 1 GROUP BY p.id
            HAVING COALESCE(SUM(pb.quantity_in_stock), 0) <= p.reorder_level)`,
       );
-      lowStockCount.value = lowCount?.count || 0;
+      const nextLowStockCount = lowCount?.count || 0;
 
       // Get near-expiry items
       const nearExpiryDays = Number(settingsStore.settings?.near_expiry_days ?? 60);
       const expiryLimit = new Date();
       expiryLimit.setDate(expiryLimit.getDate() + nearExpiryDays);
       const expiryLimitKey = localDateKey(expiryLimit);
-      nearExpiryItems.value = await executeQuery<NearExpiryItem>(
+      const nextNearExpiryItems = await executeQuery<NearExpiryItem>(
         `SELECT pb.*, p.name, p.sku
          FROM product_batches pb
          JOIN products p ON pb.product_id = p.id
@@ -109,12 +111,26 @@ export function useDashboardData() {
            AND DATE(pb.expiry_date) <= DATE(?)`,
         [expiryLimitKey],
       );
+      if (version !== loadVersion) return;
+      // Keep the current dashboard intact until the complete refresh succeeds.
+      todaysSales.value = nextTodaysSales;
+      yesterdaySales.value = nextYesterdaySales;
+      activeCustomers.value = nextActiveCustomers;
+      billsToday.value = todayInvoices.length;
+      hourlySales.value = hours;
+      recentBills.value = nextRecentBills;
+      totalProducts.value = nextTotalProducts;
+      lowStockItems.value = nextLowStockItems;
+      lowStockCount.value = nextLowStockCount;
+      nearExpiryItems.value = nextNearExpiryItems;
       nearExpiryCount.value = expiryCount?.count || 0;
+      hasLoaded = true;
+      loadError.value = false;
     } catch {
       reportDiagnostic('operation_failed', 'reports');
-      loadError.value = true;
+      if (version === loadVersion && !silent) loadError.value = true;
     } finally {
-      loading.value = false;
+      if (version === loadVersion) loading.value = false;
     }
   }
 

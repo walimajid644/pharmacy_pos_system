@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { computed, onMounted, ref } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { executeQuery } from '@/lib/database';
@@ -108,7 +109,7 @@ async function save() {
 }
 </script>
 <template>
-  <div class="tool-terminal documents-terminal">
+  <div class="tool-terminal compact-workspace documents-terminal">
     <header class="tool-header">
       <div>
         <h1>{{ pick('Bulk Catalog Setup', 'فہرست کی اجتماعی ترتیب') }}</h1>
@@ -168,35 +169,37 @@ async function save() {
     </p>
     <p v-if="error" role="alert" class="commercial-error">{{ error }}</p>
     <p v-if="notice" role="status">{{ notice }}</p>
-    <div class="commercial-table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ pick('Select', 'منتخب') }}</th>
-            <th>SKU</th>
-            <th>{{ pick('Name', 'نام') }}</th>
-            <th>{{ pick('Pack', 'پیک') }}</th>
-            <th>{{ pick('Reorder', 'آرڈر حد') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="p in paged" :key="p.id">
-            <td>
-              <input
-                v-model="chosen"
-                type="checkbox"
-                :value="p.id"
-                :disabled="busy"
-                :aria-label="p.name"
-              />
-            </td>
-            <td>{{ p.sku }}</td>
-            <td>{{ p.name }}</td>
-            <td>{{ p.pack_size }}</td>
-            <td>{{ p.reorder_level }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="paged-table-host commercial-table-scroll">
+      <CompactPages :items="paged" :row-height="56" :header-height="36" v-slot="{ rows: pageRows }">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ pick('Select', 'منتخب') }}</th>
+              <th>SKU</th>
+              <th>{{ pick('Name', 'نام') }}</th>
+              <th>{{ pick('Pack', 'پیک') }}</th>
+              <th>{{ pick('Reorder', 'آرڈر حد') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="{ item: p } in pageRows" :key="p.id">
+              <td>
+                <input
+                  v-model="chosen"
+                  type="checkbox"
+                  :value="p.id"
+                  :disabled="busy"
+                  :aria-label="p.name"
+                />
+              </td>
+              <td>{{ p.sku }}</td>
+              <td>{{ p.name }}</td>
+              <td>{{ p.pack_size }}</td>
+              <td>{{ p.reorder_level }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </CompactPages>
     </div>
     <footer class="tool-summary">
       <strong>{{ chosen.length }} {{ pick('selected', 'منتخب') }}</strong
@@ -219,11 +222,18 @@ async function save() {
       >
         <h2>{{ pick('Confirm selected catalog changes', 'منتخب فہرست کی تبدیلیوں کی تصدیق') }}</h2>
         <p>{{ pending?.products.length }} {{ pick('products', 'مصنوعات') }}</p>
-        <ul style="max-height: 140px; overflow: auto">
-          <li v-for="p in pending?.products" :key="p.id">
-            {{ productById.get(p.id)?.sku }} · {{ productById.get(p.id)?.name }}
-          </li>
-        </ul>
+        <CompactPages
+          class="review-list-pages"
+          :items="pending?.products || []"
+          :row-height="38"
+          :header-height="0"
+          v-slot="{ rows: reviewRows }"
+          ><ul>
+            <li v-for="{ item: p } in reviewRows" :key="p.id">
+              {{ productById.get(p.id)?.sku }} · {{ productById.get(p.id)?.name }}
+            </li>
+          </ul></CompactPages
+        >
         <p>
           {{ pick('Category', 'قسم') }}:
           {{

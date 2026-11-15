@@ -105,7 +105,7 @@ async function signOut() {
           class="w-full rounded border bg-background p-2"
         />
       </label>
-      <p v-if="error" role="alert" class="text-sm text-red-600">{{ error }}</p>
+      <p v-if="error" role="alert" class="text-sm text-danger">{{ error }}</p>
       <div class="flex gap-3">
         <button
           :disabled="busy"

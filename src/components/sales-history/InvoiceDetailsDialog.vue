@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { ref, type Ref } from 'vue';
 import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import type { useSalesHistory } from '@/composables/useSalesHistory';
@@ -24,6 +25,7 @@ const props = defineProps<{
 }>();
 const digitalText = defineModel<ViewValue<State['digitalText']>>('digitalText', { required: true });
 const invoiceDialog = ref<HTMLElement | null>(null);
+const detailTab = ref<'items' | 'receipt'>('items');
 useDialogKeyboard(invoiceDialog, () => props.closeDetailModal());
 </script>
 
@@ -38,7 +40,7 @@ useDialogKeyboard(invoiceDialog, () => props.closeDetailModal());
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
     @click.self="closeDetailModal"
   >
-    <Card class="w-full max-w-4xl max-h-[90vh] flex flex-col">
+    <Card class="invoice-detail-panel w-full max-w-4xl max-h-[90vh] flex flex-col">
       <!-- Modal Header -->
       <div class="p-6 border-b flex justify-between items-start">
         <div>
@@ -90,58 +92,79 @@ useDialogKeyboard(invoiceDialog, () => props.closeDetailModal());
         </div>
       </div>
 
+      <nav class="detail-tabs flex gap-2 p-2 border-b" aria-label="Invoice sections">
+        <Button
+          variant="outline"
+          :aria-pressed="detailTab === 'items'"
+          @click="detailTab = 'items'"
+          >{{ t('items') }}</Button
+        >
+        <Button
+          variant="outline"
+          :aria-pressed="detailTab === 'receipt'"
+          @click="detailTab = 'receipt'"
+          >{{ pick('Digital receipt', 'ڈیجیٹل رسید') }}</Button
+        >
+      </nav>
       <!-- Items -->
-      <div class="flex-1 overflow-auto p-6">
+      <div v-if="detailTab === 'items'" class="paged-table-host flex-1 p-6">
         <h3 class="font-semibold mb-4">{{ t('items') }}</h3>
-        <table class="w-full border-collapse">
-          <thead>
-            <tr class="border-b bg-gray-50">
-              <th class="text-left p-3 font-semibold">{{ pick('Product', 'مصنوعات') }}</th>
-              <th class="text-left p-3 font-semibold">{{ pick('Batch', 'بیچ') }}</th>
-              <th class="text-right p-3 font-semibold">{{ pick('Qty', 'تعداد') }}</th>
-              <th class="text-right p-3 font-semibold">{{ t('unit_price') }}</th>
-              <th class="text-right p-3 font-semibold">{{ t('discount') }}</th>
-              <th class="text-right p-3 font-semibold">{{ t('total') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in invoiceItems" :key="item.id" class="border-b">
-              <td class="p-3">
-                <div>{{ item.product_name }}</div>
-                <div class="text-xs text-gray-500">
+        <CompactPages
+          :items="invoiceItems"
+          :row-height="56"
+          :header-height="36"
+          v-slot="{ rows: pageRows }"
+        >
+          <table class="w-full border-collapse">
+            <thead>
+              <tr class="border-b bg-gray-50">
+                <th class="text-left p-3 font-semibold">{{ pick('Product', 'مصنوعات') }}</th>
+                <th class="text-left p-3 font-semibold">{{ pick('Batch', 'بیچ') }}</th>
+                <th class="text-right p-3 font-semibold">{{ pick('Qty', 'تعداد') }}</th>
+                <th class="text-right p-3 font-semibold">{{ t('unit_price') }}</th>
+                <th class="text-right p-3 font-semibold">{{ t('discount') }}</th>
+                <th class="text-right p-3 font-semibold">{{ t('total') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="{ item: item } in pageRows" :key="item.id" class="border-b">
+                <td class="p-3">
+                  <div>{{ item.product_name }}</div>
+                  <div class="text-xs text-gray-500">
+                    {{
+                      item.is_loose_sale
+                        ? pick('Loose sale', 'کھلی فروخت')
+                        : pick('Pack sale', 'پیک فروخت')
+                    }}
+                  </div>
+                </td>
+                <td class="p-3 text-sm font-mono">{{ item.batch_number }}</td>
+                <td class="p-3 text-right">
+                  {{ formatNumber(item.sale_quantity ?? item.quantity) }}
                   {{
-                    item.is_loose_sale
-                      ? pick('Loose sale', 'کھلی فروخت')
-                      : pick('Pack sale', 'پیک فروخت')
+                    item.sale_quantity == null
+                      ? pick('units', 'اکائیاں')
+                      : item.is_loose_sale
+                        ? pick('loose units', 'کھلی اکائیاں')
+                        : pick('packs', 'پیک')
                   }}
-                </div>
-              </td>
-              <td class="p-3 text-sm font-mono">{{ item.batch_number }}</td>
-              <td class="p-3 text-right">
-                {{ formatNumber(item.sale_quantity ?? item.quantity) }}
-                {{
-                  item.sale_quantity == null
-                    ? pick('units', 'اکائیاں')
-                    : item.is_loose_sale
-                      ? pick('loose units', 'کھلی اکائیاں')
-                      : pick('packs', 'پیک')
-                }}
-                <div v-if="item.bonus_quantity" class="text-xs">
-                  + {{ formatNumber(item.bonus_quantity) }} {{ pick('free', 'مفت') }}
-                </div>
-                <div
-                  v-if="item.sale_quantity != null && !item.is_loose_sale"
-                  class="text-xs text-gray-500"
-                >
-                  {{ formatNumber(item.quantity) }} {{ pick('units', 'اکائیاں') }}
-                </div>
-              </td>
-              <td class="p-3 text-right">{{ formatCurrency(salePrice(item)) }}</td>
-              <td class="p-3 text-right">{{ formatNumber(item.discount_percent) }}%</td>
-              <td class="p-3 text-right font-semibold">{{ formatCurrency(item.line_total) }}</td>
-            </tr>
-          </tbody>
-        </table>
+                  <div v-if="item.bonus_quantity" class="text-xs">
+                    + {{ formatNumber(item.bonus_quantity) }} {{ pick('free', 'مفت') }}
+                  </div>
+                  <div
+                    v-if="item.sale_quantity != null && !item.is_loose_sale"
+                    class="text-xs text-gray-500"
+                  >
+                    {{ formatNumber(item.quantity) }} {{ pick('units', 'اکائیاں') }}
+                  </div>
+                </td>
+                <td class="p-3 text-right">{{ formatCurrency(salePrice(item)) }}</td>
+                <td class="p-3 text-right">{{ formatNumber(item.discount_percent) }}%</td>
+                <td class="p-3 text-right font-semibold">{{ formatCurrency(item.line_total) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </CompactPages>
       </div>
 
       <!-- Totals -->
@@ -159,7 +182,7 @@ useDialogKeyboard(invoiceDialog, () => props.closeDetailModal());
           </div>
           <div v-if="selectedInvoice.discount_amount > 0" class="flex justify-between text-sm">
             <span>{{ pick('Invoice discount', 'انوائس پر رعایت') }}:</span>
-            <span class="text-red-600">-{{ formatCurrency(selectedInvoice.discount_amount) }}</span>
+            <span class="text-danger">-{{ formatCurrency(selectedInvoice.discount_amount) }}</span>
           </div>
           <div class="flex justify-between text-lg font-bold pt-2 border-t">
             <span>{{ t('total') }}:</span>
@@ -177,7 +200,7 @@ useDialogKeyboard(invoiceDialog, () => props.closeDetailModal());
       </div>
 
       <!-- Actions -->
-      <div class="p-6 border-t">
+      <div v-if="detailTab === 'receipt'" class="receipt-panel p-6 border-t">
         <h3 class="font-semibold">{{ pick('Digital receipt', 'ڈیجیٹل رسید') }}</h3>
         <p class="text-sm">
           {{

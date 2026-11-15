@@ -192,9 +192,9 @@ export function useDailyClosing() {
   }
 
   function getDifferenceClass(diff: number) {
-    if (diff === 0) return 'text-green-600';
-    if (Math.abs(diff) < 10) return 'text-yellow-600';
-    return 'text-red-600';
+    if (diff === 0) return 'text-success';
+    if (Math.abs(diff) < 10) return 'text-warning';
+    return 'text-danger';
   }
 
   return {

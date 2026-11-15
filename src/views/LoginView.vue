@@ -152,11 +152,11 @@ async function onSubmit() {
 .login-background {
   position: absolute;
   inset: 0;
-  background: linear-gradient(115deg, #e3f4f1 0%, #f7faf9 50%, #e7f0f5 100%);
+  background: linear-gradient(115deg, var(--color-primary-50) 0%, var(--surface-page) 50%, var(--color-secondary-50) 100%);
   pointer-events: none;
 }
 [data-theme='dark'] .login-background {
-  background: linear-gradient(115deg, #0f172a 0%, #172637 52%, #0f262b 100%);
+  background: linear-gradient(115deg, var(--surface-page) 0%, var(--surface-card) 52%, var(--color-primary-50) 100%);
 }
 .login-controls {
   position: absolute;
@@ -185,8 +185,8 @@ async function onSubmit() {
   justify-content: center;
   align-items: flex-start;
   padding: 36px 42px;
-  background: linear-gradient(150deg, #0f766e, #0d9488);
-  color: #fff;
+  background: linear-gradient(150deg, var(--color-primary-600), var(--color-primary-400));
+  color: var(--text-inverse);
 }
 .login-logo {
   display: grid;
@@ -277,25 +277,25 @@ async function onSubmit() {
 .remember-checkbox {
   width: 15px;
   height: 15px;
-  accent-color: #0d9488;
+  accent-color: var(--color-primary-600);
 }
 .error-banner {
   padding: 9px 11px;
   border: 1px solid var(--color-danger);
   border-radius: 7px;
-  background: rgba(220, 38, 38, 0.08);
+  background: var(--color-danger-bg);
   color: var(--color-danger);
   font-size: 12px;
 }
 .login-button {
   width: 100%;
   min-height: 42px;
-  background: #0f766e;
-  color: #fff;
+  background: var(--color-primary-600);
+  color: var(--text-inverse);
   font-weight: 700;
 }
 .login-button:hover:not(:disabled) {
-  background: #115e59;
+  background: var(--color-primary-800);
 }
 .login-footer {
   margin: 15px 0 0;
@@ -305,7 +305,7 @@ async function onSubmit() {
 }
 .login-container :deep(input:focus-visible),
 .login-container :deep(button:focus-visible) {
-  outline: 2px solid #0d9488;
+  outline: 2px solid var(--color-primary-600);
   outline-offset: 2px;
 }
 @media (max-height: 680px) {

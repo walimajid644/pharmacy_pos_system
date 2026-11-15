@@ -57,9 +57,9 @@
 }
 
 .purchase-terminal .status-tab-active {
-  background-color: #047857;
+  background-color: var(--color-primary-600);
   color: white;
-  border-color: var(--color-primary);
+  border-color: var(--color-primary-600);
 }
 
 .purchase-terminal .status-count {

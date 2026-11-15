@@ -108,6 +108,42 @@
   --color-border: var(--border-primary);
   --color-hover: var(--neutral-100);
 
+  /* === New Design Token System === */
+  --color-primary-50:  #E1F5EE;
+  --color-primary-100: #9FE1CB;
+  --color-primary-400: #1D9E75;
+  --color-primary-600: #0F6E56;
+  --color-primary-800: #085041;
+
+  --color-secondary-50:  #E6F1FB;
+  --color-secondary-400: #378ADD;
+  --color-secondary-600: #185FA5;
+  --color-secondary-800: #0C447C;
+
+  --color-success-bg:   #EAF3DE;
+  --color-success:      #639922;
+  --color-success-text: #27500A;
+
+  --color-warning-bg:   #FAEEDA;
+  --color-warning:      #BA7517;
+  --color-warning-text: #633806;
+
+  --color-danger-bg:    #FCEBEB;
+  --color-danger:       #A32D2D;
+  --color-danger-text:  #501313;
+
+  --color-info-bg:      #E6F1FB;
+  --color-info:         #185FA5;
+  --color-info-text:    #0C447C;
+
+  --surface-page:   #F7F6F2;
+  --surface-card:   #FFFFFF;
+  --border:         #D3D1C7;
+  --border-strong:  #B4B2A9;
+  --text-primary:   #2C2C2A;
+  --text-secondary: #5F5E5A;
+  --text-muted:     #888780;
+
   /* === Spacing System - 8px Grid === */
   --space-0: 0;
   --space-1: 0.25rem; /* 4px - Tight spacing */
@@ -207,6 +243,25 @@
   --color-text-secondary: var(--text-secondary);
   --color-border: var(--border-primary);
   --color-hover: var(--neutral-800);
+
+  /* === New Design Token System — Dark === */
+  --surface-page:   #1C1C1A;
+  --surface-card:   #26241F;
+  --border:         #3A3833;
+  --border-strong:  #52504A;
+  --text-primary:   #F1EFE8;
+  --text-secondary: #B4B2A9;
+  --text-muted:     #888780;
+
+  --color-primary-600: #1D9E75;
+  --color-primary-50:  #0B3A2D;
+  --color-secondary-600: #378ADD;
+  --color-secondary-50:  #0A2A44;
+
+  --color-success-bg:  #1C2B0C;
+  --color-warning-bg:  #2E200A;
+  --color-danger-bg:   #331010;
+  --color-info-bg:     #0A2A44;
 
   /* Softer shadows in dark mode */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);

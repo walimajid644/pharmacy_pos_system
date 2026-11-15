@@ -7,7 +7,6 @@ import { useAuthStore } from '@/stores/auth';
 import { useSettingsStore } from '@/stores/settings';
 import { useDashboardData } from '@/composables/useDashboardData';
 import DashboardTasks from '@/components/DashboardTasks.vue';
-import Button from '@/components/ui/Button.vue';
 import DashboardMetrics from '@/components/dashboard/DashboardMetrics.vue';
 import SalesActivityCard from '@/components/dashboard/SalesActivityCard.vue';
 import RecentBillsCard from '@/components/dashboard/RecentBillsCard.vue';
@@ -52,7 +51,7 @@ onMounted(async () => {
 watch(
   () => route.path,
   (path, previousPath) => {
-    if (path === '/' && previousPath !== '/') void loadDashboardData();
+    if (path === '/' && previousPath !== '/') void loadDashboardData({ background: true });
   },
 );
 function navigateTo(path: string) {
@@ -70,7 +69,7 @@ function navigateTo(path: string) {
           type="button"
           class="dashboard-action refresh-action"
           :disabled="loading"
-          @click="loadDashboardData"
+          @click="loadDashboardData()"
         >
           <span aria-hidden="true">↻</span> {{ pick('Refresh', 'تازہ کریں') }}
         </button>
@@ -79,7 +78,7 @@ function navigateTo(path: string) {
 
     <div
       v-if="loadError"
-      class="rounded-lg border border-red-300 bg-red-50 p-4 text-red-800"
+      class="rounded-lg border border-danger bg-danger-bg p-4 text-danger-text"
       role="alert"
     >
       {{
@@ -108,45 +107,6 @@ function navigateTo(path: string) {
       @products="navigateTo('/products')"
       @alerts="showAlerts"
     />
-
-    <nav class="quick-actions" :aria-label="pick('Quick actions', 'فوری کام')">
-      <Button
-        v-if="auth.hasRole(['admin', 'manager', 'cashier'])"
-        variant="primary"
-        size="md"
-        @click="navigateTo('/pos')"
-      >
-        <span class="text-lg leading-none">＋</span>
-        {{ pick('New Sale', 'نئی فروخت') }}
-      </Button>
-      <Button
-        v-if="canManageProducts"
-        variant="outline"
-        size="md"
-        @click="router.push({ path: '/purchase-orders', query: { status: 'receivable' } })"
-      >
-        <span class="text-lg leading-none">↓</span>
-        {{ pick('Receive PO', 'مال وصول کریں') }}
-      </Button>
-      <Button
-        v-if="canManageProducts"
-        variant="outline"
-        size="md"
-        @click="navigateTo('/daily-closing')"
-      >
-        <span class="text-lg leading-none">▤</span>
-        {{ pick('Daily Closing', 'روزانہ بندش') }}
-      </Button>
-      <Button
-        v-if="auth.hasRole(['admin', 'manager', 'cashier'])"
-        variant="outline"
-        size="md"
-        @click="navigateTo('/shifts')"
-      >
-        <span class="text-lg leading-none">▣</span>
-        {{ pick('Open Shift', 'شفٹ کھولیں') }}
-      </Button>
-    </nav>
 
     <div class="insights-grid">
       <SalesActivityCard
@@ -182,10 +142,10 @@ function navigateTo(path: string) {
 <style scoped>
 /* Match the Sales terminal's 11–12px text, short controls and tight spacing. */
 .home-view {
-  --compact-panel: var(--brand-100);
-  --compact-field: var(--brand-50);
-  --compact-rule: #86c9a3;
-  --compact-ink: var(--brand-900);
+  --compact-panel: var(--color-primary-50);
+  --compact-field: var(--surface-card);
+  --compact-rule: var(--color-primary-400);
+  --compact-ink: var(--color-primary-800);
   flex: 1;
   width: 100%;
   min-height: 0;
@@ -202,10 +162,10 @@ function navigateTo(path: string) {
   font-variant-numeric: tabular-nums;
 }
 :global([data-theme='dark'] .home-view) {
-  --compact-panel: #123e2b;
-  --compact-field: #102e22;
-  --compact-rule: #3a7958;
-  --compact-ink: #d1fae5;
+  --compact-panel: var(--color-primary-50);
+  --compact-field: var(--surface-card);
+  --compact-rule: var(--color-primary-600);
+  --compact-ink: var(--text-primary);
 }
 .home-view :deep(*) {
   box-sizing: border-box;
@@ -262,7 +222,7 @@ function navigateTo(path: string) {
   border-bottom: 2px solid var(--brand-600);
 }
 .home-view.home-view :deep(.task-icon) {
-  width: 16px;
+  width: 20px;
   height: 18px;
   font-size: 14px;
   background: transparent;
@@ -479,11 +439,11 @@ function navigateTo(path: string) {
   .home-view {
     height: 100%;
     display: grid;
-    grid-template-rows: auto auto auto minmax(120px, 0.9fr) minmax(120px, 1fr);
+    grid-template-rows: auto auto minmax(110px, 0.9fr) minmax(120px, 1fr);
     overflow: hidden;
   }
   .home-view.has-load-error {
-    grid-template-rows: auto auto auto auto minmax(100px, 0.9fr) minmax(100px, 1fr);
+    grid-template-rows: auto auto auto minmax(100px, 0.9fr) minmax(100px, 1fr);
   }
 }
 @media (max-width: 899px) {

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { computed, onMounted, ref } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { localDateKey, localDayBounds } from '@/lib/businessDay';
@@ -52,7 +53,7 @@ async function load() {
 }
 </script>
 <template>
-  <div class="tool-terminal documents-terminal">
+  <div class="tool-terminal compact-workspace documents-terminal">
     <header class="tool-header">
       <div>
         <h1>{{ pick('Cashier Performance', 'کیشئر کی کارکردگی') }}</h1>
@@ -85,51 +86,62 @@ async function load() {
         )
       }}
     </p>
-    <div class="commercial-table-scroll">
+    <div class="paged-table-host commercial-table-scroll">
       <p v-if="busy" role="status">{{ pick('Loading…', 'لوڈ ہو رہا ہے…') }}</p>
-      <table v-else>
-        <thead>
-          <tr>
-            <th>{{ pick('Cashier', 'کیشئر') }}</th>
-            <th>{{ pick('Invoices', 'بل') }}</th>
-            <th>{{ pick('Invoiced', 'فروخت') }}</th>
-            <th>{{ pick('Refunds / count', 'واپسی / تعداد') }}</th>
-            <th>{{ pick('Net sales', 'خالص فروخت') }}</th>
-            <th>{{ pick('Average bill', 'اوسط بل') }}</th>
-            <th>{{ pick('Return rate', 'واپسی شرح') }}</th>
-            <template v-if="mix"
-              ><th>{{ pick('Cash', 'نقد') }}</th>
-              <th>{{ pick('Card', 'کارڈ') }}</th>
-              <th>{{ pick('Mobile', 'موبائل') }}</th>
-              <th>{{ pick('Credit', 'ادھار') }}</th></template
-            >
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="r in rows" :key="r.id">
-            <td>{{ r.full_name }}</td>
-            <td>{{ r.invoice_count }}</td>
-            <td>{{ formatCurrency(r.invoiced) }}</td>
-            <td>{{ formatCurrency(r.refunds) }} / {{ r.return_count }}</td>
-            <td>{{ formatCurrency(r.net_sales) }}</td>
-            <td>{{ formatCurrency(r.average_bill) }}</td>
-            <td>{{ r.return_rate }}%</td>
-            <template v-if="mix"
-              ><td>{{ formatCurrency(r.cash) }}</td>
-              <td>{{ formatCurrency(r.card) }}</td>
-              <td>{{ formatCurrency(r.mobile) }}</td>
-              <td>{{ formatCurrency(r.credit) }}</td></template
-            >
-          </tr>
-          <tr v-if="!rows.length">
-            <td :colspan="mix ? 11 : 7" class="commercial-empty">
-              {{
-                pick('No cashier activity for this range.', 'اس مدت میں کیشئر کی کوئی سرگرمی نہیں۔')
-              }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <CompactPages
+        v-else
+        :items="rows"
+        :row-height="56"
+        :header-height="36"
+        v-slot="{ rows: pageRows }"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th>{{ pick('Cashier', 'کیشئر') }}</th>
+              <th>{{ pick('Invoices', 'بل') }}</th>
+              <th>{{ pick('Invoiced', 'فروخت') }}</th>
+              <th>{{ pick('Refunds / count', 'واپسی / تعداد') }}</th>
+              <th>{{ pick('Net sales', 'خالص فروخت') }}</th>
+              <th>{{ pick('Average bill', 'اوسط بل') }}</th>
+              <th>{{ pick('Return rate', 'واپسی شرح') }}</th>
+              <template v-if="mix"
+                ><th>{{ pick('Cash', 'نقد') }}</th>
+                <th>{{ pick('Card', 'کارڈ') }}</th>
+                <th>{{ pick('Mobile', 'موبائل') }}</th>
+                <th>{{ pick('Credit', 'ادھار') }}</th></template
+              >
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="{ item: r } in pageRows" :key="r.id">
+              <td>{{ r.full_name }}</td>
+              <td>{{ r.invoice_count }}</td>
+              <td>{{ formatCurrency(r.invoiced) }}</td>
+              <td>{{ formatCurrency(r.refunds) }} / {{ r.return_count }}</td>
+              <td>{{ formatCurrency(r.net_sales) }}</td>
+              <td>{{ formatCurrency(r.average_bill) }}</td>
+              <td>{{ r.return_rate }}%</td>
+              <template v-if="mix"
+                ><td>{{ formatCurrency(r.cash) }}</td>
+                <td>{{ formatCurrency(r.card) }}</td>
+                <td>{{ formatCurrency(r.mobile) }}</td>
+                <td>{{ formatCurrency(r.credit) }}</td></template
+              >
+            </tr>
+            <tr v-if="!rows.length">
+              <td :colspan="mix ? 11 : 7" class="commercial-empty">
+                {{
+                  pick(
+                    'No cashier activity for this range.',
+                    'اس مدت میں کیشئر کی کوئی سرگرمی نہیں۔',
+                  )
+                }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </CompactPages>
     </div>
     <footer class="tool-summary">
       <div>

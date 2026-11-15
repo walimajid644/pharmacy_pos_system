@@ -118,9 +118,10 @@ try {
   await open('/');
   await until("document.querySelector('.alerts-table tbody tr')!==null");
   inside(await evaluate(rect('.alerts-card')), 'dashboard alerts');
-  assert.equal(await evaluate("document.querySelectorAll('.quick-actions button').length"), 4);
+  assert.equal(await evaluate("document.querySelectorAll('.dashboard-tasks button').length"), 5);
+  assert.equal(await evaluate("document.querySelectorAll('.dashboard-footer button').length"), 5);
   await shot('dashboard-1024x600');
-  results.push('Dashboard metric/quick-action/alert panels fit 1024x600');
+  results.push('Dashboard metrics, task shortcuts, footer links and alerts fit 1024x600');
   await evaluate(
     "document.querySelector('.nav-group .nav-button').dispatchEvent(new PointerEvent('pointerenter',{pointerType:'mouse'}))",
   );
@@ -159,9 +160,11 @@ try {
     'Click opens the desktop menu; mouse hover switches all headings; Escape/outside click close it; touch hover does not switch',
   );
 
-  await evaluate("document.querySelectorAll('.quick-actions button')[1].click()");
+  await evaluate(
+    "[...document.querySelectorAll('.dashboard-tasks button')].find(b=>b.textContent.includes('Purchases')).click()",
+  );
   await until(
-    "document.querySelector('.purchase-terminal .status-tab-active')?.textContent.includes('Receivable')",
+    "document.querySelector('.purchase-terminal .status-tab-active')?.textContent.includes('All')",
   );
   await open('/pos');
   inside(await evaluate(rect('.pos-complete')), 'checkout');

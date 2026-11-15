@@ -23,7 +23,7 @@ defineProps<{
 </script>
 
 <template>
-  <div v-if="activeTab === 'appearance'" class="max-w-2xl space-y-5">
+  <div v-if="activeTab === 'appearance'" class="settings-fields max-w-2xl space-y-5">
     <p class="text-sm text-muted-foreground">
       {{
         pick(

@@ -32,7 +32,7 @@ const {
 const binddialog = bindTemplateRef(dialog);
 </script>
 <template>
-  <div class="tool-terminal documents-terminal compact-workspace">
+  <div class="tool-terminal documents-terminal suggestions-terminal compact-workspace">
     <header class="tool-header">
       <div>
         <h1>{{ pick('Purchase Suggestions', 'خریداری کی تجاویز') }}</h1>

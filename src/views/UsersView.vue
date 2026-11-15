@@ -26,7 +26,7 @@ const {
 </script>
 
 <template>
-  <div class="tool-terminal p-6 h-full flex flex-col">
+  <div class="tool-terminal compact-workspace p-6 h-full flex flex-col">
     <Card class="tool-panel flex-1 flex flex-col">
       <!-- Header -->
       <div class="tool-header p-6 border-b flex justify-between items-center">

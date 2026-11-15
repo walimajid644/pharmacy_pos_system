@@ -33,6 +33,22 @@ const tasks = [
     color: 'var(--color-warning)',
     roles: ['admin', 'manager'],
   },
+  {
+    path: '/daily-closing',
+    en: 'Daily Closing',
+    ur: 'روزانہ بندش',
+    icon: '▤',
+    color: 'var(--color-primary)',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/shifts',
+    en: 'Open Shift',
+    ur: 'شفٹ کھولیں',
+    icon: '▣',
+    color: 'var(--color-info, var(--color-secondary))',
+    roles: ['admin', 'manager', 'cashier'],
+  },
 ];
 const visibleTasks = computed(() => tasks.filter((task) => auth.hasRole(task.roles as UserRole[])));
 </script>

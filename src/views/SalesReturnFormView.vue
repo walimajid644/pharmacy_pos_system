@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { useSalesReturnForm } from '@/composables/useSalesReturnForm';
 
 const {
@@ -23,7 +24,7 @@ const {
 </script>
 
 <template>
-  <div class="tool-terminal max-w-5xl space-y-5 p-6">
+  <div class="tool-terminal compact-workspace return-editor max-w-5xl space-y-5 p-6">
     <header class="tool-header">
       <h2 class="text-2xl font-bold">{{ pick('New sales return', 'نئی فروخت واپسی') }}</h2>
       <p class="text-muted-foreground">
@@ -83,40 +84,47 @@ const {
           )
         }}
       </p>
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
-          <thead>
-            <tr>
-              <th class="p-2">{{ pick('Product', 'مصنوعات') }}</th>
-              <th class="p-2">{{ pick('Batch', 'بیچ') }}</th>
-              <th class="p-2">{{ pick('Available to return', 'واپسی کے لیے دستیاب') }}</th>
-              <th class="p-2">{{ pick('Return now', 'ابھی واپس کریں') }}</th>
-              <th class="p-2">{{ t('restock') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="line in lines" :key="line.id" class="border-t">
-              <td class="p-2">{{ line.product_name }}</td>
-              <td class="p-2">
-                <bdi>{{ line.batch_number }}</bdi>
-              </td>
-              <td class="p-2">
-                {{ formatNumber(Number(line.quantity) - Number(line.already_returned)) }}
-              </td>
-              <td class="p-2">
-                <input
-                  v-model.number="line.return_now"
-                  type="number"
-                  min="0"
-                  :max="Number(line.quantity) - Number(line.already_returned)"
-                  step="1"
-                  class="w-24 rounded border bg-background p-2"
-                />
-              </td>
-              <td class="p-2"><input v-model="line.restock" type="checkbox" /></td>
-            </tr>
-          </tbody>
-        </table>
+      <div class="paged-table-host overflow-x-auto">
+        <CompactPages
+          :items="lines"
+          :row-height="56"
+          :header-height="36"
+          v-slot="{ rows: pageRows }"
+        >
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr>
+                <th class="p-2">{{ pick('Product', 'مصنوعات') }}</th>
+                <th class="p-2">{{ pick('Batch', 'بیچ') }}</th>
+                <th class="p-2">{{ pick('Available to return', 'واپسی کے لیے دستیاب') }}</th>
+                <th class="p-2">{{ pick('Return now', 'ابھی واپس کریں') }}</th>
+                <th class="p-2">{{ t('restock') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="{ item: line } in pageRows" :key="line.id" class="border-t">
+                <td class="p-2">{{ line.product_name }}</td>
+                <td class="p-2">
+                  <bdi>{{ line.batch_number }}</bdi>
+                </td>
+                <td class="p-2">
+                  {{ formatNumber(Number(line.quantity) - Number(line.already_returned)) }}
+                </td>
+                <td class="p-2">
+                  <input
+                    v-model.number="line.return_now"
+                    type="number"
+                    min="0"
+                    :max="Number(line.quantity) - Number(line.already_returned)"
+                    step="1"
+                    class="w-24 rounded border bg-background p-2"
+                  />
+                </td>
+                <td class="p-2"><input v-model="line.restock" type="checkbox" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </CompactPages>
       </div>
       <p class="font-semibold">
         {{ pick('Estimated refund', 'متوقع واپسی رقم') }}: {{ formatCurrency(refund) }}

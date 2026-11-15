@@ -13,7 +13,7 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
 </script>
 
 <template>
-  <div v-if="activeTab === 'tax'" class="max-w-2xl space-y-6">
+  <div v-if="activeTab === 'tax'" class="settings-fields max-w-2xl space-y-6">
     <div>
       <label for="field-taxsettings-1" class="block text-sm font-medium mb-2"
         >{{ pick('Tax Rate', 'ٹیکس کی شرح') }} (%) *</label
@@ -42,15 +42,15 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
         placeholder="e.g. Rs, $, €"
         maxlength="5"
       />
-      <p class="text-xs text-gray-500 mt-1">Used in price displays and reports</p>
+      <p class="text-xs text-muted mt-1">Used in price displays and reports</p>
     </div>
 
-    <div class="p-4 bg-blue-50 border border-blue-200 rounded-md">
+    <div class="p-4 bg-info-bg border border-info rounded-md">
       <div class="flex items-start gap-3">
         <span class="text-2xl">ℹ️</span>
         <div>
-          <div class="font-semibold text-blue-900">Price Format</div>
-          <div class="text-sm text-blue-800 mt-1">
+          <div class="font-semibold text-info-text">Price Format</div>
+          <div class="text-sm text-info-text mt-1">
             Prices will be displayed as: {{ formData.currency_symbol }} 1,234.56
           </div>
         </div>

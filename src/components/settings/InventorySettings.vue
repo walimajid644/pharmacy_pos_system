@@ -13,7 +13,7 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
 </script>
 
 <template>
-  <div v-if="activeTab === 'inventory'" class="max-w-2xl space-y-6">
+  <div v-if="activeTab === 'inventory'" class="settings-fields max-w-2xl space-y-6">
     <div>
       <label for="field-inventorysettings-1" class="block text-sm font-medium mb-2">{{
         pick('Low Stock Threshold', 'کم اسٹاک کی حد')
@@ -42,15 +42,15 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
         max="3650"
         placeholder="e.g. 60"
       />
-      <p class="text-xs text-gray-500 mt-1">Alert when products expire within this many days</p>
+      <p class="text-xs text-muted mt-1">Alert when products expire within this many days</p>
     </div>
 
-    <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+    <div class="p-4 bg-warning-bg border border-warning rounded-md">
       <div class="flex items-start gap-3">
         <span class="text-2xl">⚠️</span>
         <div>
-          <div class="font-semibold text-yellow-900">Alert Settings</div>
-          <div class="text-sm text-yellow-800 mt-1">
+          <div class="font-semibold text-warning-text">Alert Settings</div>
+          <div class="text-sm text-warning-text mt-1">
             These settings control when alerts appear on the dashboard and in reports.
           </div>
         </div>

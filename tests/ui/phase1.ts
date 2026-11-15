@@ -144,6 +144,9 @@ const fixture = {
   catalogInvalid: false,
   importError: false,
   bulkError: false,
+  dashboardDelay: 0,
+  dashboardFail: false,
+  dashboardBillAmount: 100,
 };
 Object.assign(window, { fixture });
 if (params.get('app') === '1') {
@@ -378,6 +381,71 @@ Object.assign(window, {
         };
       if (command === 'database_select') {
         const q = (args.query || '').toLowerCase();
+        if (q.includes('from sales_dashboard')) {
+          if (fixture.dashboardDelay)
+            await new Promise((resolve) => setTimeout(resolve, fixture.dashboardDelay));
+          if (fixture.dashboardFail) throw new Error('Synthetic dashboard refresh failure');
+        }
+        if (params.get('layout') === '1') {
+          if (q.includes('from daily_closing')) return [];
+          if (q.includes('from cashier_shifts'))
+            return Array.from({ length: 40 }, (_, index) => ({
+              id: 'shift-' + index,
+              cashierName: user.full_name,
+              openedAt: stamp,
+              openingCashCents: 10000,
+              status: 'closed',
+              closedByName: user.full_name,
+              countedCashCents: 20000,
+              expectedCashCents: 20000,
+              varianceCents: 0,
+            }));
+          const reportRow = {
+            ...product,
+            ...batch,
+            product_name: product.name,
+            sale_date: stamp,
+            invoice_count: 2,
+            total_sales: 100,
+            cash_sales: 70,
+            card_sales: 20,
+            mobile_sales: 10,
+            total_cash: 70,
+            total_card: 20,
+            total_mobile: 10,
+            total_credit: 0,
+            current_stock: 8,
+            total_stock: 8,
+            stock_value: 40,
+            total_quantity: 10,
+            total_cost_value: 40,
+            total_retail_value: 80,
+            batch_value: 40,
+            days_until_expiry: 10,
+            batch_id: batch.id,
+            quarantined_stock: 0,
+          };
+          if (
+            q.includes('as sale_date') ||
+            q.includes('as total_quantity') ||
+            q.includes('as stock_value') ||
+            q.includes('as days_until_expiry') ||
+            q.includes('as total_cost_value')
+          )
+            return Array.from({ length: 40 }, (_, index) => ({
+              ...reportRow,
+              id: 'report-' + index,
+              batch_id: 'report-' + index,
+              sale_date: '2026-10-' + String((index % 28) + 1).padStart(2, '0'),
+            }));
+          if (q.includes('from sales_invoices') && q.includes('sum(')) return [reportRow];
+          if (q.includes('from sales_invoice_items'))
+            return Array.from({ length: 40 }, (_, index) => ({
+              ...saved.items[0],
+              id: 'invoice-line-' + index,
+              already_returned: 0,
+            }));
+        }
         if (params.get('compact') === '1') {
           if (q.includes('from sales_invoices'))
             return [
@@ -427,7 +495,7 @@ Object.assign(window, {
               id: 'bill-' + index,
               invoice_number: 'INV-' + (index + 1),
               invoice_date: stamp,
-              net_amount: 100,
+              net_amount: fixture.dashboardBillAmount,
               payment_method: 'cash',
               customer_name: 'Test Customer ' + (index + 1),
             }));

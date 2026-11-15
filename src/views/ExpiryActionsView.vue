@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { bindTemplateRef } from '@/lib/templateRefs';
 
 import { useExpiryActions } from '@/composables/useExpiryActions';
@@ -35,7 +36,7 @@ const {
 const binddialog = bindTemplateRef(dialog);
 </script>
 <template>
-  <div class="tool-terminal finance-terminal">
+  <div class="tool-terminal compact-workspace finance-terminal">
     <header class="tool-header">
       <div>
         <h1>{{ pick('Expiry & Quarantine Actions', 'میعاد اور قرنطینہ کی کارروائیاں') }}</h1>
@@ -80,50 +81,57 @@ const binddialog = bindTemplateRef(dialog);
             <option value="all">{{ pick('All batches', 'تمام بیچ') }}</option>
           </select>
         </div>
-        <div class="commercial-table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>{{ pick('Product / batch', 'مصنوعات / بیچ') }}</th>
-                <th>{{ pick('Expiry', 'میعاد') }}</th>
-                <th>{{ pick('Outside quarantine', 'قرنطینہ سے باہر') }}</th>
-                <th>{{ pick('Quarantined units', 'قرنطینہ اکائیاں') }}</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="b in visible" :key="b.id">
-                <td>
-                  {{ b.name }}<small>{{ b.batch_number }} · {{ b.sku }}</small>
-                </td>
-                <td>
-                  {{ b.expiry_date
-                  }}<small v-if="isExpired(b.expiry_date)" class="stock-badge expired">{{
-                    pick('Expired — cannot sell', 'میعاد ختم — فروخت منع')
-                  }}</small
-                  ><small
-                    v-else-if="isNearExpiry(b.expiry_date, nearExpiryDays)"
-                    class="stock-badge near"
-                    >{{ pick('Near expiry', 'قریب المیعاد') }}</small
-                  >
-                </td>
-                <td>{{ b.quantity_in_stock }}</td>
-                <td>
-                  <strong v-if="b.held" class="stock-badge held"
-                    >{{ pick('Quarantined', 'قرنطینہ') }}: {{ b.held }}</strong
-                  ><span v-else>0</span>
-                </td>
-                <td>
-                  <button @click="selectedId = b.id">{{ pick('Select', 'منتخب کریں') }}</button>
-                </td>
-              </tr>
-              <tr v-if="!visible.length">
-                <td colspan="5" class="commercial-empty">
-                  {{ pick('No batches match.', 'کوئی بیچ نہیں ملا۔') }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        <div class="paged-table-host commercial-table-scroll">
+          <CompactPages
+            :items="visible"
+            :row-height="56"
+            :header-height="36"
+            v-slot="{ rows: pageRows }"
+          >
+            <table>
+              <thead>
+                <tr>
+                  <th>{{ pick('Product / batch', 'مصنوعات / بیچ') }}</th>
+                  <th>{{ pick('Expiry', 'میعاد') }}</th>
+                  <th>{{ pick('Outside quarantine', 'قرنطینہ سے باہر') }}</th>
+                  <th>{{ pick('Quarantined units', 'قرنطینہ اکائیاں') }}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="{ item: b } in pageRows" :key="b.id">
+                  <td>
+                    {{ b.name }}<small>{{ b.batch_number }} · {{ b.sku }}</small>
+                  </td>
+                  <td>
+                    {{ b.expiry_date
+                    }}<small v-if="isExpired(b.expiry_date)" class="stock-badge expired">{{
+                      pick('Expired — cannot sell', 'میعاد ختم — فروخت منع')
+                    }}</small
+                    ><small
+                      v-else-if="isNearExpiry(b.expiry_date, nearExpiryDays)"
+                      class="stock-badge near"
+                      >{{ pick('Near expiry', 'قریب المیعاد') }}</small
+                    >
+                  </td>
+                  <td>{{ b.quantity_in_stock }}</td>
+                  <td>
+                    <strong v-if="b.held" class="stock-badge held"
+                      >{{ pick('Quarantined', 'قرنطینہ') }}: {{ b.held }}</strong
+                    ><span v-else>0</span>
+                  </td>
+                  <td>
+                    <button @click="selectedId = b.id">{{ pick('Select', 'منتخب کریں') }}</button>
+                  </td>
+                </tr>
+                <tr v-if="!visible.length">
+                  <td colspan="5" class="commercial-empty">
+                    {{ pick('No batches match.', 'کوئی بیچ نہیں ملا۔') }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </CompactPages>
         </div>
         <footer class="tool-summary">
           <small>{{
@@ -192,46 +200,48 @@ const binddialog = bindTemplateRef(dialog);
         </p>
       </aside>
     </div>
-    <div v-else class="commercial-table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ pick('Product / batch', 'مصنوعات / بیچ') }}</th>
-            <th>{{ pick('Quantity / reason', 'تعداد / وجہ') }}</th>
-            <th>{{ pick('Held by / date', 'روکنے والا / تاریخ') }}</th>
-            <th>{{ pick('Status / resolution', 'حیثیت / تصفیہ') }}</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="h in holds" :key="h.id">
-            <td>
-              {{ h.name }}<small>{{ h.batch_number }}</small>
-            </td>
-            <td>
-              {{ h.quantity }}<small>{{ h.reason }}</small>
-            </td>
-            <td>
-              {{ h.created_by_name }}<small>{{ formatDateTime(h.created_at) }}</small>
-            </td>
-            <td>
-              {{ h.status }}<small>{{ h.resolved_by_name }} {{ h.resolution_notes }}</small>
-            </td>
-            <td>
-              <button
-                v-if="h.status === 'held'"
-                @click="
-                  selectedHold = h;
-                  resolution = 'written_off';
-                  resolutionNotes = '';
-                "
-              >
-                {{ pick('Resolve hold', 'قرنطینہ کا تصفیہ') }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-else class="paged-table-host commercial-table-scroll">
+      <CompactPages :items="holds" :row-height="56" :header-height="36" v-slot="{ rows: pageRows }">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ pick('Product / batch', 'مصنوعات / بیچ') }}</th>
+              <th>{{ pick('Quantity / reason', 'تعداد / وجہ') }}</th>
+              <th>{{ pick('Held by / date', 'روکنے والا / تاریخ') }}</th>
+              <th>{{ pick('Status / resolution', 'حیثیت / تصفیہ') }}</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="{ item: h } in pageRows" :key="h.id">
+              <td>
+                {{ h.name }}<small>{{ h.batch_number }}</small>
+              </td>
+              <td>
+                {{ h.quantity }}<small>{{ h.reason }}</small>
+              </td>
+              <td>
+                {{ h.created_by_name }}<small>{{ formatDateTime(h.created_at) }}</small>
+              </td>
+              <td>
+                {{ h.status }}<small>{{ h.resolved_by_name }} {{ h.resolution_notes }}</small>
+              </td>
+              <td>
+                <button
+                  v-if="h.status === 'held'"
+                  @click="
+                    selectedHold = h;
+                    resolution = 'written_off';
+                    resolutionNotes = '';
+                  "
+                >
+                  {{ pick('Resolve hold', 'قرنطینہ کا تصفیہ') }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </CompactPages>
     </div>
     <div
       v-if="selectedHold"

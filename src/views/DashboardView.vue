@@ -4,6 +4,7 @@ import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import { bindTemplateRef } from '@/lib/templateRefs';
 import DesktopNav from '@/components/DesktopNav.vue';
 import HomeView from '@/views/HomeView.vue';
+import DashboardFooter from '@/components/DashboardFooter.vue';
 import { useDashboardWorkspace } from '@/composables/useDashboardWorkspace';
 
 const {
@@ -38,6 +39,9 @@ useDialogKeyboard(helpDialog, () => {
     <main class="dashboard-main" :inert="workspaceMode">
       <HomeView />
     </main>
+
+    <!-- Footer shortcuts -->
+    <DashboardFooter :inert="workspaceMode" />
     <div v-if="workspaceMode" class="workspace-overlay" @click.self="closeWorkspace">
       <section
         :ref="bindworkspaceDialog"
@@ -193,7 +197,7 @@ useDialogKeyboard(helpDialog, () => {
 .workspace-body {
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
 }
 .workspace-body :deep(.pos-terminal) {
   height: 100%;
@@ -270,11 +274,26 @@ useDialogKeyboard(helpDialog, () => {
   }
   .dashboard-overview .dashboard-main {
     min-height: 0;
+    overflow: hidden;
   }
 }
 @media (max-width: 1100px) {
   .header-content {
     padding-inline: 1rem;
   }
+}
+.dashboard-overview :deep(.dashboard-footer) {
+  flex-shrink: 0;
+  padding: 4px 12px;
+  gap: 5px;
+}
+.dashboard-overview :deep(.footer-btn) {
+  padding: 3px 7px;
+  font:
+    11px/1.2 Arial,
+    Tahoma,
+    sans-serif;
+  min-height: 24px;
+  border-radius: 2px;
 }
 </style>

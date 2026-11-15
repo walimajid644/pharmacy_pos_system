@@ -38,6 +38,8 @@ try {
   const suites = [
     'phase1',
     'compact',
+    'escape',
+    'no_scroll',
     'phase2',
     'phase3',
     'release_gate',

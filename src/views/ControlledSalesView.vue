@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { onMounted, ref } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { localDateKey, localDayBounds } from '@/lib/businessDay';
@@ -56,7 +57,7 @@ function page(n: number) {
 }
 </script>
 <template>
-  <div class="tool-terminal documents-terminal">
+  <div class="tool-terminal compact-workspace documents-terminal">
     <header class="tool-header">
       <div>
         <h1>{{ pick('Controlled Sales', 'کنٹرول شدہ ادویات کی فروخت') }}</h1>
@@ -86,51 +87,59 @@ function page(n: number) {
       }}
     </p>
     <p v-if="error" role="alert" class="commercial-error">{{ error }}</p>
-    <div class="commercial-table-scroll">
+    <div class="paged-table-host commercial-table-scroll">
       <p v-if="busy" role="status">{{ pick('Loading…', 'لوڈ ہو رہا ہے…') }}</p>
-      <table v-else>
-        <thead>
-          <tr>
-            <th>{{ pick('Invoice / when', 'بل / وقت') }}</th>
-            <th>{{ pick('Cashier', 'کیشئر') }}</th>
-            <th>{{ pick('Medicine / batch / DRAP', 'دوا / بیچ / DRAP') }}</th>
-            <th>{{ pick('Stock / free units', 'اسٹاک / مفت اکائیاں') }}</th>
-            <th>{{ pick('Patient / doctor / prescription', 'مریض / ڈاکٹر / نسخہ') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="r in result.rows" :key="r.id">
-            <td>
-              {{ r.invoice_number }}<small>{{ formatDateTime(r.invoice_date) }}</small
-              ><small v-if="!r.regulatory_snapshot">{{
-                pick('Imported classification', 'درآمد شدہ درجہ بندی')
-              }}</small>
-            </td>
-            <td>{{ r.cashier_name }}</td>
-            <td>
-              {{ r.product_name }}<small>{{ r.batch_number }}</small
-              ><small>DRAP: {{ r.drap || pick('Not recorded', 'درج نہیں') }}</small>
-            </td>
-            <td>{{ r.quantity }} / {{ r.bonus_units }}</td>
-            <td>
-              {{ r.patient_name || '—' }}<small>{{ r.doctor_name || '—' }}</small
-              ><small style="white-space: normal; max-width: 300px; overflow-wrap: anywhere">{{
-                r.prescription_note || '—'
-              }}</small>
-            </td>
-          </tr>
-          <tr v-if="!result.rows.length">
-            <td colspan="5" class="commercial-empty">
-              {{
-                pick(
-                  'No controlled sales in this range.',
-                  'اس مدت میں کنٹرول شدہ دوا کی فروخت نہیں۔',
-                )
-              }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <CompactPages
+        v-else
+        :items="result.rows"
+        :row-height="56"
+        :header-height="36"
+        v-slot="{ rows: pageRows }"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th>{{ pick('Invoice / when', 'بل / وقت') }}</th>
+              <th>{{ pick('Cashier', 'کیشئر') }}</th>
+              <th>{{ pick('Medicine / batch / DRAP', 'دوا / بیچ / DRAP') }}</th>
+              <th>{{ pick('Stock / free units', 'اسٹاک / مفت اکائیاں') }}</th>
+              <th>{{ pick('Patient / doctor / prescription', 'مریض / ڈاکٹر / نسخہ') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="{ item: r } in pageRows" :key="r.id">
+              <td>
+                {{ r.invoice_number }}<small>{{ formatDateTime(r.invoice_date) }}</small
+                ><small v-if="!r.regulatory_snapshot">{{
+                  pick('Imported classification', 'درآمد شدہ درجہ بندی')
+                }}</small>
+              </td>
+              <td>{{ r.cashier_name }}</td>
+              <td>
+                {{ r.product_name }}<small>{{ r.batch_number }}</small
+                ><small>DRAP: {{ r.drap || pick('Not recorded', 'درج نہیں') }}</small>
+              </td>
+              <td>{{ r.quantity }} / {{ r.bonus_units }}</td>
+              <td>
+                {{ r.patient_name || '—' }}<small>{{ r.doctor_name || '—' }}</small
+                ><small style="white-space: normal; max-width: 300px; overflow-wrap: anywhere">{{
+                  r.prescription_note || '—'
+                }}</small>
+              </td>
+            </tr>
+            <tr v-if="!result.rows.length">
+              <td colspan="5" class="commercial-empty">
+                {{
+                  pick(
+                    'No controlled sales in this range.',
+                    'اس مدت میں کنٹرول شدہ دوا کی فروخت نہیں۔',
+                  )
+                }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </CompactPages>
     </div>
     <footer class="tool-summary">
       <div>

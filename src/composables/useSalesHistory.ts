@@ -307,13 +307,13 @@ export function useSalesHistory() {
     const badges: Record<string, { label: string; class: string }> = {
       credit: {
         label: pick('Credit / Udhar', 'کریڈٹ / ادھار'),
-        class: 'bg-purple-100 text-purple-800',
+        class: 'bg-warning-bg text-warning-text',
       },
-      cash: { label: 'Cash', class: 'bg-green-100 text-green-800' },
-      card: { label: 'Card', class: 'bg-blue-100 text-blue-800' },
-      mobile: { label: 'Mobile', class: 'bg-purple-100 text-purple-800' },
+      cash: { label: 'Cash', class: 'bg-success-bg text-success-text' },
+      card: { label: 'Card', class: 'bg-info-bg text-info-text' },
+      mobile: { label: 'Mobile', class: 'bg-secondary-50 text-secondary-800' },
     };
-    return badges[method] || { label: method, class: 'bg-gray-100 text-gray-800' };
+    return badges[method] || { label: method, class: 'bg-surface-page text-muted' };
   }
 
   function clearFilters() {

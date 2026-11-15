@@ -12,7 +12,7 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
 </script>
 
 <template>
-  <div v-if="activeTab === 'receipt'" class="max-w-2xl space-y-6">
+  <div v-if="activeTab === 'receipt'" class="settings-fields max-w-2xl space-y-6">
     <div>
       <label for="field-receiptsettings-1" class="block text-sm font-medium mb-2">{{
         pick('Receipt Header', 'رسید کا عنوان')

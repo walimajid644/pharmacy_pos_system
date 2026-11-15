@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { bindTemplateRef } from '@/lib/templateRefs';
 
 import { useAdvancedItemSearch } from '@/composables/useAdvancedItemSearch';
@@ -27,7 +28,7 @@ const {
 const bindbatchDialog = bindTemplateRef(batchDialog);
 </script>
 <template>
-  <div class="tool-terminal search-terminal">
+  <div class="tool-terminal compact-workspace search-terminal">
     <header class="tool-header">
       <div>
         <h1>{{ label('Advanced Item Search') }}</h1>
@@ -104,51 +105,54 @@ const bindbatchDialog = bindTemplateRef(batchDialog);
       </button>
     </form>
     <p v-if="error" class="commercial-error" role="alert">{{ error }}</p>
-    <div class="commercial-table-scroll">
-      <table>
-        <thead>
-          <tr>
-            <th>{{ label('Product / generic') }}</th>
-            <th>{{ label('SKU / barcode') }}</th>
-            <th>{{ label('Category / manufacturer') }}</th>
-            <th>{{ label('Unit price') }}</th>
-            <th>{{ label('Available units') }}</th>
-            <th>{{ label('Expired units') }}</th>
-            <th>{{ label('Next expiry') }}</th>
-            <th>{{ label('Actions') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="p in items" :key="p.id">
-            <td>
-              {{ p.name }}<small>{{ p.generic_name }} {{ p.is_active ? '' : '· Inactive' }}</small>
-            </td>
-            <td>
-              {{ p.sku }}<small>{{ p.barcode }}</small>
-            </td>
-            <td>
-              {{ p.category || '—' }}<small>{{ p.manufacturer }}</small>
-            </td>
-            <td>
-              {{ formatCurrency(p.unit_price) }}<small>{{ p.pack_size }} units / pack</small>
-            </td>
-            <td :class="{ 'commercial-error': p.stock <= p.reorder_level }">{{ p.stock }}</td>
-            <td>{{ p.expired_stock }}</td>
-            <td>{{ p.next_expiry || '—' }}</td>
-            <td>
-              <button @click="show(p)">{{ label('Batches') }}</button>
-              <button v-if="auth.hasRole(['admin', 'manager'])" @click="router.push('/products')">
-                {{ label('Manage') }}
-              </button>
-            </td>
-          </tr>
-          <tr v-if="!items.length && !loading">
-            <td colspan="8" class="commercial-empty">
-              {{ label('No items match these filters.') }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="paged-table-host commercial-table-scroll">
+      <CompactPages :items="items" :row-height="56" :header-height="36" v-slot="{ rows: pageRows }">
+        <table>
+          <thead>
+            <tr>
+              <th>{{ label('Product / generic') }}</th>
+              <th>{{ label('SKU / barcode') }}</th>
+              <th>{{ label('Category / manufacturer') }}</th>
+              <th>{{ label('Unit price') }}</th>
+              <th>{{ label('Available units') }}</th>
+              <th>{{ label('Expired units') }}</th>
+              <th>{{ label('Next expiry') }}</th>
+              <th>{{ label('Actions') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="{ item: p } in pageRows" :key="p.id">
+              <td>
+                {{ p.name
+                }}<small>{{ p.generic_name }} {{ p.is_active ? '' : '· Inactive' }}</small>
+              </td>
+              <td>
+                {{ p.sku }}<small>{{ p.barcode }}</small>
+              </td>
+              <td>
+                {{ p.category || '—' }}<small>{{ p.manufacturer }}</small>
+              </td>
+              <td>
+                {{ formatCurrency(p.unit_price) }}<small>{{ p.pack_size }} units / pack</small>
+              </td>
+              <td :class="{ 'commercial-error': p.stock <= p.reorder_level }">{{ p.stock }}</td>
+              <td>{{ p.expired_stock }}</td>
+              <td>{{ p.next_expiry || '—' }}</td>
+              <td>
+                <button @click="show(p)">{{ label('Batches') }}</button>
+                <button v-if="auth.hasRole(['admin', 'manager'])" @click="router.push('/products')">
+                  {{ label('Manage') }}
+                </button>
+              </td>
+            </tr>
+            <tr v-if="!items.length && !loading">
+              <td colspan="8" class="commercial-empty">
+                {{ label('No items match these filters.') }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </CompactPages>
     </div>
     <footer class="tool-summary">
       <div>
@@ -188,27 +192,34 @@ const bindbatchDialog = bindTemplateRef(batchDialog);
           DRAP: {{ selected.drap_registration_number || 'Not recorded' }} · Earliest expiry is sold
           first.
         </p>
-        <table>
-          <thead>
-            <tr>
-              <th>{{ label('Batch') }}</th>
-              <th>{{ label('Expiry') }}</th>
-              <th>{{ label('Total units') }}</th>
-              <th>{{ label('Opened loose units') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="b in batches" :key="b.id">
-              <td>{{ b.batch_number }}</td>
-              <td>{{ b.expiry_date }}</td>
-              <td>{{ b.quantity_in_stock }}</td>
-              <td>{{ b.loose_open_remaining }}</td>
-            </tr>
-            <tr v-if="!batches.length">
-              <td colspan="4">{{ label('No batches recorded.') }}</td>
-            </tr>
-          </tbody>
-        </table>
+        <CompactPages
+          :items="batches"
+          :row-height="56"
+          :header-height="36"
+          v-slot="{ rows: pageRows }"
+        >
+          <table>
+            <thead>
+              <tr>
+                <th>{{ label('Batch') }}</th>
+                <th>{{ label('Expiry') }}</th>
+                <th>{{ label('Total units') }}</th>
+                <th>{{ label('Opened loose units') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="{ item: b } in pageRows" :key="b.id">
+                <td>{{ b.batch_number }}</td>
+                <td>{{ b.expiry_date }}</td>
+                <td>{{ b.quantity_in_stock }}</td>
+                <td>{{ b.loose_open_remaining }}</td>
+              </tr>
+              <tr v-if="!batches.length">
+                <td colspan="4">{{ label('No batches recorded.') }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </CompactPages>
       </section>
     </div>
   </div>

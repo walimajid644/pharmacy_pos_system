@@ -125,12 +125,36 @@ try {
       `var s=document.querySelector('.commercial-filters select');s.value=${JSON.stringify(id)};s.dispatchEvent(new Event('change',{bubbles:true}))`,
     );
   await scenario('/customers', 'admin', { customers: 'many' });
-  await until("document.querySelectorAll('.customer-balance-badge').length===4");
-  assert(
+  await until("document.querySelector('.customer-balance-badge')!==null");
+  const balanceKinds = new Set();
+  for (let page = 0; page < 10; page++) {
+    for (const kind of await evaluate(
+      "[...document.querySelectorAll('.customer-balance-badge')].flatMap(e=>[...e.classList])",
+    ))
+      balanceKinds.add(kind);
+    const next = '.tool-table-scroll .compact-pager button:last-child';
+    if (
+      await evaluate(
+        `!document.querySelector('${next}') || document.querySelector('${next}').disabled`,
+      )
+    )
+      break;
+    await evaluate(`document.querySelector('${next}').click()`);
+    await delay(150);
+  }
+  assert(['owed', 'over-limit', 'credit', 'settled'].every((kind) => balanceKinds.has(kind)));
+  await scenario('/customers', 'admin', { customers: 'many' });
+  await until("document.querySelector('.customer-balance-badge')!==null");
+  for (
+    let page = 0;
+    page < 4 && !(await evaluate("!!document.querySelector('.customer-balance-badge.over-limit')"));
+    page++
+  ) {
     await evaluate(
-      "['owed','over-limit','credit','settled'].every(c=>document.querySelector('.customer-balance-badge.'+c))",
-    ),
-  );
+      "document.querySelector('.tool-table-scroll .compact-pager button:last-child').click()",
+    );
+    await delay(150);
+  }
   inside(await evaluate(rect('.tool-summary')), 'customer footer');
   await shot('customer-balances-1024x600');
   await evaluate(

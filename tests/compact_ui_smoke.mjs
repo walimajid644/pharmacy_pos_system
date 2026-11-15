@@ -164,6 +164,45 @@ try {
   results.push(
     'Compact dashboard uses 11px controls and 18px metrics; populated bills/alerts fit without scrolling',
   );
+  await evaluate(`
+    window.dashboardFlashed=false;
+    window.dashboardBillNode=document.querySelector('.bill-row');
+    window.dashboardObserver=new MutationObserver(()=>{
+      if(document.querySelector('.home-view .skeleton')) window.dashboardFlashed=true;
+    });
+    window.dashboardObserver.observe(document.querySelector('.home-view'),{childList:true,subtree:true});
+    fixture.dashboardDelay=150;
+    fixture.dashboardBillAmount=200;
+    fixture.calls.length=0;
+    document.querySelector('.dashboard-tasks button').click();
+  `);
+  await until("document.querySelector('#pos-product-search')!==null");
+  await escape();
+  await until("location.pathname==='/'");
+  await until("fixture.calls.some(c=>c.query?.includes('FROM sales_dashboard'))");
+  assert(
+    await evaluate(
+      "document.querySelector('.bill-row')===window.dashboardBillNode&&!document.querySelector('.home-view .skeleton')",
+    ),
+  );
+  await until("document.querySelector('.bill-row b')?.textContent.includes('200.00')");
+  assert.equal(await evaluate('window.dashboardFlashed'), false);
+  await evaluate(
+    "fixture.dashboardFail=true;fixture.calls.length=0;document.querySelector('.dashboard-tasks button').click()",
+  );
+  await until("document.querySelector('#pos-product-search')!==null");
+  await escape();
+  await until("location.pathname==='/'");
+  await until("fixture.calls.some(c=>c.command==='record_diagnostic')");
+  assert(
+    await evaluate(
+      "!window.dashboardFlashed&&!document.querySelector('.home-view [role=alert]')&&document.querySelector('.bill-row b').textContent.includes('200.00')",
+    ),
+  );
+  await evaluate('window.dashboardObserver.disconnect()');
+  results.push(
+    'Closing Sales refreshes dashboard data in the background without placeholders or replacing existing cards; failed refresh retains the last values without a flashing error',
+  );
   await open('/pos');
   await evaluate(
     "document.querySelector('#pos-product-search').focus();document.querySelector('#pos-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
@@ -401,8 +440,12 @@ try {
     await until("location.pathname==='/'");
   }
   await open('/pos');
-  await evaluate("document.querySelector('#pos-customer').focus()");
+  await until("document.querySelector('#pos-customer')!==null");
+  await evaluate(
+    "var customer=document.querySelector('#pos-customer');customer.focus();customer.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}))",
+  );
   await until("document.querySelector('#pos-customer-options')!==null");
+  await evaluate("document.querySelector('#pos-customer').focus()");
   await escape();
   await until("document.querySelector('#pos-customer-options')===null");
   assert.equal(await evaluate('location.pathname'), '/pos');

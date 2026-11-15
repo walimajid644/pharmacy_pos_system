@@ -37,7 +37,7 @@ const {
 </script>
 
 <template>
-  <div class="tool-terminal p-6 h-full flex flex-col">
+  <div class="tool-terminal compact-workspace p-6 h-full flex flex-col">
     <header class="tool-header">
       <h1>{{ label('Reports') }}</h1>
     </header>

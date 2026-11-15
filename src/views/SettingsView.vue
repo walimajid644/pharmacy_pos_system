@@ -28,7 +28,7 @@ const {
 </script>
 
 <template>
-  <div class="tool-terminal p-6 h-full flex flex-col">
+  <div class="tool-terminal compact-workspace p-6 h-full flex flex-col">
     <Card class="tool-panel flex-1 flex flex-col">
       <!-- Header -->
       <div class="tool-header p-6 border-b">
@@ -51,8 +51,8 @@ const {
             :class="[
               'px-4 py-3 font-medium border-b-2 transition-colors',
               activeTab === 'company'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900',
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-secondary hover:text-primary',
             ]"
           >
             {{ pick('Company Info', 'کمپنی کی معلومات') }}
@@ -62,8 +62,8 @@ const {
             :class="[
               'px-4 py-3 font-medium border-b-2 transition-colors',
               activeTab === 'tax'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900',
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-secondary hover:text-primary',
             ]"
           >
             {{ pick('Tax & Currency', 'ٹیکس اور کرنسی') }}
@@ -73,8 +73,8 @@ const {
             :class="[
               'px-4 py-3 font-medium border-b-2 transition-colors',
               activeTab === 'inventory'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900',
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-secondary hover:text-primary',
             ]"
           >
             {{ pick('Inventory', 'اسٹاک') }}
@@ -84,8 +84,8 @@ const {
             :class="[
               'px-4 py-3 font-medium border-b-2 transition-colors',
               activeTab === 'receipt'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900',
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-secondary hover:text-primary',
             ]"
           >
             {{ pick('Receipt', 'رسید') }}
@@ -95,8 +95,8 @@ const {
             :class="[
               'px-4 py-3 font-medium border-b-2 transition-colors',
               activeTab === 'appearance'
-                ? 'border-blue-600 text-blue-600'
-                : 'border-transparent text-gray-600 hover:text-gray-900',
+                ? 'border-primary-600 text-primary-600'
+                : 'border-transparent text-secondary hover:text-primary',
             ]"
           >
             {{ pick('Appearance & Language', 'ظاہری شکل اور زبان') }}

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { reportDiagnostic } from '@/lib/diagnostics';
 
 import { computed, onMounted, ref } from 'vue';
@@ -135,7 +136,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="tool-terminal max-w-4xl space-y-5 p-6">
+  <div class="tool-terminal adjustment-editor compact-workspace max-w-4xl space-y-5 p-6">
     <header class="tool-header">
       <h2 class="text-2xl font-bold">{{ pick('New stock adjustment', 'نئی اسٹاک ترمیم') }}</h2>
       <p class="text-muted-foreground">
@@ -161,39 +162,47 @@ onMounted(async () => {
         >{{ pick('Notes', 'نوٹس')
         }}<textarea v-model="notes" class="block w-full rounded border bg-background p-2" />
       </label>
-      <div class="space-y-3">
+      <div class="adjustment-lines space-y-3">
         <h3 class="font-semibold">{{ pick('Batches', 'بیچ') }}</h3>
-        <div
-          v-for="(line, index) in lines"
-          :key="index"
-          class="grid gap-3 sm:grid-cols-[1fr_8rem_auto]"
+        <CompactPages
+          :items="lines"
+          :row-height="36"
+          :header-height="0"
+          follow-added
+          v-slot="{ rows: adjustmentRows }"
         >
-          <select v-model="line.batch_id" class="rounded border bg-background p-2" required>
-            <option value="">
-              {{ pick('Choose product and batch', 'مصنوعات اور بیچ منتخب کریں') }}
-            </option>
-            <option v-for="batch in batches" :key="batch.id" :value="batch.id">
-              {{ batch.product_name }} · {{ batch.batch_number }} ·
-              {{ formatNumber(batch.quantity_in_stock) }} {{ pick('in stock', 'اسٹاک میں') }}
-            </option>
-          </select>
-          <input
-            v-model.number="line.quantity"
-            type="number"
-            min="1"
-            step="1"
-            class="rounded border bg-background p-2"
-            required
-          />
-          <button
-            type="button"
-            class="rounded border px-3"
-            :disabled="lines.length === 1"
-            @click="lines.splice(index, 1)"
+          <div
+            v-for="{ item: line, index } in adjustmentRows"
+            :key="index"
+            class="grid gap-3 sm:grid-cols-[1fr_8rem_auto]"
           >
-            {{ pick('Remove', 'ہٹائیں') }}
-          </button>
-        </div>
+            <select v-model="line.batch_id" class="rounded border bg-background p-2" required>
+              <option value="">
+                {{ pick('Choose product and batch', 'مصنوعات اور بیچ منتخب کریں') }}
+              </option>
+              <option v-for="batch in batches" :key="batch.id" :value="batch.id">
+                {{ batch.product_name }} · {{ batch.batch_number }} ·
+                {{ formatNumber(batch.quantity_in_stock) }} {{ pick('in stock', 'اسٹاک میں') }}
+              </option>
+            </select>
+            <input
+              v-model.number="line.quantity"
+              type="number"
+              min="1"
+              step="1"
+              class="rounded border bg-background p-2"
+              required
+            />
+            <button
+              type="button"
+              class="rounded border px-3"
+              :disabled="lines.length === 1"
+              @click="lines.splice(index, 1)"
+            >
+              {{ pick('Remove', 'ہٹائیں') }}
+            </button>
+          </div>
+        </CompactPages>
         <button
           type="button"
           class="text-primary"

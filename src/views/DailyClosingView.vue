@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import Card from '@/components/ui/Card.vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
@@ -25,7 +26,7 @@ const {
 </script>
 
 <template>
-  <div class="tool-terminal p-6 h-full flex flex-col">
+  <div class="tool-terminal compact-workspace p-6 h-full flex flex-col">
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
       <!-- Today's Sales -->
       <div class="flex flex-col">
@@ -46,52 +47,52 @@ const {
 
           <div class="flex-1 p-6 space-y-6">
             <!-- Status -->
-            <div v-if="todayClosed" class="p-4 bg-green-50 border border-green-200 rounded-md">
+            <div v-if="todayClosed" class="p-4 bg-success-bg border border-success rounded-md">
               <div class="flex items-center gap-2">
                 <span class="text-2xl">✅</span>
                 <div>
-                  <div class="font-semibold text-green-800">Day Already Closed</div>
-                  <div class="text-sm text-green-700">This day has been closed and reconciled</div>
+                  <div class="font-semibold text-success-text">Day Already Closed</div>
+                  <div class="text-sm text-success-text">This day has been closed and reconciled</div>
                 </div>
               </div>
             </div>
 
             <div
               v-else-if="salesData.invoice_count === 0"
-              class="p-4 bg-yellow-50 border border-yellow-200 rounded-md"
+              class="p-4 bg-warning-bg border border-warning rounded-md"
             >
               <div class="flex items-center gap-2">
                 <span class="text-2xl">ℹ️</span>
                 <div>
-                  <div class="font-semibold text-yellow-800">No Sales Today</div>
-                  <div class="text-sm text-yellow-700">No transactions recorded for today</div>
+                  <div class="font-semibold text-warning-text">No Sales Today</div>
+                  <div class="text-sm text-warning-text">No transactions recorded for today</div>
                 </div>
               </div>
             </div>
 
-            <div v-else class="p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <div v-else class="p-4 bg-info-bg border border-info rounded-md">
               <div class="flex items-center gap-2">
                 <span class="text-2xl">📊</span>
                 <div>
-                  <div class="font-semibold text-blue-800">Ready to Close</div>
-                  <div class="text-sm text-blue-700">Review sales and close the day</div>
+                  <div class="font-semibold text-info-text">Ready to Close</div>
+                  <div class="text-sm text-info-text">Review sales and close the day</div>
                 </div>
               </div>
             </div>
 
             <!-- Sales Summary -->
-            <div>
+            <div v-if="!showClosingForm">
               <h2 class="font-semibold mb-4">Today's Sales Summary</h2>
 
               <div class="space-y-3">
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                  <span class="text-gray-700">Total Invoices</span>
+                <div class="flex justify-between items-center p-3 bg-surface-page rounded-md">
+                  <span class="text-secondary">Total Invoices</span>
                   <span class="text-2xl font-bold">{{ salesData.invoice_count }}</span>
                 </div>
 
-                <div class="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                  <span class="text-gray-700">Total Sales</span>
-                  <span class="text-2xl font-bold text-blue-600">{{
+                <div class="flex justify-between items-center p-3 bg-surface-page rounded-md">
+                  <span class="text-secondary">Total Sales</span>
+                  <span class="text-2xl font-bold text-primary-600">{{
                     formatCurrency(salesData.total_sales)
                   }}</span>
                 </div>
@@ -136,7 +137,7 @@ const {
             <!-- Closing Form -->
             <div
               v-if="showClosingForm"
-              class="space-y-4 p-4 bg-yellow-50 border border-yellow-200 rounded-md"
+              class="space-y-4 p-4 bg-warning-bg border border-warning rounded-md"
             >
               <h3 class="font-semibold">Cash Reconciliation</h3>
 
@@ -214,46 +215,60 @@ const {
             <p class="text-sm text-gray-600 mt-1">Last 30 days</p>
           </div>
 
-          <div class="flex-1 overflow-auto p-6">
+          <div class="paged-table-host flex-1 p-6">
             <div v-if="closingHistory.length === 0" class="text-center py-12 text-gray-500">
               No closing history yet
             </div>
 
-            <div v-else class="space-y-3">
-              <div
-                v-for="closing in closingHistory"
-                :key="closing.id"
-                class="p-4 border rounded-md hover:bg-gray-50"
-              >
-                <div class="flex justify-between items-start mb-2">
-                  <div>
-                    <div class="font-semibold">
-                      {{ new Date(closing.closing_date).toLocaleDateString() }}
+            <CompactPages
+              v-else
+              :items="closingHistory"
+              :row-height="120"
+              :header-height="0"
+              v-slot="{ rows }"
+            >
+              <div class="space-y-3">
+                <div
+                  v-for="{ item: closing } in rows"
+                  :key="closing.id"
+                  class="p-4 border rounded-md hover:bg-gray-50"
+                >
+                  <div class="flex justify-between items-start mb-2">
+                    <div>
+                      <div class="font-semibold">
+                        {{ new Date(closing.closing_date).toLocaleDateString() }}
+                      </div>
+                      <div class="text-sm text-secondary">
+                        Closed by: {{ closing.closed_by_name }}
+                      </div>
+                      <div class="text-xs text-muted">
+                        {{ new Date(closing.closing_time).toLocaleTimeString() }}
+                      </div>
                     </div>
-                    <div class="text-sm text-gray-600">Closed by: {{ closing.closed_by_name }}</div>
-                    <div class="text-xs text-gray-500">
-                      {{ new Date(closing.closing_time).toLocaleTimeString() }}
+                    <div class="text-right">
+                      <div class="text-lg font-bold text-primary-600">
+                        {{ formatCurrency(closing.total_sales) }}
+                      </div>
                     </div>
                   </div>
-                  <div class="text-right">
-                    <div class="text-lg font-bold text-blue-600">
-                      {{ formatCurrency(closing.total_sales) }}
-                    </div>
-                  </div>
-                </div>
 
-                <div class="flex gap-4 text-sm pt-2 border-t">
-                  <div>
-                    <span class="text-gray-600">Cash:</span>
-                    <span class="font-semibold ml-1">{{ formatCurrency(closing.total_cash) }}</span>
-                  </div>
-                  <div>
-                    <span class="text-gray-600">Card:</span>
-                    <span class="font-semibold ml-1">{{ formatCurrency(closing.total_card) }}</span>
+                  <div class="flex gap-4 text-sm pt-2 border-t">
+                    <div>
+                      <span class="text-secondary">Cash:</span>
+                      <span class="font-semibold ml-1">{{
+                        formatCurrency(closing.total_cash)
+                      }}</span>
+                    </div>
+                    <div>
+                      <span class="text-secondary">Card:</span>
+                      <span class="font-semibold ml-1">{{
+                        formatCurrency(closing.total_card)
+                      }}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            </CompactPages>
           </div>
         </Card>
       </div>

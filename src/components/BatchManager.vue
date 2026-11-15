@@ -75,19 +75,19 @@ function getBatchStatus(batch: ProductBatch) {
   if (isUnallocatedStockBatch(batch) || batch.quantity_in_stock < 0) {
     return {
       label: pick('Negative / unallocated', 'منفی / غیر مختص'),
-      class: 'bg-yellow-100 text-yellow-800',
+      class: 'bg-warning-bg text-warning-text',
     };
   }
   if (isExpired(batch.expiry_date)) {
-    return { label: pick('Expired', 'میعاد ختم'), class: 'bg-red-100 text-red-800' };
+    return { label: pick('Expired', 'میعاد ختم'), class: 'bg-danger-bg text-danger-text' };
   }
   if (isNearExpiry(batch.expiry_date, Number(settingsStore.settings?.near_expiry_days ?? 60))) {
-    return { label: pick('Near expiry', 'قریب المیعاد'), class: 'bg-yellow-100 text-yellow-800' };
+    return { label: pick('Near expiry', 'قریب المیعاد'), class: 'bg-warning-bg text-warning-text' };
   }
   if (batch.quantity_in_stock === 0) {
-    return { label: pick('Out of stock', 'اسٹاک ختم'), class: 'bg-gray-100 text-gray-800' };
+    return { label: pick('Out of stock', 'اسٹاک ختم'), class: 'bg-surface-page text-muted' };
   }
-  return { label: pick('Active', 'فعال'), class: 'bg-green-100 text-green-800' };
+  return { label: pick('Active', 'فعال'), class: 'bg-success-bg text-success-text' };
 }
 
 async function addBatch() {
@@ -291,7 +291,7 @@ function cancelAdd() {
                         Number(settingsStore.settings?.near_expiry_days ?? 60),
                       )
                     "
-                    class="text-xs text-red-600 ml-2"
+                    class="text-xs text-danger ml-2"
                   >
                     ({{
                       Math.ceil(
@@ -304,7 +304,7 @@ function cancelAdd() {
                 </td>
                 <td class="p-3 text-right font-semibold">
                   {{ batch.quantity_in_stock }}
-                  <small v-if="batch.quarantined" class="block text-red-600"
+                  <small v-if="batch.quarantined" class="block text-danger"
                     >⛔ {{ batch.quarantined }} {{ pick('quarantined', 'قرنطینہ') }}</small
                   >
                 </td>

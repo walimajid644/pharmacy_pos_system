@@ -34,7 +34,7 @@ async function save() {
 }
 </script>
 <template>
-  <main class="tool-terminal backup-page">
+  <main class="tool-terminal compact-workspace backup-page">
     <header class="tool-header">
       <h2>{{ pick('Database backups', 'ڈیٹابیس بیک اپ') }}</h2>
     </header>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import { reportDiagnostic } from '@/lib/diagnostics';
 
@@ -109,7 +110,7 @@ useDialogKeyboard(reviewDialog, () => {
 </script>
 
 <template>
-  <div class="tool-terminal space-y-5 p-6">
+  <div class="tool-terminal compact-workspace space-y-5 p-6">
     <header class="tool-header flex flex-wrap items-center justify-between gap-3">
       <div>
         <h2 class="text-2xl font-bold">{{ t('stock_adjustments') }}</h2>
@@ -133,37 +134,44 @@ useDialogKeyboard(reviewDialog, () => {
     <p v-else-if="!adjustments.length" class="rounded border p-6">
       {{ pick('No stock adjustments yet.', 'ابھی کوئی اسٹاک ترمیم نہیں۔') }}
     </p>
-    <div v-else class="overflow-x-auto rounded border">
-      <table class="w-full text-left text-sm">
-        <thead class="bg-muted">
-          <tr>
-            <th class="p-3">{{ pick('Number', 'نمبر') }}</th>
-            <th class="p-3">{{ pick('Date', 'تاریخ') }}</th>
-            <th class="p-3">{{ pick('Type', 'قسم') }}</th>
-            <th class="p-3">{{ pick('Reason', 'وجہ') }}</th>
-            <th class="p-3">{{ pick('Created by', 'درج کرنے والا') }}</th>
-            <th class="p-3">{{ t('status') }}</th>
-            <th class="p-3"></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="row in adjustments" :key="row.id" class="border-t">
-            <td class="p-3">
-              <bdi>{{ row.adjustment_number }}</bdi>
-            </td>
-            <td class="p-3">{{ formatDate(row.adjustment_date) }}</td>
-            <td class="p-3">{{ t(row.adjustment_type) }}</td>
-            <td class="p-3">{{ t(row.reason) }}</td>
-            <td class="p-3">{{ row.creator_name }}</td>
-            <td class="p-3">{{ t(row.status) }}</td>
-            <td class="p-3">
-              <button class="text-primary" @click="select(row)">
-                {{ pick('Review', 'جائزہ') }}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div v-else class="paged-table-host overflow-x-auto rounded border">
+      <CompactPages
+        :items="adjustments"
+        :row-height="56"
+        :header-height="36"
+        v-slot="{ rows: pageRows }"
+      >
+        <table class="w-full text-left text-sm">
+          <thead class="bg-muted">
+            <tr>
+              <th class="p-3">{{ pick('Number', 'نمبر') }}</th>
+              <th class="p-3">{{ pick('Date', 'تاریخ') }}</th>
+              <th class="p-3">{{ pick('Type', 'قسم') }}</th>
+              <th class="p-3">{{ pick('Reason', 'وجہ') }}</th>
+              <th class="p-3">{{ pick('Created by', 'درج کرنے والا') }}</th>
+              <th class="p-3">{{ t('status') }}</th>
+              <th class="p-3"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="{ item: row } in pageRows" :key="row.id" class="border-t">
+              <td class="p-3">
+                <bdi>{{ row.adjustment_number }}</bdi>
+              </td>
+              <td class="p-3">{{ formatDate(row.adjustment_date) }}</td>
+              <td class="p-3">{{ t(row.adjustment_type) }}</td>
+              <td class="p-3">{{ t(row.reason) }}</td>
+              <td class="p-3">{{ row.creator_name }}</td>
+              <td class="p-3">{{ t(row.status) }}</td>
+              <td class="p-3">
+                <button class="text-primary" @click="select(row)">
+                  {{ pick('Review', 'جائزہ') }}
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </CompactPages>
     </div>
     <div
       v-if="selected"
@@ -175,21 +183,30 @@ useDialogKeyboard(reviewDialog, () => {
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       @click.self="selected = null"
     >
-      <div
-        class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-lg bg-background p-6 space-y-4"
-      >
+      <div class="review-detail-dialog w-full max-w-lg rounded-lg bg-background p-6 space-y-4">
         <h3 class="text-xl font-semibold">{{ selected.adjustment_number }}</h3>
         <p>
           {{ t(selected.adjustment_type) }} · {{ t(selected.reason) }} · {{ t(selected.status) }}
         </p>
         <p v-if="selected.reason_notes">{{ selected.reason_notes }}</p>
-        <ul class="divide-y rounded border">
-          <li v-for="(item, index) in items" :key="index" class="flex justify-between p-3">
-            <span
-              >{{ item.product_name }} · <bdi>{{ item.batch_number }}</bdi></span
-            ><strong>{{ formatNumber(item.quantity_adjusted) }}</strong>
-          </li>
-        </ul>
+        <CompactPages
+          class="review-list-pages"
+          :items="items || []"
+          :row-height="38"
+          :header-height="0"
+          v-slot="{ rows: reviewRows }"
+          ><ul class="divide-y rounded border">
+            <li
+              v-for="{ item: item, index: index } in reviewRows"
+              :key="index"
+              class="flex justify-between p-3"
+            >
+              <span
+                >{{ item.product_name }} · <bdi>{{ item.batch_number }}</bdi></span
+              ><strong>{{ formatNumber(item.quantity_adjusted) }}</strong>
+            </li>
+          </ul></CompactPages
+        >
         <div class="flex justify-end gap-3">
           <button class="rounded border px-4 py-2" @click="selected = null">
             {{ pick('Close', 'بند کریں') }}</button><template v-if="selected.status === 'pending'"

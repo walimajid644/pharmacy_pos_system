@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { bindTemplateRef } from '@/lib/templateRefs';
 
 import { useCatalogImport } from '@/composables/useCatalogImport';
@@ -29,7 +30,7 @@ const {
 const binddialog = bindTemplateRef(dialog);
 </script>
 <template>
-  <div class="tool-terminal documents-terminal">
+  <div class="tool-terminal compact-workspace documents-terminal">
     <header class="tool-header">
       <div>
         <h1>{{ pick('Medicine Catalog Import', 'ادویات کی فہرست درآمد کریں') }}</h1>
@@ -115,29 +116,37 @@ const binddialog = bindTemplateRef(dialog);
         {{ pick('Review import', 'درآمد کا جائزہ') }}
       </button>
     </div>
-    <div class="commercial-table-scroll">
-      <table v-if="preview">
-        <thead>
-          <tr>
-            <th>{{ pick('Row', 'سطر') }}</th>
-            <th>SKU</th>
-            <th>{{ pick('Name', 'نام') }}</th>
-            <th>{{ pick('Validation / warnings', 'جانچ / انتباہ') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="r in paged" :key="r.row">
-            <td>{{ r.row }}</td>
-            <td>{{ r.sku }}</td>
-            <td>{{ r.name }}</td>
-            <td>
-              <span v-if="!r.errors.length">✓ {{ pick('Ready', 'تیار') }}</span
-              ><small v-for="e in r.errors" :key="e" class="commercial-error">{{ e }}</small
-              ><small v-for="w in r.warnings" :key="w">⚠ {{ w }}</small>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="paged-table-host commercial-table-scroll">
+      <CompactPages
+        v-if="preview"
+        :items="paged"
+        :row-height="64"
+        :header-height="36"
+        v-slot="{ rows: pageRows }"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th>{{ pick('Row', 'سطر') }}</th>
+              <th>SKU</th>
+              <th>{{ pick('Name', 'نام') }}</th>
+              <th>{{ pick('Validation / warnings', 'جانچ / انتباہ') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="{ item: r } in pageRows" :key="r.row">
+              <td>{{ r.row }}</td>
+              <td>{{ r.sku }}</td>
+              <td>{{ r.name }}</td>
+              <td>
+                <span v-if="!r.errors.length">✓ {{ pick('Ready', 'تیار') }}</span
+                ><small v-for="e in r.errors" :key="e" class="commercial-error">{{ e }}</small
+                ><small v-for="w in r.warnings" :key="w">⚠ {{ w }}</small>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </CompactPages>
       <p v-else class="commercial-empty">
         {{
           pick(

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { onMounted, ref } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from '@/lib/i18n';
@@ -88,7 +89,7 @@ function clear() {
 }
 </script>
 <template>
-  <div class="tool-terminal documents-terminal">
+  <div class="tool-terminal compact-workspace documents-terminal">
     <header class="tool-header">
       <div>
         <h1>{{ pick('Audit Log', 'پڑتال کا ریکارڈ') }}</h1>
@@ -131,45 +132,58 @@ function clear() {
       }}
     </p>
     <p v-if="error" role="alert" class="commercial-error">{{ error }}</p>
-    <div class="commercial-table-scroll">
+    <div class="paged-table-host commercial-table-scroll">
       <p v-if="busy" role="status">{{ pick('Loading…', 'لوڈ ہو رہا ہے…') }}</p>
-      <table v-else>
-        <thead>
-          <tr>
-            <th>{{ pick('When', 'وقت') }}</th>
-            <th>{{ pick('Action', 'کارروائی') }}</th>
-            <th>{{ pick('User', 'صارف') }}</th>
-            <th>{{ pick('Reference', 'حوالہ') }}</th>
-            <th>{{ pick('Details', 'تفصیل') }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="e in result.events" :key="e.id">
-            <td>
-              {{ formatDateTime(e.occurred_at)
-              }}<small v-if="e.historical">{{ pick('Imported history', 'درآمد شدہ تاریخ') }}</small>
-            </td>
-            <td>{{ eventName(e.event_type) }}</td>
-            <td>
-              {{ e.actor_name || pick('Unknown / historical actor', 'نامعلوم / پرانا صارف')
-              }}<small>{{ e.actor_id }}</small>
-            </td>
-            <td>
-              {{ e.reference }}<small>{{ e.entity_type }}</small>
-            </td>
-            <td style="max-width: 330px; white-space: normal; overflow-wrap: anywhere">
-              {{ e.details }}
-            </td>
-          </tr>
-          <tr v-if="!result.events.length">
-            <td colspan="5" class="commercial-empty">
-              {{
-                pick('No audit events match these filters.', 'ان فلٹرز کے مطابق کوئی ریکارڈ نہیں۔')
-              }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <CompactPages
+        v-else
+        :items="result.events"
+        :row-height="56"
+        :header-height="36"
+        v-slot="{ rows: pageRows }"
+      >
+        <table>
+          <thead>
+            <tr>
+              <th>{{ pick('When', 'وقت') }}</th>
+              <th>{{ pick('Action', 'کارروائی') }}</th>
+              <th>{{ pick('User', 'صارف') }}</th>
+              <th>{{ pick('Reference', 'حوالہ') }}</th>
+              <th>{{ pick('Details', 'تفصیل') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="{ item: e } in pageRows" :key="e.id">
+              <td>
+                {{ formatDateTime(e.occurred_at)
+                }}<small v-if="e.historical">{{
+                  pick('Imported history', 'درآمد شدہ تاریخ')
+                }}</small>
+              </td>
+              <td>{{ eventName(e.event_type) }}</td>
+              <td>
+                {{ e.actor_name || pick('Unknown / historical actor', 'نامعلوم / پرانا صارف')
+                }}<small>{{ e.actor_id }}</small>
+              </td>
+              <td>
+                {{ e.reference }}<small>{{ e.entity_type }}</small>
+              </td>
+              <td style="max-width: 330px; white-space: normal; overflow-wrap: anywhere">
+                {{ e.details }}
+              </td>
+            </tr>
+            <tr v-if="!result.events.length">
+              <td colspan="5" class="commercial-empty">
+                {{
+                  pick(
+                    'No audit events match these filters.',
+                    'ان فلٹرز کے مطابق کوئی ریکارڈ نہیں۔',
+                  )
+                }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </CompactPages>
     </div>
     <footer class="tool-summary">
       <div>

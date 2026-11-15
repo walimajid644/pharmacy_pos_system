@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { useSupplierLedger } from '@/composables/useSupplierLedger';
 
 const {
@@ -26,10 +28,11 @@ const {
   save,
   printVoucher,
 } = useSupplierLedger();
+const ledgerTab = ref<'balances' | 'payment' | 'vouchers'>('balances');
 </script>
 
 <template>
-  <div class="tool-terminal ledger-page">
+  <div class="tool-terminal compact-workspace ledger-page">
     <header class="tool-header">
       <h2>{{ pick('Supplier Ledger', 'سپلائر کھاتہ') }}</h2>
       <button type="button" @click="load">{{ pick('Refresh', 'تازہ کریں') }}</button>
@@ -64,38 +67,68 @@ const {
           <option v-for="[id, name] in suppliers" :key="id" :value="id">{{ name }}</option>
         </select></label
       >
-      <div class="ledger-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>{{ pick('Supplier / PO', 'سپلائر / آرڈر') }}</th>
-              <th>{{ pick('Received value', 'موصولہ مالیت') }}</th>
-              <th>{{ pick('Paid', 'ادا شدہ') }}</th>
-              <th>{{ pick('Balance', 'بقایا') }}</th>
-              <th>{{ pick('Days overdue', 'تاخیر کے دن') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="row in visibleRows" :key="row.id">
-              <td>
-                {{ row.supplier_name }}<small>{{ row.po_number }} · {{ row.status }}</small>
-              </td>
-              <td>{{ formatCurrency(accruedCents(row) / 100) }}</td>
-              <td>{{ formatCurrency(row.paid_cents / 100) }}</td>
-              <td>
-                <strong>{{ formatCurrency(balanceCents(row) / 100) }}</strong>
-              </td>
-              <td>{{ daysOverdue(row) }}</td>
-            </tr>
-            <tr v-if="!visibleRows.length">
-              <td colspan="5">
-                {{ pick('No received purchase orders', 'ابھی کوئی موصولہ آرڈر نہیں') }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <nav class="commercial-tabs" :aria-label="pick('Ledger sections', 'کھاتے کے حصے')">
+        <button
+          type="button"
+          :aria-pressed="ledgerTab === 'balances'"
+          @click="ledgerTab = 'balances'"
+        >
+          {{ pick('Balances', 'بقایا') }}
+        </button>
+        <button
+          type="button"
+          :aria-pressed="ledgerTab === 'payment'"
+          @click="ledgerTab = 'payment'"
+        >
+          {{ pick('Record payment', 'ادائیگی درج کریں') }}
+        </button>
+        <button
+          type="button"
+          :aria-pressed="ledgerTab === 'vouchers'"
+          @click="ledgerTab = 'vouchers'"
+        >
+          {{ pick('Payment history', 'ادائیگی کی تاریخ') }}
+        </button>
+      </nav>
+      <div v-show="ledgerTab === 'balances'" class="paged-table-host ledger-table-wrap">
+        <CompactPages
+          :items="visibleRows"
+          :row-height="56"
+          :header-height="36"
+          v-slot="{ rows: pageRows }"
+        >
+          <table>
+            <thead>
+              <tr>
+                <th>{{ pick('Supplier / PO', 'سپلائر / آرڈر') }}</th>
+                <th>{{ pick('Received value', 'موصولہ مالیت') }}</th>
+                <th>{{ pick('Paid', 'ادا شدہ') }}</th>
+                <th>{{ pick('Balance', 'بقایا') }}</th>
+                <th>{{ pick('Days overdue', 'تاخیر کے دن') }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="{ item: row } in pageRows" :key="row.id">
+                <td>
+                  {{ row.supplier_name }}<small>{{ row.po_number }} · {{ row.status }}</small>
+                </td>
+                <td>{{ formatCurrency(accruedCents(row) / 100) }}</td>
+                <td>{{ formatCurrency(row.paid_cents / 100) }}</td>
+                <td>
+                  <strong>{{ formatCurrency(balanceCents(row) / 100) }}</strong>
+                </td>
+                <td>{{ daysOverdue(row) }}</td>
+              </tr>
+              <tr v-if="!visibleRows.length">
+                <td colspan="5">
+                  {{ pick('No received purchase orders', 'ابھی کوئی موصولہ آرڈر نہیں') }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </CompactPages>
       </div>
-      <form class="ledger-form" @submit.prevent="save">
+      <form v-show="ledgerTab === 'payment'" class="ledger-form" @submit.prevent="save">
         <h3>{{ pick('Record payment', 'ادائیگی درج کریں') }}</h3>
         <label
           >{{ pick('Purchase order', 'خریداری آرڈر') }}
@@ -135,35 +168,44 @@ const {
           }}
         </button>
       </form>
-      <h3>{{ pick('Recent payment vouchers', 'حالیہ ادائیگی واؤچر') }}</h3>
-      <div class="ledger-table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>{{ pick('Voucher', 'واؤچر') }}</th>
-              <th>{{ pick('Supplier', 'سپلائر') }}</th>
-              <th>{{ pick('Date', 'تاریخ') }}</th>
-              <th>{{ pick('Amount', 'رقم') }}</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="payment in payments" :key="payment.id">
-              <td>{{ payment.voucher_number }}</td>
-              <td>{{ payment.supplier_name }}</td>
-              <td>{{ payment.paid_at.slice(0, 10) }}</td>
-              <td>{{ formatCurrency(payment.amount_cents / 100) }}</td>
-              <td>
-                <button type="button" @click="printVoucher(payment)">
-                  {{ pick('Print', 'پرنٹ') }}
-                </button>
-              </td>
-            </tr>
-            <tr v-if="!payments.length">
-              <td colspan="5">{{ pick('No payments yet', 'ابھی کوئی ادائیگی نہیں') }}</td>
-            </tr>
-          </tbody>
-        </table>
+      <h3 v-show="ledgerTab === 'vouchers'">
+        {{ pick('Recent payment vouchers', 'حالیہ ادائیگی واؤچر') }}
+      </h3>
+      <div v-show="ledgerTab === 'vouchers'" class="paged-table-host ledger-table-wrap">
+        <CompactPages
+          :items="payments"
+          :row-height="56"
+          :header-height="36"
+          v-slot="{ rows: pageRows }"
+        >
+          <table>
+            <thead>
+              <tr>
+                <th>{{ pick('Voucher', 'واؤچر') }}</th>
+                <th>{{ pick('Supplier', 'سپلائر') }}</th>
+                <th>{{ pick('Date', 'تاریخ') }}</th>
+                <th>{{ pick('Amount', 'رقم') }}</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="{ item: payment } in pageRows" :key="payment.id">
+                <td>{{ payment.voucher_number }}</td>
+                <td>{{ payment.supplier_name }}</td>
+                <td>{{ payment.paid_at.slice(0, 10) }}</td>
+                <td>{{ formatCurrency(payment.amount_cents / 100) }}</td>
+                <td>
+                  <button type="button" @click="printVoucher(payment)">
+                    {{ pick('Print', 'پرنٹ') }}
+                  </button>
+                </td>
+              </tr>
+              <tr v-if="!payments.length">
+                <td colspan="5">{{ pick('No payments yet', 'ابھی کوئی ادائیگی نہیں') }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </CompactPages>
       </div>
     </template>
   </div>
