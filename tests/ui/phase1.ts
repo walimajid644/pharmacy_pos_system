@@ -137,6 +137,7 @@ const fixture = {
   clockOffset: 0,
   productDelay: 0,
   failProductSearch: false,
+  noProductStock: false,
   nearExpiryDays: Number(params.get('days') || 60),
   statementDelays: {} as Record<string, number>,
   statementFailCustomer: '',
@@ -378,6 +379,47 @@ Object.assign(window, {
       if (command === 'database_select') {
         const q = (args.query || '').toLowerCase();
         if (params.get('compact') === '1') {
+          if (q.includes('from sales_invoices'))
+            return [
+              {
+                ...saved.invoice,
+                invoice_date: stamp,
+                customer_name: 'Test Customer',
+                cashier_name: user.full_name,
+                status: 'completed',
+                created_at: stamp,
+                updated_at: stamp,
+              },
+            ];
+          if (q.includes('from sales_invoice_items')) return saved.items;
+          if (q.includes('from stock_adjustments'))
+            return [
+              {
+                id: 'adjustment1',
+                adjustment_number: 'ADJ-TEST',
+                adjustment_date: stamp,
+                adjustment_type: 'decrease',
+                reason: 'damage',
+                status: 'pending',
+                created_by: user.id,
+                creator_name: user.full_name,
+              },
+            ];
+          if (q.includes('from sales_returns'))
+            return [
+              {
+                id: 'return1',
+                return_number: 'RET-TEST',
+                original_invoice_id: saved.invoice.id,
+                invoice_number: saved.invoice.invoice_number,
+                return_date: stamp,
+                return_reason: 'customer_return',
+                refund_method: 'cash',
+                refund_amount: 7,
+                status: 'pending',
+              },
+            ];
+
           if (q.includes('count(')) return [{ count: 40, total: 600 }];
           if (q.includes('from sales_dashboard')) {
             if (q.includes('sum(')) return [{ total: 600 }];
@@ -577,6 +619,7 @@ Object.assign(window, {
           return [product];
         }
         if (q.includes('from product_batches')) {
+          if (fixture.noProductStock) return [];
           const first = {
             ...batch,
             name: product.name,

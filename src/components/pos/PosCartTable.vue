@@ -2,7 +2,6 @@
 import { computed, ref, watch, type Ref } from 'vue';
 import { useElementSize } from '@vueuse/core';
 import type { usePosTerminal } from '@/composables/usePosTerminal';
-import Button from '@/components/ui/Button.vue';
 
 type ViewValue<T> = T extends Ref<infer Value> ? Value : T;
 type State = ReturnType<typeof usePosTerminal>;
@@ -90,7 +89,7 @@ watch(pageCount, () => {
           <th scope="col">{{ pick('Disc Rs', 'رعایت روپے') }}</th>
           <th scope="col">{{ t('total') }}</th>
           <th scope="col">
-            <span class="sr-only">{{ pick('Remove', 'ہٹائیں') }}</span>
+            {{ pick('Remove', 'ہٹائیں') }}
           </th>
         </tr>
       </thead>
@@ -113,7 +112,10 @@ watch(pageCount, () => {
             <bdi class="pos-batch-number">{{ item.batch.batch_number }}</bdi><small
               class="pos-expiry-date"
               :class="{ warning: !!getBatchWarning(item.batch.expiry_date) }"
-              >{{ formatDate(item.batch.expiry_date)
+              >{{
+                item.batch.expiry_date
+                  ? formatDate(item.batch.expiry_date)
+                  : pick('Not recorded', 'درج نہیں')
               }}<span v-if="getBatchWarning(item.batch.expiry_date)">
                 · {{ getBatchWarning(item.batch.expiry_date) }}</span
               ></small
@@ -190,14 +192,14 @@ watch(pageCount, () => {
             <bdi>{{ formatCurrency(cartStore.lineTotal(item)) }}</bdi>
           </td>
           <td>
-            <Button
-              variant="destructive"
-              size="sm"
+            <button
+              type="button"
               class="pos-remove"
               :aria-label="pick('Remove item', 'آئٹم ہٹائیں')"
               @click="removeFromCart(index)"
-              >×</Button
             >
+              {{ pick('Remove', 'ہٹائیں') }}
+            </button>
           </td>
         </tr>
         <tr v-if="!cartStore.items.length">

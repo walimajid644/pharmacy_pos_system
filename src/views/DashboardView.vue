@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import { bindTemplateRef } from '@/lib/templateRefs';
 import DesktopNav from '@/components/DesktopNav.vue';
 import HomeView from '@/views/HomeView.vue';
@@ -16,6 +18,10 @@ const {
   pageTitle,
 } = useDashboardWorkspace();
 const bindworkspaceDialog = bindTemplateRef(workspaceDialog);
+const helpDialog = ref<HTMLElement | null>(null);
+useDialogKeyboard(helpDialog, () => {
+  shortcutHelpOpen.value = false;
+});
 </script>
 
 <template>
@@ -51,6 +57,8 @@ const bindworkspaceDialog = bindTemplateRef(workspaceDialog);
           <button
             type="button"
             class="workspace-close"
+            aria-keyshortcuts="Escape"
+            :title="pick('Close window (Esc)', 'ونڈو بند کریں (Esc)')"
             :aria-label="pick('Close window', 'ونڈو بند کریں')"
             @click="closeWorkspace"
           >
@@ -66,6 +74,8 @@ const bindworkspaceDialog = bindTemplateRef(workspaceDialog);
       @click.self="shortcutHelpOpen = false"
     >
       <section
+        ref="helpDialog"
+        tabindex="-1"
         role="dialog"
         aria-modal="true"
         :aria-label="pick('Keyboard shortcuts', 'کی بورڈ شارٹ کٹس')"

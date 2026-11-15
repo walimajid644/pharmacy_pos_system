@@ -1,12 +1,13 @@
 <script setup lang="ts">
-import type { Ref } from 'vue';
+import { ref, type Ref } from 'vue';
+import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import type { useSalesHistory } from '@/composables/useSalesHistory';
 import Card from '@/components/ui/Card.vue';
 import Button from '@/components/ui/Button.vue';
 
 type ViewValue<T> = T extends Ref<infer Value> ? Value : T;
 type State = ReturnType<typeof useSalesHistory>;
-defineProps<{
+const props = defineProps<{
   pick: ViewValue<State['pick']>;
   t: ViewValue<State['t']>;
   formatNumber: ViewValue<State['formatNumber']>;
@@ -22,11 +23,18 @@ defineProps<{
   formatDate: ViewValue<State['formatDate']>;
 }>();
 const digitalText = defineModel<ViewValue<State['digitalText']>>('digitalText', { required: true });
+const invoiceDialog = ref<HTMLElement | null>(null);
+useDialogKeyboard(invoiceDialog, () => props.closeDetailModal());
 </script>
 
 <template>
   <div
     v-if="showDetailModal && selectedInvoice"
+    ref="invoiceDialog"
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+    :aria-label="pick('Invoice Details', 'انوائس کی تفصیلات')"
     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
     @click.self="closeDetailModal"
   >

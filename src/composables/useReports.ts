@@ -248,7 +248,7 @@ export function useReports() {
         LEFT JOIN (SELECT batch_id,SUM(quantity) AS held FROM batch_holds WHERE status='held' GROUP BY batch_id) h ON h.batch_id=pb.id
         WHERE p.deleted_at IS NULL AND p.is_active = 1
         GROUP BY p.id, p.name, p.sku, p.cost_price, p.unit_price
-        HAVING total_stock > 0
+        HAVING total_stock != 0
         ORDER BY retail_value DESC`,
       );
       stockValuationData.value = data;

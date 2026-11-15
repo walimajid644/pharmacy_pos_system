@@ -26,3 +26,22 @@ export type PosProduct = Product & { batches: ProductBatch[] };
 export function roundSaleMoney(amount: number) {
   return Math.round(amount * 100) / 100;
 }
+
+// A stock ledger entry for sales before a physical batch has been recorded.
+export function unallocatedStockBatch(product: Product): ProductBatch {
+  return {
+    id: `unallocated-stock:${product.id}`,
+    product_id: product.id,
+    batch_number: 'Unallocated stock',
+    expiry_date: '',
+    quantity_in_stock: 0,
+    loose_open_remaining: 0,
+    cost_price_at_batch: product.cost_price,
+    received_date: '',
+    created_at: '',
+    updated_at: '',
+  };
+}
+export function isUnallocatedStockBatch(batch: ProductBatch) {
+  return batch.id === `unallocated-stock:${batch.product_id}`;
+}

@@ -92,7 +92,9 @@ export function usePosCustomer() {
   }
 
   function onCustomerKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
+    if (event.key === 'Escape' && customerOpen.value) {
+      event.preventDefault();
+      event.stopPropagation();
       customerOpen.value = false;
     } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
       event.preventDefault();

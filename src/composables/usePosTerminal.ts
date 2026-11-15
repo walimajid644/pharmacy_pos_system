@@ -1,5 +1,5 @@
 import { reportDiagnostic } from '@/lib/diagnostics';
-import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useCartStore } from '@/stores/cart';
 import { useSettingsStore } from '@/stores/settings';
@@ -22,6 +22,9 @@ export function usePosTerminal() {
   const { t, pick, formatNumber } = useI18n();
 
   const cartStore = useCartStore();
+  // Every opening is a new sale; saved invoices remain in sales history.
+  cartStore.clearCart();
+  let disposed = false;
 
   const settingsStore = useSettingsStore();
 
@@ -92,7 +95,6 @@ export function usePosTerminal() {
     lineGross,
     lineDiscount,
     lineMargin,
-    reservedInBatch,
     addToCart,
     removeFromCart,
     updateQuantities,
@@ -171,7 +173,12 @@ export function usePosTerminal() {
     window.addEventListener('keydown', onPaymentShortcut);
   });
 
-  onUnmounted(() => window.removeEventListener('keydown', onPaymentShortcut));
+  onBeforeUnmount(() => {
+    disposed = true;
+    window.removeEventListener('keydown', onPaymentShortcut);
+    resetProductSearch();
+    cartStore.clearCart();
+  });
 
   async function loadShift() {
     try {
@@ -234,7 +241,7 @@ export function usePosTerminal() {
       return;
     }
     await loadShift();
-    if (checkoutLoading.value) return;
+    if (disposed || checkoutLoading.value) return;
     if (!shift.value || shift.value.cashierId !== authStore.currentUser?.id) {
       toast.warning(
         pick('Open your cash drawer shift before selling.', 'فروخت سے پہلے اپنی کیش شفٹ کھولیں۔'),
@@ -246,12 +253,6 @@ export function usePosTerminal() {
       return;
     }
 
-    if (
-      cartStore.items.some((item) => reservedInBatch(item.batch.id) > item.batch.quantity_in_stock)
-    ) {
-      toast.warning('A cart quantity exceeds available batch stock');
-      return;
-    }
     if (!authStore.currentUser) {
       toast.error('Please sign in before completing a sale');
       return;
@@ -294,6 +295,7 @@ export function usePosTerminal() {
           })),
         },
       });
+      if (disposed) return;
       lastReceipt.value = receipt;
       lastInvoiceId.value = receipt.invoiceId;
       sourceDocumentId.value = null;
@@ -311,6 +313,7 @@ export function usePosTerminal() {
       cashReceived.value = '';
       searchInput.value?.focus();
     } catch (error) {
+      if (disposed) return;
       reportDiagnostic('operation_failed', 'pos');
       toast.error(
         String(error).includes('Selected customer is unavailable')

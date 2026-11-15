@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref } from 'vue';
+import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import { useSalesReturns } from '@/composables/useSalesReturns';
 
 const {
@@ -19,6 +21,10 @@ const {
   formatCurrency,
   formatDate,
 } = useSalesReturns();
+const reviewDialog = ref<HTMLElement | null>(null);
+useDialogKeyboard(reviewDialog, () => {
+  selected.value = null;
+});
 </script>
 
 <template>
@@ -89,6 +95,11 @@ const {
     </div>
     <div
       v-if="selected"
+      ref="reviewDialog"
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+      :aria-label="pick('Sales return details', 'فروخت کی واپسی کی تفصیلات')"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       @click.self="selected = null"
     >

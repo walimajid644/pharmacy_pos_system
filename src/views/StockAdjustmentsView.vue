@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import { reportDiagnostic } from '@/lib/diagnostics';
 
 import { onMounted, ref } from 'vue';
@@ -101,6 +102,10 @@ async function decide(approved: boolean) {
 }
 
 onMounted(load);
+const reviewDialog = ref<HTMLElement | null>(null);
+useDialogKeyboard(reviewDialog, () => {
+  selected.value = null;
+});
 </script>
 
 <template>
@@ -162,6 +167,11 @@ onMounted(load);
     </div>
     <div
       v-if="selected"
+      ref="reviewDialog"
+      role="dialog"
+      aria-modal="true"
+      tabindex="-1"
+      :aria-label="pick('Stock adjustment details', 'اسٹاک ترمیم کی تفصیلات')"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
       @click.self="selected = null"
     >

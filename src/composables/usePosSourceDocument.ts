@@ -1,16 +1,20 @@
-import { ref } from 'vue';
+import { ref, onBeforeUnmount } from 'vue';
 import { useCartStore } from '@/stores/cart';
 import { useToast } from '@/composables/useToast';
 import { useI18n } from '@/lib/i18n';
 import { executeQuery } from '@/lib/database';
 import type { Product, ProductBatch } from '@/lib/types';
-import type { CustomerOption } from '@/lib/pos';
+import { unallocatedStockBatch, isUnallocatedStockBatch, type CustomerOption } from '@/lib/pos';
 
 export function usePosSourceDocument(
   chooseCustomer: (customer: CustomerOption | null) => void,
   setRemarks: (remarks: string) => void,
 ) {
   const cartStore = useCartStore();
+  let disposed = false;
+  onBeforeUnmount(() => {
+    disposed = true;
+  });
   const toast = useToast();
   const { pick } = useI18n();
   const sourceDocumentId = ref<string | null>(null);
@@ -26,6 +30,7 @@ export function usePosSourceDocument(
   const sourcePriceChanges = ref(0);
 
   async function loadSourceDocument(id: string) {
+    if (disposed) return;
     sourceDocumentLoading.value = true;
     sourceDocumentError.value = '';
     try {
@@ -73,11 +78,11 @@ export function usePosSourceDocument(
         "SELECT p.name,l.quantity,p.is_active AS active,l.unit_price_cents AS quoted,CAST(ROUND((CASE WHEN (SELECT customer_type FROM customers WHERE id=(SELECT customer_id FROM commercial_documents WHERE id=l.document_id))='wholesale' THEN COALESCE(p.wholesale_price,p.unit_price) ELSE p.unit_price END)*100) AS INTEGER) AS current,CASE WHEN p.deleted_at IS NULL THEN COALESCE(SUM(CASE WHEN b.expiry_date>=date('now','localtime') THEN b.quantity_in_stock ELSE 0 END),0) ELSE 0 END AS available FROM commercial_document_items l JOIN products p ON p.id=l.product_id LEFT JOIN product_batches b ON b.product_id=p.id WHERE l.document_id=? GROUP BY l.id",
         [id],
       );
-      const shortages = availability.filter((l) => !l.active || l.available < l.quantity);
+      const shortages = availability.filter((l) => !l.active);
       if (shortages.length)
         throw new Error(
           pick(
-            'Cannot fulfil this document. Missing stock: ',
+            'Cannot fulfil this document. Unavailable products: ',
             'آرڈر مکمل نہیں ہو سکتا۔ کم اسٹاک: ',
           ) +
             shortages.map((l) => `${l.name}: ${l.available}/${l.quantity}`).join('; ') +
@@ -111,11 +116,14 @@ export function usePosSourceDocument(
         );
         if (!product) throw new Error('A product on this document is unavailable');
         const batches = await executeQuery<ProductBatch>(
-          "SELECT * FROM product_batches WHERE product_id=? AND expiry_date>=date('now','localtime') AND quantity_in_stock>0 ORDER BY expiry_date,id",
+          "SELECT * FROM product_batches WHERE product_id=? AND (expiry_date>=date('now','localtime') OR id='unallocated-stock:'||product_id) ORDER BY expiry_date,id",
           [product.id],
         );
+        if (disposed) return;
         let remaining = line.quantity;
-        for (const batch of batches) {
+        for (const batch of batches.filter(
+          (batch) => batch.quantity_in_stock > 0 && !isUnallocatedStockBatch(batch),
+        )) {
           if (!remaining) break;
           const loose = !!product.sell_by_loose_unit;
           const units = loose
@@ -147,9 +155,23 @@ export function usePosSourceDocument(
           });
           remaining -= units;
         }
-        if (remaining)
-          throw new Error(`${product.name}: insufficient unexpired stock to fulfil this document`);
+        if (remaining) {
+          const loose = !!product.sell_by_loose_unit;
+          if (!loose && remaining % product.pack_size !== 0)
+            throw new Error(`${product.name}: quantity must be a whole number of packs`);
+          prepared.push({
+            product,
+            batch:
+              batches.filter((batch) => !isUnallocatedStockBatch(batch)).at(-1) ||
+              batches[0] ||
+              unallocatedStockBatch(product),
+            quantity: loose ? remaining : remaining / product.pack_size,
+            loose,
+            breakStrip: false,
+          });
+        }
       }
+      if (disposed) return;
       cartStore.clearCart();
       for (const item of prepared)
         cartStore.addItem(item.product, item.batch, item.quantity, item.loose, item.breakStrip);
@@ -164,6 +186,7 @@ export function usePosSourceDocument(
         ),
       );
     } catch (error) {
+      if (disposed) return;
       sourceDocumentError.value = String(error).replace(/^Error: /, '');
       toast.error(sourceDocumentError.value);
     } finally {

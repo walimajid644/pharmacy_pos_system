@@ -42,12 +42,12 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
     searchError.value = false;
     highlightedProductIndex.value = 0;
     const term = searchQuery.value.trim();
-    if (productSearchOpen.value && term.length >= 2) {
+    if (productSearchOpen.value) {
       searchLoading.value = true;
       // Check if this looks like an exact barcode (no wildcards needed)
       // For exact matches, search immediately without debounce
       const isLikelyBarcode = /^[A-Z0-9\-_]+$/i.test(term) && term.length >= 6;
-      if (isLikelyBarcode) {
+      if (!term || isLikelyBarcode) {
         void searchProducts();
       } else {
         productSearchTimer = setTimeout(() => void searchProducts(), 150);
@@ -58,11 +58,6 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
   async function searchProducts(addFromSearch = false, loose = false) {
     const term = searchQuery.value.trim();
     const queryId = ++productQueryId;
-    if (term.length < (addFromSearch ? 1 : 2)) {
-      searchResults.value = [];
-      return;
-    }
-
     searchLoading.value = true;
     searchError.value = false;
     // Barcode input and its following Enter share one bounded IPC lookup.
@@ -74,7 +69,7 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
       if (queryId !== productQueryId) return;
 
       // Check for exact barcode match
-      const exactMatch = productsWithBatches.find((p) => p.barcode === term);
+      const exactMatch = term ? productsWithBatches.find((p) => p.barcode === term) : undefined;
 
       searchResults.value = productsWithBatches;
       // If exact barcode match exists, highlight it immediately
@@ -102,15 +97,16 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
     const query = `%${term}%`;
     const products = await executeQuery<Product>(
       `SELECT * FROM products
-         WHERE (name LIKE ? OR generic_name LIKE ? OR sku LIKE ? OR barcode = ?)
+         WHERE (? = '' OR name LIKE ? OR generic_name LIKE ? OR sku LIKE ? OR barcode = ?)
          AND is_active = 1 AND deleted_at IS NULL
-         ORDER BY CASE WHEN barcode = ? THEN 0 ELSE 1 END, name LIMIT 20`,
-      [query, query, query, term, term],
+         ORDER BY CASE WHEN ? <> '' AND barcode = ? THEN 0 ELSE 1 END,
+           TRIM(name) COLLATE NOCASE, sku COLLATE NOCASE, id LIMIT 50`,
+      [term, query, query, query, term, term, term],
     );
     // One batch query for the bounded result set, rather than one IPC call per product.
     const batches = products.length
       ? await executeQuery<ProductBatch>(
-          `SELECT * FROM product_batches WHERE product_id IN (${products.map(() => '?').join(',')}) AND quantity_in_stock>0 AND expiry_date>=date('now','localtime') ORDER BY expiry_date,id`,
+          `SELECT * FROM product_batches WHERE product_id IN (${products.map(() => '?').join(',')}) AND (expiry_date>=date('now','localtime') OR id='unallocated-stock:'||product_id) ORDER BY expiry_date,id`,
           products.map((p) => p.id),
         )
       : [];
@@ -125,7 +121,8 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
   // Shift+Enter: Same but for loose units
   // Arrow keys: Navigate results; the dialog follows the selected page.
   function handleBarcodeInput(event: KeyboardEvent) {
-    if (event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.repeat && event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
     if (event.key === 'ArrowDown' && searchResults.value.length) {
       event.preventDefault();
       highlightedProductIndex.value =
@@ -145,11 +142,7 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
         onAdd(highlighted, event.shiftKey);
       } else {
         // No results yet - trigger immediate search and add
-        const term = searchQuery.value.trim();
-        // For likely barcodes, do a quick exact-match check
-        if (term.length >= 2) {
-          void searchProducts(true, event.shiftKey);
-        }
+        void searchProducts(true, event.shiftKey);
       }
     } else if (event.key === 'Escape') {
       if (productSearchTimer) clearTimeout(productSearchTimer);
@@ -177,7 +170,7 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
     event?.stopPropagation();
     if (productSearchOpen.value) return;
     productSearchOpen.value = true;
-    if (searchQuery.value.trim().length >= 2) void searchProducts();
+    void searchProducts();
   }
   function resetProductSearch() {
     if (productSearchTimer) clearTimeout(productSearchTimer);

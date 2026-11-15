@@ -10,7 +10,9 @@ import { executeQuery } from '@/lib/database';
 import { invoke } from '@tauri-apps/api/core';
 import { formatCurrency, isNearExpiry, isExpired } from '@/lib/utils';
 import { useSettingsStore } from '@/stores/settings';
+import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import { useToast } from '@/composables/useToast';
+import { isUnallocatedStockBatch } from '@/lib/pos';
 import type { Product, ProductBatch } from '@/lib/types';
 import CompactPages from '@/components/ui/CompactPages.vue';
 import Card from '@/components/ui/Card.vue';
@@ -34,6 +36,8 @@ const settingsStore = useSettingsStore();
 const batches = ref<Array<ProductBatch & { quarantined: number }>>([]);
 const loading = ref(false);
 const showAddForm = ref(false);
+const batchDialog = ref<HTMLElement | null>(null);
+useDialogKeyboard(batchDialog, () => emit('close'));
 
 const formData = ref({
   batch_number: '',
@@ -68,6 +72,12 @@ async function loadBatches() {
 }
 
 function getBatchStatus(batch: ProductBatch) {
+  if (isUnallocatedStockBatch(batch) || batch.quantity_in_stock < 0) {
+    return {
+      label: pick('Negative / unallocated', 'منفی / غیر مختص'),
+      class: 'bg-yellow-100 text-yellow-800',
+    };
+  }
   if (isExpired(batch.expiry_date)) {
     return { label: pick('Expired', 'میعاد ختم'), class: 'bg-red-100 text-red-800' };
   }
@@ -140,6 +150,11 @@ function cancelAdd() {
 <template>
   <div
     v-if="isOpen"
+    ref="batchDialog"
+    role="dialog"
+    aria-modal="true"
+    tabindex="-1"
+    :aria-label="pick('Batch Management', 'بیچ مینجمنٹ')"
     class="compact-dialog batch-dialog fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
     @click.self="emit('close')"
   >
@@ -264,7 +279,11 @@ function cancelAdd() {
               <tr v-for="{ item: batch } in rows" :key="batch.id" class="border-b hover:bg-gray-50">
                 <td class="p-3 font-mono text-sm">{{ batch.batch_number }}</td>
                 <td class="p-3">
-                  {{ new Date(batch.expiry_date).toLocaleDateString() }}
+                  {{
+                    batch.expiry_date
+                      ? new Date(batch.expiry_date).toLocaleDateString()
+                      : pick('Not recorded', 'درج نہیں')
+                  }}
                   <span
                     v-if="
                       isNearExpiry(
@@ -291,7 +310,9 @@ function cancelAdd() {
                 </td>
                 <td class="p-3 text-right">{{ formatCurrency(batch.cost_price_at_batch) }}</td>
                 <td class="p-3 text-sm">
-                  {{ new Date(batch.received_date).toLocaleDateString() }}
+                  {{
+                    batch.received_date ? new Date(batch.received_date).toLocaleDateString() : '—'
+                  }}
                 </td>
                 <td class="p-3 text-center">
                   <span

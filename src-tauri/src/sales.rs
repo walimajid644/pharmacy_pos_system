@@ -203,9 +203,20 @@ pub(crate) async fn record_sale(
         {
             return Err("Invalid sale quantity or discount".to_string());
         }
+        let unallocated = item.batch_id == format!("unallocated-stock:{}", item.product_id);
+        if unallocated {
+            // No invented receipt or expiry: this row is only an unallocated stock balance.
+            sqlx::query(
+                "INSERT INTO product_batches (id,product_id,batch_number,expiry_date,quantity_in_stock,cost_price_at_batch,received_date,created_at,updated_at) \
+                 SELECT ?,id,'Unallocated stock','',0,cost_price,'',?,? FROM products WHERE id=? AND is_active=1 AND deleted_at IS NULL \
+                 ON CONFLICT(id) DO NOTHING",
+            )
+            .bind(&item.batch_id).bind(&request.timestamp).bind(&request.timestamp).bind(&item.product_id)
+            .execute(&mut *tx).await.map_err(|e| e.to_string())?;
+        }
         let row = sqlx::query(
             "SELECT p.unit_price, p.wholesale_price, p.pack_size, p.sell_by_loose_unit, p.controlled_substance, b.cost_price_at_batch, \
-             b.quantity_in_stock, b.loose_open_remaining, b.expiry_date < date('now', 'localtime') AS expired \
+             b.quantity_in_stock, b.loose_open_remaining, CASE WHEN b.id='unallocated-stock:'||p.id THEN 0 ELSE b.expiry_date < date('now', 'localtime') END AS expired, (SELECT COALESCE(SUM(h.quantity),0) FROM batch_holds h WHERE h.batch_id=b.id AND h.status='held') AS held \
              FROM products p JOIN product_batches b ON b.product_id = p.id \
              WHERE p.id = ? AND b.id = ? AND p.is_active = 1 AND p.deleted_at IS NULL",
         )
@@ -261,9 +272,15 @@ pub(crate) async fn record_sale(
             .filter(|prior| prior.batch_id == item.batch_id)
             .map(|prior| prior.units)
             .sum();
-        let available = row.get::<i64, _>("quantity_in_stock") - already_reserved;
-        if units > available {
-            return Err("Insufficient batch stock".to_string());
+        let available = row
+            .get::<i64, _>("quantity_in_stock")
+            .checked_sub(already_reserved)
+            .ok_or("Invalid stock balance")?;
+        available
+            .checked_sub(units)
+            .ok_or("Stock balance is too small")?;
+        if units > available && row.get::<i64, _>("held") > 0 {
+            return Err("Quarantined batch stock cannot be sold".into());
         }
         let first_available: Vec<(String, i64)> = sqlx::query_as(
             "SELECT id, quantity_in_stock FROM product_batches WHERE product_id = ? AND quantity_in_stock > 0 AND expiry_date >= date('now', 'localtime') ORDER BY expiry_date, id",
@@ -285,24 +302,25 @@ pub(crate) async fn record_sale(
             .find(|prior| prior.batch_id == item.batch_id)
             .map(|prior| prior.loose_remaining_after)
             .unwrap_or(row.get::<i64, _>("loose_open_remaining"));
-        let (strips_opened, loose_remaining_after) = if item.is_loose_sale && pack_size > 1 {
-            if units <= open_before {
-                (0, open_before - units)
-            } else {
-                let needed = units - open_before;
-                let strips = (needed + pack_size - 1) / pack_size;
-                if !item.confirm_break {
-                    return Err("Confirm the batch before opening a new strip".into());
+        // Strip events describe only recorded physical units, never the negative balance.
+        let physical_units = units.min(available.max(0));
+        let open_before = open_before.min(available.max(0));
+        let (strips_opened, loose_remaining_after) =
+            if item.is_loose_sale && pack_size > 1 && !unallocated {
+                if physical_units <= open_before {
+                    (0, open_before - physical_units)
+                } else {
+                    let needed = physical_units - open_before;
+                    let strips = (needed + pack_size - 1) / pack_size;
+                    if !item.confirm_break {
+                        return Err("Confirm the batch before opening a new strip".into());
+                    }
+                    let leftover = (strips * pack_size - needed).min((available - units).max(0));
+                    (strips, leftover)
                 }
-                let leftover = (strips * pack_size - needed).min(available - units);
-                (strips, leftover)
-            }
-        } else {
-            if !item.is_loose_sale && units > available - open_before {
-                return Err("Only opened loose units remain in this batch; choose another batch or sell loose units".into());
-            }
-            (0, open_before)
-        };
+            } else {
+                (0, open_before.min((available - units).max(0)))
+            };
         let unit_price: f64 = if wholesale {
             row.get::<Option<f64>, _>("wholesale_price")
                 .unwrap_or(row.get("unit_price"))
@@ -477,19 +495,18 @@ pub(crate) async fn record_sale(
     for item in priced {
         let stock_change = sqlx::query(
             "UPDATE product_batches SET quantity_in_stock = quantity_in_stock - ?, loose_open_remaining = ?, updated_at = ? \
-             WHERE id = ? AND quantity_in_stock >= ? AND expiry_date >= date('now', 'localtime')",
+             WHERE id = ? AND (expiry_date >= date('now', 'localtime') OR id='unallocated-stock:'||product_id)",
         )
         .bind(item.units)
         .bind(item.loose_remaining_after)
         .bind(&request.timestamp)
         .bind(&item.batch_id)
-        .bind(item.units)
         .execute(&mut *tx)
         .await
         .map_err(|e| e.to_string())?;
 
         if stock_change.rows_affected() != 1 {
-            return Err("Insufficient or expired batch stock".to_string());
+            return Err("Unavailable or expired batch".to_string());
         }
         if item.strips_opened > 0 {
             sqlx::query("INSERT INTO loose_break_events (id, invoice_id, product_id, batch_id, cashier_id, strips_opened, pack_size, units_requested, recorded_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")

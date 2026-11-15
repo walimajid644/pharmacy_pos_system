@@ -309,7 +309,7 @@
   width: 11%;
 }
 .pos-terminal .pos-lines th:last-child {
-  width: 28px;
+  width: 88px;
 }
 .pos-terminal .pos-lines td {
   height: 40px;
@@ -362,12 +362,27 @@
   font-weight: 700;
 }
 .pos-terminal .pos-remove {
-  width: 20px;
-  min-height: 22px;
-  padding: 0;
+  width: 100%;
+  min-height: 24px;
+  padding: 2px 4px;
+  border: 1px solid #dc2626;
   border-radius: 2px;
-  font-size: 14px;
+  background: #fff1f2;
+  color: #991b1b;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
 }
+.pos-terminal .pos-remove:hover {
+  background: #ffe4e6;
+}
+[data-theme='dark'] .pos-terminal .pos-remove {
+  background: #450a0a;
+  color: #fecaca;
+  border-color: #f87171;
+}
+
 .pos-terminal .pos-empty {
   border: 0 !important;
 }
@@ -853,7 +868,8 @@
   color: var(--color-text-secondary);
 }
 .pos-terminal .pos-search-dialog-results tr.highlighted {
-  background: var(--pos-field);
+  background: var(--pos-panel);
+  box-shadow: inset 3px 0 0 var(--brand-600);
   color: var(--pos-ink);
 }
 .pos-terminal .pos-search-dialog button {
@@ -882,4 +898,13 @@
 }
 .pos-terminal .pos-search-dialog-results thead tr {
   height: 34px;
+}
+.pos-terminal .pos-search-stock-warning {
+  margin: 2px 0 0;
+  padding: 4px 6px;
+  border: 1px solid #d6aa45;
+  background: #fff4cf;
+  color: #714500;
+  font-size: 11px;
+  line-height: 1.3;
 }

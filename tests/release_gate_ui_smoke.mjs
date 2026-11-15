@@ -205,6 +205,41 @@ try {
   await until("document.querySelector('.pos-search-dialog [role=alert]')!==null");
   assert(await evaluate('testCart.items.length===0'));
   results.push('Failed shared barcode search displays an error and leaves cart unchanged');
+  await app();
+  await evaluate(
+    "testCart.clearCart();fixture.noProductStock=true;var input=document.querySelector('#pos-product-search');input.value='Test medicine';input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
+  );
+  await until("document.querySelector('.pos-search-stock-warning')!==null");
+  assert(
+    await evaluate(
+      "[...document.querySelectorAll('.pos-search-add-actions button')].every(button=>!button.disabled)",
+    ),
+  );
+  await evaluate(
+    "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
+  );
+  await until("testCart.items.length===1&&!document.querySelector('.pos-search-dialog')");
+  assert(
+    await evaluate(
+      "testCart.items[0].batch.id==='unallocated-stock:p1'&&testCart.items[0].batch.expiry_date===''",
+    ),
+  );
+  await evaluate(
+    "var qty=document.querySelector('input[aria-label^=Quantity]');qty.value='3';qty.dispatchEvent(new Event('change',{bubbles:true}));var bonus=document.querySelector('input[aria-label^=\"Free quantity\"]');bonus.value='1';bonus.dispatchEvent(new Event('change',{bubbles:true}))",
+  );
+  assert(await evaluate('testCart.items[0].quantity===3&&testCart.items[0].bonusQuantity===1'));
+  await shot('negative-stock-sale-1024x600');
+  await evaluate("document.querySelector('.pos-complete').click()");
+  await until("fixture.calls.some(call=>call.command==='checkout_sale')");
+  assert(
+    await evaluate(
+      "(()=>{const sale=fixture.calls.find(call=>call.command==='checkout_sale').args.request;return sale.items[0].batchId==='unallocated-stock:p1'&&sale.items[0].quantity===3&&sale.items[0].bonusQuantity===1})()",
+    ),
+  );
+  results.push(
+    'Products without batches can be added by Enter, quantities/bonus can exceed stock, and checkout sends an unallocated negative-stock sale',
+  );
+
   await writeFile(path.join(out, 'results.json'), JSON.stringify(results, null, 2));
   console.log(JSON.stringify(results, null, 2));
 } catch (e) {

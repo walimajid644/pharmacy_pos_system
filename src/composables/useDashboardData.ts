@@ -72,7 +72,7 @@ export function useDashboardData() {
         `SELECT p.*, 
                 COALESCE(SUM(pb.quantity_in_stock), 0) as current_stock
          FROM products p
-         LEFT JOIN product_batches pb ON p.id = pb.product_id AND pb.expiry_date >= date('now', 'localtime')
+         LEFT JOIN product_batches pb ON p.id = pb.product_id AND (pb.expiry_date >= date('now', 'localtime') OR pb.quantity_in_stock<0 OR pb.id='unallocated-stock:'||pb.product_id)
          WHERE p.deleted_at IS NULL AND p.is_active = 1
          GROUP BY p.id
          HAVING current_stock <= p.reorder_level
@@ -81,7 +81,7 @@ export function useDashboardData() {
       );
       const [lowCount] = await executeQuery<{ count: number }>(
         `SELECT COUNT(*) AS count FROM (
-           SELECT p.id FROM products p LEFT JOIN product_batches pb ON pb.product_id = p.id AND pb.expiry_date >= date('now', 'localtime')
+           SELECT p.id FROM products p LEFT JOIN product_batches pb ON pb.product_id = p.id AND (pb.expiry_date >= date('now', 'localtime') OR pb.quantity_in_stock<0 OR pb.id='unallocated-stock:'||pb.product_id)
            WHERE p.deleted_at IS NULL AND p.is_active = 1 GROUP BY p.id
            HAVING COALESCE(SUM(pb.quantity_in_stock), 0) <= p.reorder_level)`,
       );

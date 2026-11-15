@@ -4,7 +4,7 @@ import { useToast } from '@/composables/useToast';
 import { useI18n } from '@/lib/i18n';
 import { formatDate, isExpired, isNearExpiry } from '@/lib/utils';
 import type { Product, ProductBatch } from '@/lib/types';
-import { roundSaleMoney as money } from '@/lib/pos';
+import { roundSaleMoney as money, unallocatedStockBatch, isUnallocatedStockBatch } from '@/lib/pos';
 
 export function usePosCartLines(onAdded: () => void) {
   const cartStore = useCartStore();
@@ -51,51 +51,20 @@ export function usePosCartLines(onAdded: () => void) {
       toast.warning('This product cannot be sold as a loose unit');
       return;
     }
-    if (!product.batches || product.batches.length === 0) {
-      toast.warning('No stock available for this product');
-      return;
-    }
-
-    const unitsNeeded = isLooseSale ? 1 : product.pack_size;
-    // Keep FEFO: an earlier batch must be exhausted before the next one is used.
-    const batch = product.batches.find(
-      (candidate) =>
-        candidate.quantity_in_stock - reservedInBatch(candidate.id) > 0 &&
-        !isExpired(candidate.expiry_date),
+    // Use recorded stock in expiry order, then allow the selected balance to go negative.
+    const batches = product.batches || [];
+    const usable = batches.filter(
+      (batch) => isUnallocatedStockBatch(batch) || !isExpired(batch.expiry_date),
     );
-    if (!batch) {
-      toast.warning(
-        `No unexpired batch has enough stock for another ${isLooseSale ? 'loose unit' : 'pack'}`,
-      );
-      return;
-    }
-    if (batch.quantity_in_stock - reservedInBatch(batch.id) < unitsNeeded) {
-      toast.warning(
-        pick(
-          'Sell the remaining units from the earliest batch first.',
-          'پہلے جلد میعاد ختم ہونے والے بیچ کی باقی اکائیاں فروخت کریں۔',
-        ),
-      );
-      return;
-    }
-    if (
-      !isLooseSale &&
-      batch.quantity_in_stock - reservedInBatch(batch.id) - batch.loose_open_remaining < unitsNeeded
-    ) {
-      toast.warning(
-        pick(
-          'Only opened loose units remain in this batch.',
-          'اس بیچ میں صرف کھلی اکائیاں باقی ہیں۔',
-        ),
-      );
-      return;
-    }
-
-    // Check if expired
-    if (isExpired(batch.expiry_date)) {
-      toast.error('Cannot sell expired product');
-      return;
-    }
+    const batch =
+      usable.find(
+        (candidate) =>
+          !isUnallocatedStockBatch(candidate) &&
+          candidate.quantity_in_stock - reservedInBatch(candidate.id) > 0,
+      ) ||
+      usable.find((candidate) => !isUnallocatedStockBatch(candidate)) ||
+      usable[0] ||
+      unallocatedStockBatch(product);
 
     const existingLoose = cartStore.items.find(
       (item) => item.batch.id === batch.id && item.isLooseSale,
@@ -103,8 +72,16 @@ export function usePosCartLines(onAdded: () => void) {
     const loosePlanned = existingLoose ? existingLoose.quantity + existingLoose.bonusQuantity : 0;
     const needsBreak =
       isLooseSale &&
-      stripsNeeded(loosePlanned + 1, batch.loose_open_remaining, product.pack_size) >
-        stripsNeeded(loosePlanned, batch.loose_open_remaining, product.pack_size);
+      stripsNeeded(
+        Math.min(loosePlanned + 1, Math.max(0, batch.quantity_in_stock)),
+        batch.loose_open_remaining,
+        product.pack_size,
+      ) >
+        stripsNeeded(
+          Math.min(loosePlanned, Math.max(0, batch.quantity_in_stock)),
+          batch.loose_open_remaining,
+          product.pack_size,
+        );
     if (
       needsBreak &&
       !confirm(
@@ -138,26 +115,15 @@ export function usePosCartLines(onAdded: () => void) {
       return;
     }
     const allQuantity = bonus ? item.quantity + quantity : quantity + item.bonusQuantity;
-    const units = allQuantity * (item.isLooseSale ? 1 : item.product.pack_size);
-    if (units + reservedInBatch(item.batch.id, index) > item.batch.quantity_in_stock) {
-      toast.warning('Quantity exceeds batch stock');
-      restore();
-      return;
-    }
-    if (
-      !item.isLooseSale &&
-      units + reservedInBatch(item.batch.id, index) >
-        item.batch.quantity_in_stock - item.batch.loose_open_remaining
-    ) {
-      toast.warning('Only opened loose units remain; reduce packs or sell loose units');
-      restore();
-      return;
-    }
     if (
       item.isLooseSale &&
-      stripsNeeded(allQuantity, item.batch.loose_open_remaining, item.product.pack_size) >
+      stripsNeeded(
+        Math.min(allQuantity, Math.max(0, item.batch.quantity_in_stock)),
+        item.batch.loose_open_remaining,
+        item.product.pack_size,
+      ) >
         stripsNeeded(
-          item.quantity + item.bonusQuantity,
+          Math.min(item.quantity + item.bonusQuantity, Math.max(0, item.batch.quantity_in_stock)),
           item.batch.loose_open_remaining,
           item.product.pack_size,
         )
@@ -203,6 +169,7 @@ export function usePosCartLines(onAdded: () => void) {
   }
 
   function getBatchWarning(expiryDate: string): string | null {
+    if (!expiryDate) return null;
     if (isExpired(expiryDate)) return pick('EXPIRED', 'میعاد ختم');
     if (isNearExpiry(expiryDate, Number(settingsStore.settings?.near_expiry_days ?? 60)))
       return pick('Near Expiry', 'جلد میعاد ختم');

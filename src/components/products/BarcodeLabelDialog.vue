@@ -2,6 +2,7 @@
 import { reportDiagnostic } from '@/lib/diagnostics';
 
 import { ref, computed, nextTick, onBeforeUnmount } from 'vue';
+import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import type { Product } from '@/lib/types';
 import { formatCurrency } from '@/lib/utils';
 import { encodeCode39 } from '@/lib/code39';
@@ -11,6 +12,8 @@ import Button from '@/components/ui/Button.vue';
 const props = defineProps<{ product: Product }>();
 const emit = defineEmits<{ close: [] }>();
 const toast = useToast();
+const labelDialog = ref<HTMLElement | null>(null);
+useDialogKeyboard(labelDialog, () => emit('close'));
 const labelCount = ref(1);
 const printingLabels = ref(false);
 const labelBarcode = computed(() => encodeCode39(props.product?.barcode || ''));
@@ -65,6 +68,8 @@ async function printLabels() {
     @click.self="emit('close')"
   >
     <section
+      ref="labelDialog"
+      tabindex="-1"
       role="dialog"
       aria-modal="true"
       aria-label="Print barcode labels"

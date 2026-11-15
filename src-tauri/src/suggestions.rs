@@ -95,7 +95,7 @@ async fn suggest(
         } else {
             None
         };
-        let urgency = if available == 0 {
+        let urgency = if available <= 0 {
             0
         } else if available <= reorder {
             1
@@ -148,7 +148,7 @@ pub async fn purchase_suggestions(
     )
     .await
 }
-pub(crate) const SUGGESTIONS_SQL: &str = r#"WITH stock AS (SELECT product_id,SUM(quantity_in_stock) AS available FROM product_batches WHERE expiry_date>=date('now','localtime') GROUP BY product_id),
+pub(crate) const SUGGESTIONS_SQL: &str = r#"WITH stock AS (SELECT product_id,SUM(quantity_in_stock) AS available FROM product_batches WHERE expiry_date>=date('now','localtime') OR quantity_in_stock<0 OR id='unallocated-stock:'||product_id GROUP BY product_id),
  incoming AS (SELECT l.product_id,SUM(MAX(0,l.quantity_ordered-l.quantity_received)) AS incoming FROM purchase_order_items l JOIN purchase_orders p ON p.id=l.po_id WHERE p.status IN ('sent','partial') GROUP BY l.product_id),
  demand AS (SELECT l.product_id,SUM(l.quantity) AS recent_units FROM sales_invoice_items l JOIN sales_invoices i ON i.id=l.invoice_id WHERE i.status='completed' AND julianday(i.invoice_date)>=julianday(?) AND julianday(i.invoice_date)<julianday(?) GROUP BY l.product_id)
  SELECT p.id,p.name,p.sku,p.pack_size,p.reorder_level,p.cost_price,COALESCE(s.available,0) AS available,COALESCE(o.incoming,0) AS incoming,COALESCE(d.recent_units,0) AS recent_units,
@@ -223,6 +223,13 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(n, 3);
+        sqlx::query("INSERT INTO product_batches(id,product_id,batch_number,expiry_date,quantity_in_stock,cost_price_at_batch,received_date,created_at,updated_at) VALUES('unallocated-stock:empty','empty','Unallocated stock','',-15,5,'','now','now')").execute(&p).await.unwrap();
+        let deficit_rows = suggest(&p, ADMIN, request()).await.unwrap();
+        let deficit = deficit_rows
+            .iter()
+            .find(|row| row.product_id == "empty")
+            .unwrap();
+        assert_eq!((deficit.available, deficit.suggested_units), (-15, 30));
         sqlx::query("INSERT INTO users(id,username,password_hash,full_name,role,is_active,created_at,updated_at) VALUES('a','a','x','Accountant','accountant',1,'now','now')").execute(&p).await.unwrap();
         assert!(suggest(&p, "a", request()).await.is_err());
     }

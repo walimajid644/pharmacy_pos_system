@@ -187,6 +187,18 @@ try {
   );
   await until("document.activeElement?.id==='pos-modal-product-search'");
   inside(await evaluate(rect('.pos-search-dialog')), 'product search modal');
+  await until("document.querySelector('.pos-search-dialog .pos-product-row')!==null");
+  assert.equal(await evaluate("document.querySelector('#pos-modal-product-search').value"), '');
+  assert(
+    await evaluate(
+      "fixture.calls.some(call=>call.query?.includes('LIMIT 50')&&call.query.includes('TRIM(name) COLLATE NOCASE')&&call.args.values[0]==='')",
+    ),
+  );
+  assert(await evaluate('testCart.items.length===0'));
+  results.push(
+    'Product-search modal browses active medicines immediately using alphabetical order and a 50-result limit',
+  );
+
   assert.equal(await evaluate("document.querySelectorAll('.pos-product-results').length"), 0);
   await evaluate(
     "var query=document.querySelector('#pos-modal-product-search');query.value='Test generic';query.dispatchEvent(new Event('input',{bubbles:true}))",
@@ -223,6 +235,24 @@ try {
   );
   inside(await evaluate(rect('.pos-complete')), 'populated checkout');
   await shot('pos-light-1024x600');
+  inside(await evaluate(rect('.pos-remove')), 'visible remove item button');
+  assert(await evaluate("document.querySelector('.pos-remove').textContent.includes('Remove')"));
+  assert(
+    await evaluate(
+      "document.querySelector('.pos-remove').scrollWidth<=document.querySelector('.pos-remove').clientWidth",
+    ),
+  );
+  await evaluate(
+    "window.removalTestItem=testCart.items[0];document.querySelector('.pos-remove').click()",
+  );
+  await until('testCart.items.length===0');
+  assert.equal(await evaluate("document.querySelectorAll('.pos-remove').length"), 0);
+  await evaluate('testCart.items=[window.removalTestItem]');
+  await until("document.querySelector('.pos-remove')!==null");
+  results.push(
+    'Labeled red Remove button is visible, fits its column and removes the current sale item',
+  );
+
   await evaluate(`window.originalSaleItem = testCart.items[0];
     testCart.items = Array.from({length: 40}, (_, index) => ({
       ...window.originalSaleItem,
@@ -271,6 +301,26 @@ try {
     'rgb(110, 231, 183)',
   );
   await shot('pos-dark-1024x600');
+  await evaluate(
+    "testCart.setDiscountAmount(5);testCart.setCustomerType('wholesale');var remarks=document.querySelector('.pos-remarks textarea');remarks.value='Old sale note';remarks.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector('.workspace-close').click()",
+  );
+  await until("location.pathname==='/'&&!document.querySelector('.pos-terminal')");
+  assert(
+    await evaluate(
+      "testCart.items.length===0&&testCart.discountAmount===0&&testCart.customerType==='retail'",
+    ),
+  );
+  await evaluate("document.querySelector('.dashboard-tasks button').click()");
+  await until("document.querySelector('.pos-terminal')!==null");
+  assert(
+    await evaluate(
+      "testCart.items.length===0&&testCart.total===0&&document.querySelector('.pos-remarks textarea').value===''&&document.querySelector('#pos-product-search').value===''&&document.querySelector('#pos-customer').value===''",
+    ),
+  );
+  results.push(
+    'Closing and reopening Sales starts empty with no items, discount, customer, remarks or old search',
+  );
+
   results.push(
     'Barcode + immediate Enter adds once in two queries; F8/F9/F10 work; checkout and summary visible in light/dark',
   );
@@ -321,13 +371,11 @@ try {
   results.push('Closed-drawer expense void blocked with an actionable inline reason');
   await open('/estimates');
   await evaluate("fixture.shortage=true;testRouter.push({path:'/pos',query:{document:'d1'}})");
-  await until("document.querySelector('.pos-source-error')?.textContent.includes('Missing stock')");
-  assert(
-    await evaluate(
-      "document.querySelector('.pos-source-error').textContent.includes('Test medicine: 0/2')",
-    ),
+  await until(
+    "document.querySelector('.pos-source-document strong')?.textContent.includes('EST-TEST')",
   );
-  results.push('Source document shortage lists item and available/requested units');
+  assert(await evaluate("testCart.items.length>0&&!document.querySelector('.pos-source-error')"));
+  results.push('Source documents can load for checkout when recorded stock is short');
   await open('/estimates');
   await evaluate("fixture.expired=true;testRouter.push({path:'/pos',query:{document:'d1'}})");
   await until("document.querySelector('.pos-source-error')?.textContent.includes('expired')");

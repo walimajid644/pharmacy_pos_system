@@ -52,13 +52,6 @@ export function useDashboardWorkspace() {
     if ((event.target as HTMLElement).closest('[role="dialog"]') !== event.currentTarget) return;
     if (
       event.key === 'Escape' &&
-      (event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement ||
-        event.target instanceof HTMLSelectElement)
-    )
-      return;
-    if (
-      event.key === 'Escape' &&
       (event.target as HTMLElement).closest('[role="dialog"]') === event.currentTarget
     ) {
       event.preventDefault();

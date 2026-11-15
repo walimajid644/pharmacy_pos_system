@@ -106,7 +106,7 @@ onUnmounted(() => {
   <RouterView />
 
   <!-- Toast notifications -->
-  <div class="fixed top-4 right-4 z-50 flex flex-col gap-2">
+  <div class="app-toast-layer fixed top-4 right-4 z-[110] flex flex-col gap-2">
     <Toast
       v-for="toast in toasts"
       :key="toast.id"

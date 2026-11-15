@@ -111,6 +111,18 @@ try {
     );
   }
 
+  async function escape() {
+    await cdp('Input.dispatchKeyEvent', {
+      type: 'keyDown',
+      key: 'Escape',
+      windowsVirtualKeyCode: 27,
+    });
+    await cdp('Input.dispatchKeyEvent', {
+      type: 'keyUp',
+      key: 'Escape',
+      windowsVirtualKeyCode: 27,
+    });
+  }
   async function fits(selector) {
     inside(await evaluate(rect(selector)), selector);
     const overflow = await evaluate(
@@ -164,6 +176,54 @@ try {
   await delay(200);
   await fits('.pos-search-dialog');
   await fits('.pos-search-dialog-results');
+  await evaluate("document.querySelector('.pos-search-dialog .pos-product-row').click()");
+  assert.equal(await evaluate('document.activeElement?.id'), 'pos-modal-product-search');
+  await evaluate("document.querySelector('.pos-search-dialog-footer > button').focus()");
+  await cdp('Input.dispatchKeyEvent', {
+    type: 'keyDown',
+    key: 'ArrowDown',
+    windowsVirtualKeyCode: 40,
+  });
+  await cdp('Input.dispatchKeyEvent', {
+    type: 'keyUp',
+    key: 'ArrowDown',
+    windowsVirtualKeyCode: 40,
+  });
+  assert(
+    await evaluate(
+      "document.querySelector('.pos-product-row[aria-selected=true]')?.textContent.includes('Medicine 2')",
+    ),
+  );
+  assert.equal(await evaluate('document.activeElement?.id'), 'pos-modal-product-search');
+  await cdp('Input.dispatchKeyEvent', {
+    type: 'keyDown',
+    key: 'ArrowDown',
+    windowsVirtualKeyCode: 40,
+    autoRepeat: true,
+  });
+  await cdp('Input.dispatchKeyEvent', {
+    type: 'keyUp',
+    key: 'ArrowDown',
+    windowsVirtualKeyCode: 40,
+  });
+  assert(
+    await evaluate(
+      "document.querySelector('.pos-product-row[aria-selected=true]')?.textContent.includes('Medicine 3')",
+    ),
+  );
+  await cdp('Input.dispatchKeyEvent', {
+    type: 'keyDown',
+    key: 'ArrowUp',
+    windowsVirtualKeyCode: 38,
+  });
+  await cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: 'ArrowUp', windowsVirtualKeyCode: 38 });
+  assert(
+    await evaluate(
+      "document.querySelector('.pos-product-row[aria-selected=true]')?.textContent.includes('Medicine 2')",
+    ),
+  );
+  await evaluate("document.querySelector('.pos-search-dialog .pos-product-row').click()");
+
   await evaluate(
     "for(let i=0;i<12;i++)document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}))",
   );
@@ -181,6 +241,11 @@ try {
   );
   await delay(350);
   await shot('product-search-dark-1024x600');
+  await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', windowsVirtualKeyCode: 13 });
+  await cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', windowsVirtualKeyCode: 13 });
+  await until("testCart.items.length===1&&!document.querySelector('.pos-search-dialog')");
+  assert.equal(await evaluate('testCart.items[0].product.name'), 'Medicine 13');
+
   results.push(
     'Product-search dialog pages long result lists; keyboard navigation keeps the highlighted row visible without scrolling',
   );
@@ -209,9 +274,10 @@ try {
   await fits('.product-dialog-card');
   inside(await evaluate(rect('.product-dialog-card button:last-child')), 'save product');
   await shot('product-dialog-1024x600');
-  await evaluate(
-    "[...document.querySelectorAll('.product-dialog button')].find(b=>b.textContent.includes('Cancel')).click()",
-  );
+  await evaluate("document.querySelector('.product-dialog input').focus()");
+  await escape();
+  await until("!document.querySelector('.product-dialog')");
+  assert(await evaluate("location.pathname==='/products'"));
   await evaluate(
     "[...document.querySelectorAll('tbody button')].find(b=>b.textContent.includes('Batches')).click()",
   );
@@ -223,15 +289,23 @@ try {
   await delay(200);
   await fits('.batch-dialog-content');
   await shot('batch-add-dialog-1024x600');
-  await evaluate(
-    "[...document.querySelectorAll('.batch-dialog button')].find(b=>b.textContent.includes('Close')).click()",
-  );
+  await evaluate("document.querySelector('.batch-dialog input').focus()");
+  await escape();
+  await until("!document.querySelector('.batch-dialog')");
+  assert(await evaluate("location.pathname==='/products'"));
   await evaluate(
     "[...document.querySelectorAll('tbody button')].find(b=>b.textContent.includes('Label')).click()",
   );
   await until("!!document.querySelector('.barcode-dialog-card')");
   await fits('.barcode-dialog-card');
   await shot('barcode-dialog-1024x600');
+  await evaluate("document.querySelector('.barcode-dialog input').focus()");
+  await escape();
+  await until("!document.querySelector('.barcode-dialog')");
+  assert(await evaluate("location.pathname==='/products'"));
+  await escape();
+  await until("location.pathname==='/'&&!document.querySelector('.workspace-dialog')");
+
   results.push(
     '40 products and batches page without overflow; product, add-batch and barcode dialogs fit 1024x600',
   );
@@ -298,6 +372,49 @@ try {
   await shot('purchase-receive-dark-1024x600');
   results.push(
     'Purchase register, 26-line editor and 40-line receiving form page without overflow and retain visible actions',
+  );
+
+  for (const [route, control] of [
+    ['/pos', '#pos-product-search'],
+    ['/products', '#products-search'],
+    ['/purchase-orders', '.filters-grid input'],
+    ['/purchase-orders/new', '.form-select'],
+    ['/purchase-orders/po-existing/receive', '.col-batch input'],
+    ['/customers', 'input'],
+    ['/suppliers', 'input'],
+  ]) {
+    await open(route);
+    await until(`!!document.querySelector('.workspace-dialog ${control}')`);
+    await evaluate(`document.querySelector('.workspace-dialog ${control}').focus()`);
+    await escape();
+    await until("location.pathname==='/'&&!document.querySelector('.workspace-dialog')");
+  }
+  for (const route of ['/stock-adjustments', '/sales-returns', '/sales-history']) {
+    await open(route);
+    await until("document.querySelector('.workspace-body tbody button')!==null");
+    await evaluate("document.querySelector('.workspace-body tbody button').click()");
+    await until("document.querySelector('.workspace-body [role=dialog]')!==null");
+    await escape();
+    await until("document.querySelector('.workspace-body [role=dialog]')===null");
+    assert.equal(await evaluate('location.pathname'), route);
+    await escape();
+    await until("location.pathname==='/'");
+  }
+  await open('/pos');
+  await evaluate("document.querySelector('#pos-customer').focus()");
+  await until("document.querySelector('#pos-customer-options')!==null");
+  await escape();
+  await until("document.querySelector('#pos-customer-options')===null");
+  assert.equal(await evaluate('location.pathname'), '/pos');
+  await escape();
+  await until("location.pathname==='/'");
+  await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'F1', windowsVirtualKeyCode: 112 });
+  await cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: 'F1', windowsVirtualKeyCode: 112 });
+  await until('document.querySelector(\'[aria-label^="Keyboard shortcuts"]\')!==null');
+  await escape();
+  await until('document.querySelector(\'[aria-label^="Keyboard shortcuts"]\')===null');
+  results.push(
+    'Escape closes workspaces from focused fields, closes inner dialogs first, and handles batch, barcode, invoice, return, adjustment, customer picker and help popups',
   );
   console.log(JSON.stringify(results, null, 2));
 } catch (e) {

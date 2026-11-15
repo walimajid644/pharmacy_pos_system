@@ -163,11 +163,6 @@ async fn bonus_cash_and_remarks_persist_without_charging_for_free_stock() {
 async fn invalid_bonus_and_tender_roll_back_stock_and_invoice() {
     let pool = sale_details_fixture().await;
     let mut sale = request(&[2]);
-    sale.items[0].bonus_quantity = 99;
-    assert!(record_sale(&pool, sale.clone())
-        .await
-        .unwrap_err()
-        .contains("stock"));
     sale.items[0].bonus_quantity = -1;
     assert!(record_sale(&pool, sale.clone()).await.is_err());
     sale.items[0].bonus_quantity = i64::MAX;
@@ -261,7 +256,9 @@ async fn sale_rolls_back_every_write_when_a_later_item_cannot_be_filled() {
     .await
     .unwrap();
 
-    assert!(record_sale(&pool, request(&[6, 6])).await.is_err());
+    let mut invalid = request(&[6, 6]);
+    invalid.items[1].batch_id = "missing-batch".into();
+    assert!(record_sale(&pool, invalid).await.is_err());
     let stock: i64 =
         sqlx::query_scalar("SELECT quantity_in_stock FROM product_batches WHERE id = 'test-batch'")
             .fetch_one(&pool)
@@ -467,7 +464,13 @@ async fn payment_methods_history_and_expiry_preserve_stock_movements() {
     .await
     .unwrap();
     assert_eq!((stock, movement), (1, -3));
-    assert!(record_sale(&pool, request(&[2])).await.is_err());
+    record_sale(&pool, request(&[2])).await.unwrap();
+    let negative: i64 =
+        sqlx::query_scalar("SELECT quantity_in_stock FROM product_batches WHERE id='test-batch'")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(negative, -1);
     sqlx::query("UPDATE product_batches SET expiry_date = '2000-01-01' WHERE id = 'test-batch'")
         .execute(&pool)
         .await
@@ -478,11 +481,11 @@ async fn payment_methods_history_and_expiry_preserve_stock_movements() {
             .fetch_one(&pool)
             .await
             .unwrap();
-    assert_eq!(history_count, 3);
+    assert_eq!(history_count, 4);
 }
 
 #[tokio::test]
-async fn concurrent_sales_cannot_make_batch_stock_negative() {
+async fn concurrent_sales_record_each_successful_negative_stock_movement() {
     let path = std::env::temp_dir().join(format!("pharmacy-pos-test-{}.db", Uuid::new_v4()));
     let options = SqliteConnectOptions::new()
         .filename(&path)
@@ -519,7 +522,13 @@ async fn concurrent_sales_cannot_make_batch_stock_negative() {
         record_sale(&pool, request(&[7])),
         record_sale(&pool, request(&[7]))
     );
-    assert_eq!(usize::from(first.is_ok()) + usize::from(second.is_ok()), 1);
+    // SQLite may reject a simultaneous write as busy; retry that request after the first commits.
+    if first.is_err() {
+        record_sale(&pool, request(&[7])).await.unwrap();
+    }
+    if second.is_err() {
+        record_sale(&pool, request(&[7])).await.unwrap();
+    }
     let stock: i64 =
         sqlx::query_scalar("SELECT quantity_in_stock FROM product_batches WHERE id = 'test-batch'")
             .fetch_one(&pool)
@@ -529,7 +538,7 @@ async fn concurrent_sales_cannot_make_batch_stock_negative() {
         .fetch_one(&pool)
         .await
         .unwrap();
-    assert_eq!((stock, invoices), (3, 1));
+    assert_eq!((stock, invoices), (-4, 2));
     pool.close().await;
     // Windows can briefly retain SQLite's file handle after the pool closes.
     for _ in 0..10 {
@@ -781,4 +790,75 @@ async fn controlled_pair_of_names_is_valid_and_report_denies_cashier() {
     )
     .unwrap();
     assert!(crate::controlled::read(&pool, "cashier", r).await.is_err());
+}
+
+#[tokio::test]
+async fn negative_stock_sales_persist_units_bonus_and_movements() {
+    let pool = sale_details_fixture().await;
+    sqlx::query("UPDATE product_batches SET quantity_in_stock=0 WHERE id='test-batch'")
+        .execute(&pool)
+        .await
+        .unwrap();
+    let mut sale = request(&[2]);
+    sale.items[0].bonus_quantity = 1;
+    let first = record_sale(&pool, sale).await.unwrap();
+    assert_eq!(first.net_amount, 5.0);
+    record_sale(&pool, request(&[1])).await.unwrap();
+    let stock: i64 =
+        sqlx::query_scalar("SELECT quantity_in_stock FROM product_batches WHERE id='test-batch'")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    let movements: i64 =
+        sqlx::query_scalar("SELECT SUM(quantity) FROM stock_movements WHERE batch_id='test-batch'")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    let strips: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM loose_break_events")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!((stock, movements, strips), (-4, -4, 0));
+}
+
+#[tokio::test]
+async fn product_without_batches_can_sell_into_an_unallocated_negative_balance() {
+    let pool = sale_details_fixture().await;
+    sqlx::query("DELETE FROM product_batches WHERE product_id='test-product'")
+        .execute(&pool)
+        .await
+        .unwrap();
+    let mut sale = request(&[2]);
+    sale.items[0].batch_id = "unallocated-stock:test-product".into();
+    sale.items[0].is_loose_sale = false;
+    sale.expected_subtotal = 50.0;
+    sale.expected_net_amount = 50.0;
+    record_sale(&pool, sale).await.unwrap();
+    let row: (i64, String, String) = sqlx::query_as("SELECT quantity_in_stock,expiry_date,received_date FROM product_batches WHERE id='unallocated-stock:test-product'").fetch_one(&pool).await.unwrap();
+    assert_eq!(row, (-20, String::new(), String::new()));
+    let movement: i64 = sqlx::query_scalar(
+        "SELECT SUM(quantity) FROM stock_movements WHERE batch_id='unallocated-stock:test-product'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(movement, -20);
+}
+
+#[tokio::test]
+async fn failed_unallocated_sale_does_not_create_a_stock_balance() {
+    let pool = sale_details_fixture().await;
+    sqlx::query("DELETE FROM product_batches WHERE product_id='test-product'")
+        .execute(&pool)
+        .await
+        .unwrap();
+    let mut sale = request(&[2]);
+    sale.items[0].batch_id = "unallocated-stock:test-product".into();
+    sale.expected_net_amount = 1.0;
+    assert!(record_sale(&pool, sale).await.is_err());
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM product_batches")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(count, 0);
 }

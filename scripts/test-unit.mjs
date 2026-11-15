@@ -5,10 +5,9 @@ const cases = [
     process.execPath,
     ['--experimental-strip-types', `tests/${name}_smoke.mjs`],
   ]),
-  ...['commercial_operations_smoke', 'test_inventory_schema'].map((name) => [
-    'python',
-    [`tests/${name}.py`],
-  ]),
+  ...['commercial_operations_smoke', 'test_inventory_schema', 'pos_product_search_smoke'].map(
+    (name) => ['python', [`tests/${name}.py`]],
+  ),
 ];
 for (const [command, args] of cases) {
   const result = spawnSync(command, args, { stdio: 'inherit', windowsHide: true, timeout: 120000 });
