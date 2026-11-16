@@ -45,7 +45,9 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
       <p class="text-xs text-muted mt-1">Alert when products expire within this many days</p>
     </div>
 
-    <div class="p-4 bg-warning-bg border border-warning rounded-md">
+    <div
+      class="p-4 bg-banner-warning-bg border-banner-warning-border border border-banner-warning-border rounded-md"
+    >
       <div class="flex items-start gap-3">
         <span class="text-2xl">⚠️</span>
         <div>

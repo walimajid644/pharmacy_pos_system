@@ -5,9 +5,28 @@ export default {
   theme: {
     extend: {
       colors: {
+        banner: {
+          success: {
+            bg: 'var(--banner-success-bg)',
+            border: 'var(--banner-success-border)',
+          },
+          warning: {
+            bg: 'var(--banner-warning-bg)',
+            border: 'var(--banner-warning-border)',
+          },
+          danger: {
+            bg: 'var(--banner-danger-bg)',
+            border: 'var(--banner-danger-border)',
+          },
+          info: {
+            bg: 'var(--banner-info-bg)',
+            border: 'var(--banner-info-border)',
+          },
+        },
+
         border: {
           DEFAULT: 'var(--border)',
-          strong:  'var(--border-strong)',
+          strong: 'var(--border-strong)',
         },
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -16,7 +35,7 @@ export default {
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
-          50:  'var(--color-primary-50)',
+          50: 'var(--color-primary-50)',
           100: 'var(--color-primary-100)',
           400: 'var(--color-primary-400)',
           600: 'var(--color-primary-600)',
@@ -25,7 +44,7 @@ export default {
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
           foreground: 'hsl(var(--secondary-foreground))',
-          50:  'var(--color-secondary-50)',
+          50: 'var(--color-secondary-50)',
           400: 'var(--color-secondary-400)',
           600: 'var(--color-secondary-600)',
           800: 'var(--color-secondary-800)',
@@ -47,24 +66,32 @@ export default {
           foreground: 'hsl(var(--card-foreground))',
         },
         success: {
+          50: 'var(--color-success-50)',
+          600: 'var(--color-success-600)',
           DEFAULT: 'var(--color-success)',
-          bg:      'var(--color-success-bg)',
-          text:    'var(--color-success-text)',
+          bg: 'var(--color-success-bg)',
+          text: 'var(--color-success-text)',
         },
         warning: {
+          50: 'var(--color-warning-50)',
+          600: 'var(--color-warning-600)',
           DEFAULT: 'var(--color-warning)',
-          bg:      'var(--color-warning-bg)',
-          text:    'var(--color-warning-text)',
+          bg: 'var(--color-warning-bg)',
+          text: 'var(--color-warning-text)',
         },
         danger: {
+          50: 'var(--color-danger-50)',
+          600: 'var(--color-danger-600)',
           DEFAULT: 'var(--color-danger)',
-          bg:      'var(--color-danger-bg)',
-          text:    'var(--color-danger-text)',
+          bg: 'var(--color-danger-bg)',
+          text: 'var(--color-danger-text)',
         },
         info: {
+          50: 'var(--color-info-50)',
+          600: 'var(--color-info-600)',
           DEFAULT: 'var(--color-info)',
-          bg:      'var(--color-info-bg)',
-          text:    'var(--color-info-text)',
+          bg: 'var(--color-info-bg)',
+          text: 'var(--color-info-text)',
         },
         surface: {
           page: 'var(--surface-page)',
@@ -72,14 +99,14 @@ export default {
         },
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        lg: 'var(--radius-lg)',
+        md: 'var(--radius-md)',
+        sm: 'var(--radius-sm)',
       },
       textColor: {
-        primary:   'var(--text-primary)',
+        primary: 'var(--text-primary)',
         secondary: 'var(--text-secondary)',
-        muted:     'var(--text-muted)',
+        muted: 'var(--text-muted)',
       },
     },
   },

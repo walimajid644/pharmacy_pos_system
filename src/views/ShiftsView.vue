@@ -125,7 +125,11 @@ onMounted(load);
         {{ pick('Refresh', 'تازہ کریں') }}
       </button>
     </header>
-    <p v-if="error" role="alert" class="rounded border border-danger bg-danger-bg p-3 text-danger-text">
+    <p
+      v-if="error"
+      role="alert"
+      class="rounded border border-banner-danger-border bg-banner-danger-bg border-banner-danger-border p-3 text-danger-text"
+    >
       {{ error }}
     </p>
     <section v-if="current" class="rounded-xl border bg-card p-5 shadow-sm">
@@ -181,7 +185,11 @@ onMounted(load);
         </button>
       </form>
     </section>
-    <section v-if="result" class="rounded-xl border border-success bg-card p-5" role="status">
+    <section
+      v-if="result"
+      class="rounded-xl border border-banner-success-border bg-card p-5"
+      role="status"
+    >
       <h2 class="font-semibold">{{ pick('Shift closed', 'شفٹ بند ہوگئی') }}</h2>
       <p>
         {{ pick('Expected cash', 'متوقع نقد رقم') }}:

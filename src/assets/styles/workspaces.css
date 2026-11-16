@@ -18,7 +18,7 @@
   flex-direction: column;
   min-height: 0;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   box-shadow: none;
   background: var(--color-surface);
 }
@@ -32,8 +32,8 @@
   min-height: 76px;
   margin: 0;
   padding: 0.75rem 1rem;
-  background: linear-gradient(110deg, var(--color-primary-600), var(--color-primary-400));
-  color: white;
+  background: var(--surface-card);
+  color: var(--text-primary);
 }
 .inventory-header h1,
 .purchase-terminal.purchase-orders-view .view-title {
@@ -81,7 +81,7 @@
   margin-inline-start: 0.5rem;
   padding: 0.1rem 0.3rem;
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-size: 0.65rem;
 }
 .inventory-search input {
@@ -113,8 +113,8 @@
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--color-primary-600);
-  color: white;
+  background: var(--surface-page);
+  color: var(--text-secondary);
 }
 .inventory-table th,
 .purchase-table th {
@@ -123,8 +123,8 @@
   white-space: nowrap;
   font-size: 0.73rem;
   font-weight: 700;
-  background: var(--color-primary-600);
-  color: white;
+  background: var(--surface-page);
+  color: var(--text-secondary);
 }
 .purchase-table th {
   text-align: start;
@@ -153,7 +153,7 @@
   padding: 0.2rem 0.45rem;
   margin-inline-end: 0.25rem;
   border: 1px solid var(--color-border);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   background: var(--color-background);
   color: var(--color-text-primary);
   font-size: 0.7rem;
@@ -185,7 +185,7 @@
   flex-shrink: 0;
   min-height: 64px;
   padding: 0.6rem 1rem;
-  border-top: 2px solid var(--color-primary-600);
+  border-top: 1px solid var(--border);
   background: var(--color-surface);
   box-shadow: 0 -3px 14px rgba(0, 0, 0, 0.04);
 }
@@ -219,7 +219,7 @@
 .purchase-terminal.purchase-orders-view .status-tab {
   padding: 0.35rem 0.65rem;
   font-size: 0.72rem;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
 }
 .purchase-terminal.purchase-orders-view .filters-card {
   flex-shrink: 0;
@@ -227,7 +227,7 @@
   padding: 0.65rem 1rem;
   border: 0;
   border-bottom: 1px solid var(--color-border);
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   box-shadow: none;
 }
 .purchase-terminal.purchase-orders-view .filters-grid {
@@ -308,7 +308,7 @@
   flex: 1;
   min-height: 0;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   box-shadow: none;
   background: var(--color-surface);
 }
@@ -322,9 +322,9 @@
   margin: 0;
   padding: 0.75rem 1rem;
   border: 0;
-  border-radius: 0;
-  background: linear-gradient(110deg, var(--color-primary-600), var(--color-primary-400));
-  color: white;
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--text-primary);
 }
 .workspace-body .tool-terminal .tool-header :is(h1, h2) {
   margin: 0;
@@ -341,7 +341,7 @@
   min-height: 30px;
   padding: 0.35rem 0.65rem;
   border: 1px solid var(--color-border);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
@@ -420,8 +420,8 @@
 .workspace-body .tool-terminal table th {
   padding: 0.5rem 0.6rem;
   height: 36px;
-  background: var(--color-primary-600);
-  color: white;
+  background: var(--surface-page);
+  color: var(--text-secondary);
   border-color: var(--color-border);
   font-size: 0.73rem;
   font-weight: 700;
@@ -449,7 +449,7 @@
   flex-shrink: 0;
   min-height: 64px;
   padding: 0.6rem 1rem;
-  border-top: 2px solid var(--color-primary-600);
+  border-top: 1px solid var(--border);
   background: var(--color-surface);
 }
 .workspace-body .tool-terminal .tool-summary small {
@@ -479,12 +479,12 @@
   box-shadow: none;
 }
 .workspace-body .tool-terminal :is(.form-actions, .total-row) {
-  border-top: 2px solid var(--color-primary-600);
+  border-top: 1px solid var(--border);
   padding-top: 0.75rem;
 }
 .workspace-body .tool-terminal .table-header {
-  background: var(--color-primary-600);
-  color: white;
+  background: var(--surface-page);
+  color: var(--text-secondary);
   font-size: 0.73rem;
 }
 .workspace-body .tool-terminal .tool-report-grid {
@@ -543,8 +543,8 @@
 }
 .workspace-body .tool-terminal .fixed > div > .border-b:first-child {
   padding: 0.75rem 1rem;
-  background: linear-gradient(110deg, var(--color-primary-600), var(--color-primary-400));
-  color: white;
+  background: var(--surface-card);
+  color: var(--text-primary);
 }
 .workspace-body .tool-terminal .fixed > div > .border-b:first-child :is(h1, h2, h3) {
   color: white;
@@ -552,7 +552,7 @@
 }
 .workspace-body .tool-terminal .fixed > div > .border-t:last-child {
   padding: 0.75rem 1rem;
-  border-top: 2px solid var(--color-primary-600);
+  border-top: 1px solid var(--border);
 }
 .workspace-body .tool-terminal :is(.supplier-card, .form-section) {
   box-shadow: none;
@@ -726,7 +726,7 @@
   margin-inline-start: 0.5rem;
   padding: 0.2rem 0.4rem;
   border: 1px solid var(--color-border);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
 }
 .commercial-print {
   display: none;
@@ -864,16 +864,16 @@
 .stock-badge.held,
 .customer-balance-badge.over-limit {
   color: var(--color-danger-text);
-  background: var(--color-danger-bg);
+  background: var(--banner-danger-bg);
 }
 .stock-badge.near,
 .customer-balance-badge.owed {
   color: var(--color-warning-text);
-  background: var(--color-warning-bg);
+  background: var(--banner-warning-bg);
 }
 .customer-balance-badge.credit {
   color: var(--color-success-text);
-  background: var(--color-success-bg);
+  background: var(--banner-success-bg);
 }
 .customer-balance-badge.settled {
   color: var(--color-text-secondary);
@@ -890,14 +890,14 @@
 [data-theme='dark'] .stock-badge.held,
 [data-theme='dark'] .customer-balance-badge.over-limit {
   color: var(--color-danger-text);
-  background: var(--color-danger-bg);
+  background: var(--banner-danger-bg);
 }
 [data-theme='dark'] .stock-badge.near,
 [data-theme='dark'] .customer-balance-badge.owed {
   color: var(--color-warning-text);
-  background: var(--color-warning-bg);
+  background: var(--banner-warning-bg);
 }
 [data-theme='dark'] .customer-balance-badge.credit {
   color: var(--color-success-text);
-  background: var(--color-success-bg);
+  background: var(--banner-success-bg);
 }

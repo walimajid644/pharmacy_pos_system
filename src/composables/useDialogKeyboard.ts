@@ -15,7 +15,7 @@ export function useDialogKeyboard(dialog: Ref<HTMLElement | null>, close: () => 
   function release() {
     if (current) openDialogs.splice(openDialogs.indexOf(current), 1);
     current = null;
-    if (trigger?.isConnected) trigger.focus();
+    if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     trigger = null;
   }
   watch(
@@ -27,7 +27,7 @@ export function useDialogKeyboard(dialog: Ref<HTMLElement | null>, close: () => 
       current = element;
       openDialogs.push(element);
       await nextTick();
-      if (dialog.value === element) (controls()[0] || element).focus();
+      if (dialog.value === element) (controls()[0] || element).focus({ preventScroll: true });
     },
     { flush: 'post' },
   );
@@ -43,7 +43,7 @@ export function useDialogKeyboard(dialog: Ref<HTMLElement | null>, close: () => 
         last = elements[elements.length - 1];
       if (!first) {
         event.preventDefault();
-        current.focus();
+        current.focus({ preventScroll: true });
         return;
       }
       if (
@@ -53,7 +53,7 @@ export function useDialogKeyboard(dialog: Ref<HTMLElement | null>, close: () => 
           !current.contains(document.activeElement))
       ) {
         event.preventDefault();
-        last?.focus();
+        last?.focus({ preventScroll: true });
       } else if (
         !event.shiftKey &&
         (document.activeElement === last ||
@@ -61,7 +61,7 @@ export function useDialogKeyboard(dialog: Ref<HTMLElement | null>, close: () => 
           !current.contains(document.activeElement))
       ) {
         event.preventDefault();
-        first.focus();
+        first.focus({ preventScroll: true });
       }
     }
   }

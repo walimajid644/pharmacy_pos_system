@@ -180,7 +180,7 @@ useDialogKeyboard(helpDialog, () => {
   width: 32px;
   height: 30px;
   border: 1px solid transparent;
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: var(--color-text-primary);
   font-size: 1.25rem;
@@ -221,7 +221,7 @@ useDialogKeyboard(helpDialog, () => {
   min-height: 22px;
   padding: 2px 6px;
   gap: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   font:
     11px/1.2 Arial,
     Tahoma,
@@ -229,13 +229,13 @@ useDialogKeyboard(helpDialog, () => {
 }
 .dashboard-header :deep(.nav-menu) {
   padding: 4px;
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 .dashboard-header :deep(.nav-menu-item) {
   min-height: 26px;
   padding: 4px 7px;
   gap: 6px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   font:
     11px/1.2 Arial,
     Tahoma,
@@ -294,6 +294,6 @@ useDialogKeyboard(helpDialog, () => {
     Tahoma,
     sans-serif;
   min-height: 24px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 </style>

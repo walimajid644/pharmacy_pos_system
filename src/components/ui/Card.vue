@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const cardClass = computed(() => {
-  const baseClasses = 'rounded-lg bg-surface-primary transition-all duration-200';
+  const baseClasses = 'ui-card rounded-md bg-surface-card transition-all duration-200';
 
   const variantClasses = {
     default: 'border border-border-primary shadow-sm',

@@ -32,12 +32,12 @@ export function useDashboardWorkspace() {
           document.activeElement instanceof HTMLElement ? document.activeElement : null;
       }
       await nextTick();
-      if (path !== '/') workspaceDialog.value?.focus();
+      if (path !== '/') workspaceDialog.value?.focus({ preventScroll: true });
       else if (previousPath && previousPath !== '/') {
         const target = workspaceTrigger?.isConnected
           ? workspaceTrigger
           : document.querySelector<HTMLElement>('.desktop-nav .nav-button');
-        target?.focus();
+        target?.focus({ preventScroll: true });
         workspaceTrigger = null;
       }
     },
@@ -71,10 +71,10 @@ export function useDashboardWorkspace() {
         (document.activeElement === first || document.activeElement === panel)
       ) {
         event.preventDefault();
-        last.focus();
+        last.focus({ preventScroll: true });
       } else if (!event.shiftKey && document.activeElement === last) {
         event.preventDefault();
-        first.focus();
+        first.focus({ preventScroll: true });
       }
     }
   }
@@ -131,7 +131,7 @@ export function useDashboardWorkspace() {
     shortcutHelpOpen.value = false;
     if (router.currentRoute.value.path !== path) await router.push(path);
     await nextTick();
-    document.querySelector<HTMLInputElement>(selector)?.focus();
+    document.querySelector<HTMLInputElement>(selector)?.focus({ preventScroll: true });
   }
 
   function onShortcut(event: KeyboardEvent) {

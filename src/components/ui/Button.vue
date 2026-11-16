@@ -39,7 +39,7 @@ const normalizedSize = computed(() => {
 
 const buttonClass = computed(() => {
   const baseClasses =
-    'inline-flex items-center justify-center gap-2 font-medium transition-all duration-150 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden';
+    'ui-button inline-flex items-center justify-center gap-2 font-medium transition-all duration-150 focus-visible:outline-none disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden';
 
   // Size classes
   const sizeClasses = {
@@ -66,7 +66,7 @@ const buttonClass = computed(() => {
     primary:
       'bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 shadow-sm hover:shadow-md focus-visible:ring-4 focus-visible:ring-brand-500/30',
     secondary:
-      'bg-neutral-200 text-neutral-900 hover:bg-neutral-300 active:bg-neutral-400 dark:bg-neutral-700 dark:text-neutral-100 dark:hover:bg-neutral-600 focus-visible:ring-4 focus-visible:ring-neutral-500/30',
+      'bg-secondary text-white hover:bg-secondary-800 focus-visible:ring-4 focus-visible:ring-secondary-600/30',
     outline:
       'border-2 border-neutral-300 bg-transparent hover:bg-neutral-100 active:bg-neutral-200 dark:border-neutral-600 dark:hover:bg-neutral-800 focus-visible:ring-4 focus-visible:ring-neutral-500/30',
     ghost:

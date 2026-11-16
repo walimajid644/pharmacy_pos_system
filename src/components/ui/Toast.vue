@@ -34,10 +34,10 @@ function close() {
 }
 
 const bgColor = {
-  success: 'bg-success',
-  error: 'bg-danger',
-  warning: 'bg-warning',
-  info: 'bg-info',
+  success: 'banner-success',
+  error: 'banner-danger',
+  warning: 'banner-warning',
+  info: 'banner-info',
 };
 
 const icon = {
@@ -51,7 +51,7 @@ const icon = {
 <template>
   <div
     :class="[
-      'fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg text-white transition-all duration-300',
+      'ui-banner fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-md shadow-lg border transition-all duration-300',
       bgColor[type],
       show ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0',
     ]"

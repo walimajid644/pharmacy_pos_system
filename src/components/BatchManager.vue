@@ -75,19 +75,28 @@ function getBatchStatus(batch: ProductBatch) {
   if (isUnallocatedStockBatch(batch) || batch.quantity_in_stock < 0) {
     return {
       label: pick('Negative / unallocated', 'منفی / غیر مختص'),
-      class: 'bg-warning-bg text-warning-text',
+      class: 'bg-banner-warning-bg border-banner-warning-border text-warning-text',
     };
   }
   if (isExpired(batch.expiry_date)) {
-    return { label: pick('Expired', 'میعاد ختم'), class: 'bg-danger-bg text-danger-text' };
+    return {
+      label: pick('Expired', 'میعاد ختم'),
+      class: 'bg-banner-danger-bg border-banner-danger-border text-danger-text',
+    };
   }
   if (isNearExpiry(batch.expiry_date, Number(settingsStore.settings?.near_expiry_days ?? 60))) {
-    return { label: pick('Near expiry', 'قریب المیعاد'), class: 'bg-warning-bg text-warning-text' };
+    return {
+      label: pick('Near expiry', 'قریب المیعاد'),
+      class: 'bg-banner-warning-bg border-banner-warning-border text-warning-text',
+    };
   }
   if (batch.quantity_in_stock === 0) {
     return { label: pick('Out of stock', 'اسٹاک ختم'), class: 'bg-surface-page text-muted' };
   }
-  return { label: pick('Active', 'فعال'), class: 'bg-success-bg text-success-text' };
+  return {
+    label: pick('Active', 'فعال'),
+    class: 'bg-banner-success-bg border-banner-success-border text-success-text',
+  };
 }
 
 async function addBatch() {

@@ -152,11 +152,21 @@ async function onSubmit() {
 .login-background {
   position: absolute;
   inset: 0;
-  background: linear-gradient(115deg, var(--color-primary-50) 0%, var(--surface-page) 50%, var(--color-secondary-50) 100%);
+  background: linear-gradient(
+    115deg,
+    var(--color-primary-50) 0%,
+    var(--surface-page) 50%,
+    var(--color-secondary-50) 100%
+  );
   pointer-events: none;
 }
 [data-theme='dark'] .login-background {
-  background: linear-gradient(115deg, var(--surface-page) 0%, var(--surface-card) 52%, var(--color-primary-50) 100%);
+  background: linear-gradient(
+    115deg,
+    var(--surface-page) 0%,
+    var(--surface-card) 52%,
+    var(--color-primary-50) 100%
+  );
 }
 .login-controls {
   position: absolute;
@@ -185,8 +195,8 @@ async function onSubmit() {
   justify-content: center;
   align-items: flex-start;
   padding: 36px 42px;
-  background: linear-gradient(150deg, var(--color-primary-600), var(--color-primary-400));
-  color: var(--text-inverse);
+  background: var(--surface-page);
+  color: var(--text-primary);
 }
 .login-logo {
   display: grid;
@@ -283,7 +293,7 @@ async function onSubmit() {
   padding: 9px 11px;
   border: 1px solid var(--color-danger);
   border-radius: 7px;
-  background: var(--color-danger-bg);
+  background: var(--banner-danger-bg);
   color: var(--color-danger);
   font-size: 12px;
 }

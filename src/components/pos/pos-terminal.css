@@ -38,7 +38,7 @@
   min-height: 0;
   padding: 2px 5px;
   border: 1px solid var(--pos-rule);
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: var(--pos-field);
   color: var(--pos-ink);
   box-shadow: inset 1px 1px 1px #00000012;
@@ -121,7 +121,7 @@
 }
 .pos-terminal .is-closed {
   color: var(--color-warning-text);
-  background: var(--color-warning-bg);
+  background: var(--banner-warning-bg);
 }
 .pos-terminal .pos-customer-mode {
   display: flex;
@@ -335,7 +335,7 @@
 }
 .pos-terminal .pos-break-pill {
   color: var(--color-warning-text);
-  background: var(--color-warning-bg);
+  background: var(--banner-warning-bg);
 }
 .pos-terminal .pos-batch-number,
 .pos-terminal .pos-expiry-date {
@@ -366,8 +366,8 @@
   min-height: 24px;
   padding: 2px 4px;
   border: 1px solid var(--color-danger);
-  border-radius: 2px;
-  background: var(--color-danger-bg);
+  border-radius: var(--radius-sm);
+  background: var(--banner-danger-bg);
   color: var(--color-danger-text);
   font-size: 11px;
   font-weight: 700;
@@ -375,10 +375,10 @@
   white-space: nowrap;
 }
 .pos-terminal .pos-remove:hover {
-  background: var(--color-danger-bg);
+  background: var(--banner-danger-bg);
 }
 [data-theme='dark'] .pos-terminal .pos-remove {
-  background: var(--color-danger-bg);
+  background: var(--banner-danger-bg);
   color: var(--color-danger-text);
   border-color: var(--color-danger);
 }
@@ -528,7 +528,7 @@
   height: 28px;
   padding: 3px 8px;
   border: 1px solid var(--color-primary-600);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   background: var(--color-primary-600);
   color: var(--text-inverse);
   font-size: 11px;
@@ -575,7 +575,7 @@
 }
 .pos-terminal .pos-product-card {
   padding: 6px 8px;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   cursor: pointer;
 }
 .pos-terminal .pos-product-card h4,
@@ -697,7 +697,7 @@
   width: 100%;
   padding: 2px 0;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--radius-sm);
   background: transparent;
   font-size: 10px;
 }
@@ -715,7 +715,7 @@
 .pos-terminal .saved-sale-actions button {
   padding: 1px 4px;
   border: 1px solid var(--pos-rule);
-  border-radius: 1px;
+  border-radius: var(--radius-sm);
   font-size: 10px;
   background: var(--pos-field);
   color: var(--pos-ink);
@@ -765,7 +765,7 @@
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--pos-rule);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
   background: var(--color-surface);
   color: var(--color-text-primary);
   box-shadow: 0 8px 32px #0003;
@@ -876,7 +876,7 @@
   height: 24px;
   padding: 2px 7px;
   border: 1px solid var(--pos-rule);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: var(--pos-field);
   color: var(--pos-ink);
   font-size: 11px;
@@ -903,7 +903,7 @@
   margin: 2px 0 0;
   padding: 4px 6px;
   border: 1px solid var(--color-warning);
-  background: var(--color-warning-bg);
+  background: var(--banner-warning-bg);
   color: var(--color-warning-text);
   font-size: 11px;
   line-height: 1.3;

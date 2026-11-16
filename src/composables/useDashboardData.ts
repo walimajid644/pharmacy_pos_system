@@ -1,5 +1,5 @@
 import { reportDiagnostic } from '@/lib/diagnostics';
-import { ref } from 'vue';
+import { ref, type Ref } from 'vue';
 import { executeQuery } from '@/lib/database';
 import { localDateKey, localDayBounds } from '@/lib/businessDay';
 import { useSettingsStore } from '@/stores/settings';
@@ -25,11 +25,22 @@ export function useDashboardData() {
   const loadError = ref(false);
   let hasLoaded = false;
   let loadVersion = 0;
+  function updateList<T>(current: Ref<T[]>, next: T[]) {
+    // Preserve list instances, pagination and chart state when the data is unchanged.
+    if (JSON.stringify(current.value) !== JSON.stringify(next)) current.value = next;
+  }
   async function loadDashboardData(options: { background?: boolean } = {}) {
     const version = ++loadVersion;
-    const silent = options.background === true && hasLoaded;
+    const silent = hasLoaded && options.background !== false;
     loading.value = !silent;
     if (!silent) loadError.value = false;
+    // Inventory totals must remain available even if a sales/report query fails.
+    const productsRequest = executeQuery<{ count: number }>(
+      'SELECT COUNT(*) as count FROM products WHERE deleted_at IS NULL AND is_active = 1',
+    ).then(
+      (rows) => ({ ok: true, count: Number(rows[0]?.count ?? 0) }),
+      () => ({ ok: false, count: 0 }),
+    );
     try {
       const [dayStart, dayEnd] = localDayBounds(localDateKey());
       const todayInvoices = await executeQuery<{ invoice_date: string; net_amount: number }>(
@@ -62,12 +73,6 @@ export function useDashboardData() {
          FROM sales_dashboard si LEFT JOIN customers c ON c.id = si.customer_id
          WHERE si.status = 'completed' ORDER BY si.invoice_date DESC LIMIT 6`,
       );
-
-      // Get total products
-      const productsResult = await executeQuery<{ count: number }>(
-        'SELECT COUNT(*) as count FROM products WHERE deleted_at IS NULL AND is_active = 1',
-      );
-      const nextTotalProducts = productsResult[0]?.count || 0;
 
       // Get low stock items
       const nextLowStockItems = await executeQuery<LowStockItem>(
@@ -117,12 +122,11 @@ export function useDashboardData() {
       yesterdaySales.value = nextYesterdaySales;
       activeCustomers.value = nextActiveCustomers;
       billsToday.value = todayInvoices.length;
-      hourlySales.value = hours;
-      recentBills.value = nextRecentBills;
-      totalProducts.value = nextTotalProducts;
-      lowStockItems.value = nextLowStockItems;
+      updateList(hourlySales, hours);
+      updateList(recentBills, nextRecentBills);
+      updateList(lowStockItems, nextLowStockItems);
       lowStockCount.value = nextLowStockCount;
-      nearExpiryItems.value = nextNearExpiryItems;
+      updateList(nearExpiryItems, nextNearExpiryItems);
       nearExpiryCount.value = expiryCount?.count || 0;
       hasLoaded = true;
       loadError.value = false;
@@ -130,7 +134,17 @@ export function useDashboardData() {
       reportDiagnostic('operation_failed', 'reports');
       if (version === loadVersion && !silent) loadError.value = true;
     } finally {
-      if (version === loadVersion) loading.value = false;
+      const products = await productsRequest;
+      if (version === loadVersion) {
+        if (products.ok) {
+          totalProducts.value = products.count;
+          hasLoaded = true;
+        } else {
+          reportDiagnostic('operation_failed', 'reports');
+          if (!silent) loadError.value = true;
+        }
+        loading.value = false;
+      }
     }
   }
 

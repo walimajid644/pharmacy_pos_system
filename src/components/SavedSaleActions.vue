@@ -264,7 +264,7 @@ defineExpose({ print, copy, whatsapp, load });
 .saved-sale-actions button {
   padding: 0.3rem 0.4rem;
   border: 1px solid var(--color-border);
-  border-radius: 5px;
+  border-radius: var(--radius-sm);
   background: var(--color-surface);
   color: var(--color-text-primary);
   font-size: 0.7rem;

@@ -238,12 +238,12 @@ function getExpiryText(days: number): string {
 }
 
 .alert-tab-active {
-  background-color: var(--color-primary);
-  color: white;
+  background-color: var(--color-success-50);
+  color: var(--banner-success-text);
 }
 
 .alert-tab-active:hover {
-  background-color: var(--color-primary-hover);
+  background-color: var(--color-success-50);
 }
 
 .alerts-content {

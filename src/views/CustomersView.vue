@@ -110,8 +110,8 @@ useDialogKeyboard(formDialog, () => {
                     :class="[
                       'inline-block px-2 py-1 text-xs rounded capitalize',
                       customer.customer_type === 'wholesale'
-                        ? 'bg-info-bg text-info-text'
-                        : 'bg-success-bg text-success-text',
+                        ? 'bg-banner-info-bg border-banner-info-border text-info-text'
+                        : 'bg-banner-success-bg border-banner-success-border text-success-text',
                     ]"
                   >
                     {{ t(customer.customer_type) }}
@@ -149,7 +149,7 @@ useDialogKeyboard(formDialog, () => {
                     :class="[
                       'inline-block px-2 py-1 text-xs rounded',
                       customer.is_active
-                        ? 'bg-success-bg text-success-text'
+                        ? 'bg-banner-success-bg border-banner-success-border text-success-text'
                         : 'bg-surface-page text-muted',
                     ]"
                   >
@@ -292,7 +292,10 @@ useDialogKeyboard(formDialog, () => {
             </div>
           </div>
 
-          <div v-if="!editingCustomer" class="text-sm text-info-text bg-info-bg p-3 rounded">
+          <div
+            v-if="!editingCustomer"
+            class="text-sm text-info-text bg-banner-info-bg border-banner-info-border p-3 rounded"
+          >
             {{
               pick(
                 'Customer code will be auto-generated (e.g., C001, C002...)',

@@ -79,7 +79,9 @@ defineProps<{
               <span
                 :class="[
                   'inline-block px-2 py-1 text-xs rounded',
-                  user.is_active ? 'bg-success-bg text-success-text' : 'bg-surface-page text-muted',
+                  user.is_active
+                    ? 'bg-banner-success-bg border-banner-success-border text-success-text'
+                    : 'bg-surface-page text-muted',
                 ]"
               >
                 {{ user.is_active ? 'Active' : 'Inactive' }}

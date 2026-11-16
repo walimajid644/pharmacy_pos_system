@@ -47,19 +47,24 @@ const {
 
           <div class="flex-1 p-6 space-y-6">
             <!-- Status -->
-            <div v-if="todayClosed" class="p-4 bg-success-bg border border-success rounded-md">
+            <div
+              v-if="todayClosed"
+              class="p-4 bg-banner-success-bg border-banner-success-border border border-banner-success-border rounded-md"
+            >
               <div class="flex items-center gap-2">
                 <span class="text-2xl">✅</span>
                 <div>
                   <div class="font-semibold text-success-text">Day Already Closed</div>
-                  <div class="text-sm text-success-text">This day has been closed and reconciled</div>
+                  <div class="text-sm text-success-text">
+                    This day has been closed and reconciled
+                  </div>
                 </div>
               </div>
             </div>
 
             <div
               v-else-if="salesData.invoice_count === 0"
-              class="p-4 bg-warning-bg border border-warning rounded-md"
+              class="p-4 bg-banner-warning-bg border-banner-warning-border border border-banner-warning-border rounded-md"
             >
               <div class="flex items-center gap-2">
                 <span class="text-2xl">ℹ️</span>
@@ -70,7 +75,10 @@ const {
               </div>
             </div>
 
-            <div v-else class="p-4 bg-info-bg border border-info rounded-md">
+            <div
+              v-else
+              class="p-4 bg-banner-info-bg border-banner-info-border border border-banner-info-border rounded-md"
+            >
               <div class="flex items-center gap-2">
                 <span class="text-2xl">📊</span>
                 <div>
@@ -137,7 +145,7 @@ const {
             <!-- Closing Form -->
             <div
               v-if="showClosingForm"
-              class="space-y-4 p-4 bg-warning-bg border border-warning rounded-md"
+              class="space-y-4 p-4 bg-banner-warning-bg border-banner-warning-border border border-banner-warning-border rounded-md"
             >
               <h3 class="font-semibold">Cash Reconciliation</h3>
 

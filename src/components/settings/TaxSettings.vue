@@ -45,7 +45,9 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
       <p class="text-xs text-muted mt-1">Used in price displays and reports</p>
     </div>
 
-    <div class="p-4 bg-info-bg border border-info rounded-md">
+    <div
+      class="p-4 bg-banner-info-bg border-banner-info-border border border-banner-info-border rounded-md"
+    >
       <div class="flex items-start gap-3">
         <span class="text-2xl">ℹ️</span>
         <div>

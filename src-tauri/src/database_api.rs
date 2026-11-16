@@ -333,6 +333,26 @@ pub async fn initialize(pool: &Pool<Sqlite>) -> Result<(), String> {
             .map_err(|e| e.to_string())?;
         tx.commit().await.map_err(|e| e.to_string())?;
     }
+    // Older installations may have recorded migration 013 before this view was added.
+    ensure_dashboard_view(pool).await?;
+    let medicine_products: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM schema_migrations WHERE version='014_100_medicine_products'",
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+    if medicine_products == 0 {
+        let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
+        sqlx::raw_sql(include_str!("../migrations/014_100_medicine_products.sql"))
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        sqlx::query("INSERT INTO schema_migrations(version) VALUES('014_100_medicine_products')")
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        tx.commit().await.map_err(|e| e.to_string())?;
+    }
     sqlx::query("INSERT INTO app_settings (id, company_name, tax_rate, currency_symbol, theme, created_at, updated_at) SELECT ?, 'Pharmacy POS', 0, 'Rs', 'light', datetime('now'), datetime('now') WHERE NOT EXISTS (SELECT 1 FROM app_settings)")
         .bind(Uuid::new_v4().to_string()).execute(pool).await.map_err(|e| e.to_string())?;
     Ok(())
@@ -561,6 +581,14 @@ async fn authorize_select(db: &Pool<Sqlite>, actor: &str, query: &str) -> Result
     Ok(())
 }
 
+async fn ensure_dashboard_view(pool: &Pool<Sqlite>) -> Result<(), String> {
+    sqlx::query("CREATE VIEW IF NOT EXISTS sales_dashboard AS SELECT id,invoice_number,invoice_date,net_amount,payment_method,status,customer_id FROM sales_invoices")
+        .execute(pool)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 pub(crate) async fn select_safe(
     pool: &Pool<Sqlite>,
     query: String,
@@ -692,6 +720,29 @@ mod release_gate_tests;
 #[cfg(test)]
 mod prescription_read_tests {
     use super::*;
+    #[tokio::test]
+    async fn repairs_missing_dashboard_view_without_changing_catalog() {
+        let p = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        sqlx::raw_sql("CREATE TABLE products(id TEXT PRIMARY KEY,name TEXT); INSERT INTO products VALUES('p1','Tearsplus'); CREATE TABLE sales_invoices(id TEXT,invoice_number TEXT,invoice_date TEXT,net_amount REAL,payment_method TEXT,status TEXT,customer_id TEXT);")
+            .execute(&p).await.unwrap();
+        ensure_dashboard_view(&p).await.unwrap();
+        ensure_dashboard_view(&p).await.unwrap();
+        let products: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM products")
+            .fetch_one(&p)
+            .await
+            .unwrap();
+        let sales: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM sales_dashboard")
+            .fetch_one(&p)
+            .await
+            .unwrap();
+        assert_eq!(products, 1);
+        assert_eq!(sales, 0);
+    }
+
     #[tokio::test]
     async fn cashier_reads_summary_not_prescription_tables_or_import_journal() {
         let p = sqlx::sqlite::SqlitePoolOptions::new()

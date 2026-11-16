@@ -153,6 +153,21 @@ try {
     '18px',
   );
   await shot('dashboard-populated-1024x600');
+  async function assertSoftMetrics() {
+    assert(
+      await evaluate(`(() => {
+      const root=getComputedStyle(document.documentElement);
+      const swatch=document.createElement('div');swatch.style.background='var(--surface-card)';document.body.append(swatch);
+      const surface=getComputedStyle(swatch).backgroundColor;swatch.remove();
+      return [...document.querySelectorAll('.stat-card')].every(card=>{
+        const style=getComputedStyle(card),icon=card.querySelector('.stat-card-icon'),chip=getComputedStyle(icon),rect=icon.getBoundingClientRect();
+        return style.borderRadius==='10px' && style.borderLeftWidth==='1px' && style.backgroundColor===surface && rect.width===40 && rect.height===40 && chip.borderRadius==='50%' && !!icon.querySelector('svg');
+      }) && root.getPropertyValue('--radius-lg').trim()==='14px';
+    })()`),
+      'Metric cards use neutral surfaces, 10px corners and 40px circular icons',
+    );
+  }
+  await assertSoftMetrics();
   await evaluate("document.querySelectorAll('.alert-tab')[1].click()");
   await delay(150);
   await fits('.alerts-content');
@@ -161,6 +176,7 @@ try {
   );
   await delay(350);
   await shot('dashboard-dark-1024x600');
+  await assertSoftMetrics();
   results.push(
     'Compact dashboard uses 11px controls and 18px metrics; populated bills/alerts fit without scrolling',
   );
@@ -311,6 +327,11 @@ try {
   );
   await until("!!document.querySelector('.product-dialog-card')");
   await fits('.product-dialog-card');
+  assert(
+    await evaluate(
+      "getComputedStyle(document.querySelector('.product-dialog-card')).borderRadius==='14px' && getComputedStyle(document.querySelector('.product-dialog-card')).overflow==='hidden'",
+    ),
+  );
   inside(await evaluate(rect('.product-dialog-card button:last-child')), 'save product');
   await shot('product-dialog-1024x600');
   await evaluate("document.querySelector('.product-dialog input').focus()");

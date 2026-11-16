@@ -1,0 +1,343 @@
+/* Surface hierarchy: one strong accent per card/row. Reserve solid fills for
+   actions and selection; use banner tokens for status, and neutral card bodies.
+   These selectors also cover lazily loaded scoped styles and teleported dialogs. */
+:is(#app, .compact-dialog) :is(.compact-workspace, .compact-dialog),
+#app.compact-workspace,
+.compact-dialog {
+  --compact-ink: var(--text-primary);
+  --compact-panel: var(--surface-card);
+  --compact-entry: var(--surface-card);
+  --compact-field: var(--surface-card);
+  --compact-rule: var(--border);
+}
+#app .pos-terminal {
+  --pos-ink: var(--text-primary);
+  --pos-panel: var(--surface-card);
+  --pos-entry: var(--surface-card);
+  --pos-field: var(--surface-card);
+  --pos-rule: var(--border);
+}
+#app .home-view {
+  --compact-ink: var(--text-primary);
+  --compact-panel: var(--surface-page);
+  --compact-entry: var(--surface-card);
+  --compact-field: var(--surface-card);
+  --compact-rule: var(--border);
+}
+#app .login-brand {
+  background: var(--surface-page);
+  color: var(--text-primary);
+}
+#app .login-logo {
+  background: var(--color-primary-50);
+  color: var(--color-primary-600);
+  border-color: var(--border);
+}
+#app .supplier-card .detail-icon {
+  color: var(--text-secondary);
+}
+#app :is(.dashboard-layout, .dashboard-main, .home-view) {
+  background-color: var(--surface-page);
+}
+:is(#app, .compact-dialog)
+  :is(
+    .ui-card,
+    .stat-card,
+    .supplier-card,
+    .tool-panel,
+    .form-section,
+    .commercial-dock,
+    .ledger-form,
+    .insight-card,
+    .alerts-card,
+    .inventory-panel,
+    .order-info-section,
+    .purchase-summary,
+    .pos-summary,
+    .bg-card,
+    .ledger-summary > div,
+    .info-card
+  ) {
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+#app :is(.stat-card, .task-card, .supplier-card) {
+  border: 1px solid var(--border);
+}
+#app .stat-card .stat-card-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  border-radius: 50%;
+  opacity: 1;
+  background: var(--metric-icon-bg);
+  color: var(--metric-icon-fg);
+}
+#app .stat-card-icon svg {
+  width: 20px;
+  height: 20px;
+}
+#app .stat-card-primary {
+  --metric-icon-bg: var(--color-primary-50);
+  --metric-icon-fg: var(--color-primary-600);
+}
+#app .stat-card-secondary {
+  --metric-icon-bg: var(--color-secondary-50);
+  --metric-icon-fg: var(--color-secondary-600);
+}
+#app .stat-card-success {
+  --metric-icon-bg: var(--color-success-50);
+  --metric-icon-fg: var(--color-success-600);
+}
+#app .stat-card-warning {
+  --metric-icon-bg: var(--color-warning-50);
+  --metric-icon-fg: var(--color-warning-600);
+}
+#app .stat-card-danger {
+  --metric-icon-bg: var(--color-danger-50);
+  --metric-icon-fg: var(--color-danger-600);
+}
+#app .stat-card-info {
+  --metric-icon-bg: var(--color-info-50);
+  --metric-icon-fg: var(--color-info-600);
+}
+#app .stat-card :is(.stat-card-value, .stat-card-trend) {
+  color: var(--text-primary);
+}
+/* Let the 40px icon sit beside the label and value without making tiles taller. */
+#app .stat-card {
+  position: relative;
+}
+#app .stat-card-header {
+  display: block;
+  min-height: 40px;
+}
+#app .stat-card-icon {
+  position: absolute;
+  inset-inline-end: 7px;
+  top: 7px;
+}
+#app .stat-card-title {
+  min-width: 0;
+  padding-inline-end: 46px;
+  overflow-wrap: anywhere;
+}
+
+:is(#app, .compact-dialog)
+  :is(
+    .workspace-dialog,
+    .compact-dialog-card,
+    .pos-search-dialog,
+    .commercial-dialog,
+    .modal-content,
+    .review-detail-dialog,
+    .nav-menu,
+    .account-menu,
+    .product-dropdown,
+    .pos-customer-results,
+    .login-card,
+    .invoice-detail-panel
+  ) {
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  border-color: var(--border);
+}
+#app [role='dialog'].fixed > :is(.ui-card, form, section, .review-detail-dialog) {
+  border-radius: var(--radius-lg);
+  background: var(--surface-card);
+}
+:is(#app, .compact-dialog)
+  :is(.compact-dialog-card, .commercial-dialog, .modal-content, .review-detail-dialog),
+#app [role='dialog'].fixed > .ui-card {
+  overflow: hidden;
+}
+#app [role='dialog']:not(.fixed):not(.workspace-dialog):not(.compact-dialog):not(.modal-overlay) {
+  border-radius: var(--radius-lg);
+}
+:is(#app, .compact-dialog)
+  :is(
+    button,
+    .ui-button,
+    .ui-badge,
+    .badge,
+    .stock-badge,
+    .customer-balance-badge,
+    .status-count,
+    .pos-break-pill,
+    .pos-pack-pill,
+    .line-item-number,
+    .pos-search-badge
+  ) {
+  border-radius: var(--radius-sm);
+}
+/* A metric tile may itself be a button; its card radius takes precedence. */
+#app button.stat-card,
+#app button.task-card {
+  border-radius: var(--radius-md);
+}
+:is(#app, .compact-dialog) :is(input:not([type='radio']):not([type='checkbox']), select, textarea) {
+  border-radius: var(--radius-sm);
+}
+#app
+  :is(
+    .tool-header,
+    .view-header,
+    .inventory-header,
+    .workspace-titlebar,
+    .pos-header,
+    .pos-entry,
+    .tool-summary,
+    .form-actions,
+    .pos-dock,
+    .compact-dialog-card > .border-b,
+    .fixed > .ui-card > .border-b,
+    .fixed > .ui-card > .border-t
+  ) {
+  background: var(--surface-card);
+  border-color: var(--border);
+  color: var(--text-primary);
+}
+#app :is(.tool-header, .workspace-titlebar, .fixed > .ui-card > .border-b) :is(h1, h2, h3, strong) {
+  color: var(--text-primary);
+}
+#app :is(.table-header, .table-head, thead, .pos-lines thead) {
+  background: var(--surface-page);
+  color: var(--text-secondary);
+}
+#app .alerts-header,
+#app .alerts-content > .empty-state {
+  background: var(--banner-success-bg);
+  border-color: var(--banner-success-border);
+  color: var(--banner-success-text);
+}
+#app .alerts-header {
+  border-bottom: 1px solid var(--banner-success-border);
+}
+#app .alerts-content > .empty-state {
+  border: 1px solid var(--banner-success-border);
+  border-radius: var(--radius-md);
+}
+#app :is(.alerts-header, .alerts-content > .empty-state) :is(h3, h4, p, .empty-icon) {
+  color: inherit;
+}
+#app .alert-tab-active,
+#app .alert-tab-active:hover {
+  background: var(--color-success-50);
+  color: var(--banner-success-text);
+}
+
+/* Status role tokens are shared by banners, toasts and small indicators. */
+:is(#app, .compact-dialog)
+  :is(
+    .banner-success,
+    .ui-badge[data-tone='success'],
+    .bg-banner-success-bg,
+    .stock-badge.active,
+    .customer-balance-badge.credit
+  ) {
+  --status-bg: var(--banner-success-bg);
+  --status-border: var(--banner-success-border);
+  --status-text: var(--banner-success-text);
+}
+:is(#app, .compact-dialog)
+  :is(
+    .banner-warning,
+    .ui-badge[data-tone='warning'],
+    .bg-banner-warning-bg,
+    .stock-badge.near,
+    .customer-balance-badge.owed,
+    .pos-break-pill,
+    .pos-shift-warning,
+    .pos-search-stock-warning
+  ) {
+  --status-bg: var(--banner-warning-bg);
+  --status-border: var(--banner-warning-border);
+  --status-text: var(--banner-warning-text);
+}
+:is(#app, .compact-dialog)
+  :is(.banner-info, .ui-badge[data-tone='info'], .bg-banner-info-bg, .pos-source-document) {
+  --status-bg: var(--banner-info-bg);
+  --status-border: var(--banner-info-border);
+  --status-text: var(--banner-info-text);
+}
+:is(#app, .compact-dialog)
+  :is(
+    .banner-danger,
+    .ui-badge[data-tone='danger'],
+    .bg-banner-danger-bg,
+    .stock-badge.expired,
+    .stock-badge.held,
+    .customer-balance-badge.over-limit,
+    .error-banner,
+    .pos-source-error,
+    .pos-error,
+    p.commercial-error,
+    p.ledger-error,
+    [role='alert']:is(div, p, section)
+  ) {
+  --status-bg: var(--banner-danger-bg);
+  --status-border: var(--banner-danger-border);
+  --status-text: var(--banner-danger-text);
+}
+:is(#app, .compact-dialog)
+  :is(
+    .ui-banner,
+    [class*='bg-banner-'],
+    .stock-badge,
+    .customer-balance-badge:not(.settled),
+    .error-banner,
+    .pos-source-document,
+    .pos-source-error,
+    .pos-error,
+    .pos-search-stock-warning,
+    .pos-break-pill,
+    .pos-shift-warning,
+    p.commercial-error,
+    p.ledger-error,
+    [role='alert']:is(div, p, section)
+  ) {
+  background: var(--status-bg, var(--banner-info-bg));
+  color: var(--status-text, var(--banner-info-text));
+  border: 1px solid var(--status-border, var(--banner-info-border));
+  border-radius: var(--radius-sm);
+}
+:is(#app, .compact-dialog)
+  :is(
+    .ui-banner,
+    [class*='bg-banner-'],
+    .error-banner,
+    .pos-source-error,
+    .pos-source-document,
+    .pos-search-stock-warning,
+    [role='alert']:is(div, p, section)
+  )
+  :is(p, span, strong, small, label, h2, h3) {
+  color: inherit;
+}
+:is(#app, .compact-dialog) :is(p.commercial-error, p.ledger-error, .pos-error) {
+  padding: 4px 6px;
+}
+/* Primary/secondary action buttons retain a single, solid palette fill. */
+:is(#app, .compact-dialog) button:is(.bg-primary, .bg-brand-600, .pos-complete, .receive-goods) {
+  background: var(--color-primary-600);
+  border-color: var(--color-primary-600);
+  color: var(--text-inverse);
+}
+:is(#app, .compact-dialog) button.bg-secondary {
+  background: var(--color-secondary-600);
+  border-color: var(--color-secondary-600);
+  color: var(--text-inverse);
+}
+
+/* Outlined indicators share role text/borders without acquiring a filled body. */
+:is(#app, .compact-dialog)
+  .ui-badge[data-tone]:not([data-tone='neutral']):not([data-tone='brand']) {
+  color: var(--status-text);
+  border-color: var(--status-border);
+}

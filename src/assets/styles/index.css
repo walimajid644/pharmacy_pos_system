@@ -1,11 +1,34 @@
 @import './workspaces.css';
 @import './compact-operational.css';
+@import './soft-surfaces.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
+  /* Quiet status surfaces; existing palette values remain unchanged. */
+  --banner-success-bg: #f2f8ec;
+  --banner-success-border: #d8e8c4;
+  --banner-success-text: var(--color-success-text);
+  --color-success-50: var(--color-success-bg);
+  --color-success-600: var(--color-success);
+  --banner-warning-bg: #fbf3e4;
+  --banner-warning-border: #f0ddb8;
+  --banner-warning-text: var(--color-warning-text);
+  --color-warning-50: var(--color-warning-bg);
+  --color-warning-600: var(--color-warning);
+  --banner-danger-bg: #fcf0f0;
+  --banner-danger-border: #f2d4d4;
+  --banner-danger-text: var(--color-danger-text);
+  --color-danger-50: var(--color-danger-bg);
+  --color-danger-600: var(--color-danger);
+  --banner-info-bg: #eff6fc;
+  --banner-info-border: #d6e7f5;
+  --banner-info-text: var(--color-info-text);
+  --color-info-50: var(--color-info-bg);
+  --color-info-600: var(--color-info);
+
   /* === Typography System === */
   /* Fonts */
   --font-en: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -109,40 +132,40 @@
   --color-hover: var(--neutral-100);
 
   /* === New Design Token System === */
-  --color-primary-50:  #E1F5EE;
-  --color-primary-100: #9FE1CB;
-  --color-primary-400: #1D9E75;
-  --color-primary-600: #0F6E56;
+  --color-primary-50: #e1f5ee;
+  --color-primary-100: #9fe1cb;
+  --color-primary-400: #1d9e75;
+  --color-primary-600: #0f6e56;
   --color-primary-800: #085041;
 
-  --color-secondary-50:  #E6F1FB;
-  --color-secondary-400: #378ADD;
-  --color-secondary-600: #185FA5;
-  --color-secondary-800: #0C447C;
+  --color-secondary-50: #e6f1fb;
+  --color-secondary-400: #378add;
+  --color-secondary-600: #185fa5;
+  --color-secondary-800: #0c447c;
 
-  --color-success-bg:   #EAF3DE;
-  --color-success:      #639922;
-  --color-success-text: #27500A;
+  --color-success-bg: #eaf3de;
+  --color-success: #639922;
+  --color-success-text: #27500a;
 
-  --color-warning-bg:   #FAEEDA;
-  --color-warning:      #BA7517;
+  --color-warning-bg: #faeeda;
+  --color-warning: #ba7517;
   --color-warning-text: #633806;
 
-  --color-danger-bg:    #FCEBEB;
-  --color-danger:       #A32D2D;
-  --color-danger-text:  #501313;
+  --color-danger-bg: #fcebeb;
+  --color-danger: #a32d2d;
+  --color-danger-text: #501313;
 
-  --color-info-bg:      #E6F1FB;
-  --color-info:         #185FA5;
-  --color-info-text:    #0C447C;
+  --color-info-bg: #e6f1fb;
+  --color-info: #185fa5;
+  --color-info-text: #0c447c;
 
-  --surface-page:   #F7F6F2;
-  --surface-card:   #FFFFFF;
-  --border:         #D3D1C7;
-  --border-strong:  #B4B2A9;
-  --text-primary:   #2C2C2A;
-  --text-secondary: #5F5E5A;
-  --text-muted:     #888780;
+  --surface-page: #f7f6f2;
+  --surface-card: #ffffff;
+  --border: #d3d1c7;
+  --border-strong: #b4b2a9;
+  --text-primary: #2c2c2a;
+  --text-secondary: #5f5e5a;
+  --text-muted: #888780;
 
   /* === Spacing System - 8px Grid === */
   --space-0: 0;
@@ -174,9 +197,9 @@
 
   /* === Border Radius === */
   --radius-none: 0;
-  --radius-sm: 0.25rem; /* 4px - Small elements */
-  --radius-md: 0.5rem; /* 8px - Default buttons, inputs */
-  --radius-lg: 0.75rem; /* 12px - Cards */
+  --radius-sm: 6px; /* Buttons, chips and badges */
+  --radius-md: 10px; /* Cards, metric tiles and panels */
+  --radius-lg: 14px; /* Dialogs and popovers */
   --radius-xl: 1rem; /* 16px - Large cards */
   --radius-2xl: 1.5rem; /* 24px - Modal corners */
   --radius-full: 9999px; /* Pills, avatars */
@@ -201,6 +224,20 @@
 }
 
 [data-theme='dark'] {
+  /* Quiet status surfaces — dark theme. */
+  --banner-success-bg: #1a2410;
+  --banner-success-border: #30421c;
+  --banner-success-text: var(--success-500);
+  --banner-warning-bg: #26190a;
+  --banner-warning-border: #40300f;
+  --banner-warning-text: var(--warning-500);
+  --banner-danger-bg: #2a0f0f;
+  --banner-danger-border: #442020;
+  --banner-danger-text: var(--danger-500);
+  --banner-info-bg: #0a2238;
+  --banner-info-border: #1c3c58;
+  --banner-info-text: var(--info-500);
+
   /* Functional Colors - Dark Theme */
   --background-primary: var(--neutral-950);
   --background-secondary: var(--neutral-900);
@@ -245,23 +282,23 @@
   --color-hover: var(--neutral-800);
 
   /* === New Design Token System — Dark === */
-  --surface-page:   #1C1C1A;
-  --surface-card:   #26241F;
-  --border:         #3A3833;
-  --border-strong:  #52504A;
-  --text-primary:   #F1EFE8;
-  --text-secondary: #B4B2A9;
-  --text-muted:     #888780;
+  --surface-page: #1c1c1a;
+  --surface-card: #26241f;
+  --border: #3a3833;
+  --border-strong: #52504a;
+  --text-primary: #f1efe8;
+  --text-secondary: #b4b2a9;
+  --text-muted: #888780;
 
-  --color-primary-600: #1D9E75;
-  --color-primary-50:  #0B3A2D;
-  --color-secondary-600: #378ADD;
-  --color-secondary-50:  #0A2A44;
+  --color-primary-600: #1d9e75;
+  --color-primary-50: #0b3a2d;
+  --color-secondary-600: #378add;
+  --color-secondary-50: #0a2a44;
 
-  --color-success-bg:  #1C2B0C;
-  --color-warning-bg:  #2E200A;
-  --color-danger-bg:   #331010;
-  --color-info-bg:     #0A2A44;
+  --color-success-bg: #1c2b0c;
+  --color-warning-bg: #2e200a;
+  --color-danger-bg: #331010;
+  --color-info-bg: #0a2a44;
 
   /* Softer shadows in dark mode */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.4);

@@ -69,7 +69,7 @@ function navigateTo(path: string) {
           type="button"
           class="dashboard-action refresh-action"
           :disabled="loading"
-          @click="loadDashboardData()"
+          @click="loadDashboardData({ background: false })"
         >
           <span aria-hidden="true">↻</span> {{ pick('Refresh', 'تازہ کریں') }}
         </button>
@@ -78,12 +78,12 @@ function navigateTo(path: string) {
 
     <div
       v-if="loadError"
-      class="rounded-lg border border-danger bg-danger-bg p-4 text-danger-text"
+      class="rounded-lg border border-banner-danger-border bg-banner-danger-bg border-banner-danger-border p-4 text-danger-text"
       role="alert"
     >
       {{
         pick(
-          'Dashboard data could not be loaded. Try Refresh.',
+          'Some dashboard data could not be loaded. Try Refresh.',
           'ڈیش بورڈ کا ڈیٹا لوڈ نہیں ہو سکا۔ تازہ کریں۔',
         )
       }}
@@ -190,7 +190,7 @@ function navigateTo(path: string) {
   width: auto;
   padding: 3px 8px;
   border: 1px solid var(--compact-rule);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   background: var(--compact-field);
   color: var(--compact-ink);
   font:
@@ -244,7 +244,7 @@ function navigateTo(path: string) {
   min-height: 74px;
   padding: 6px 8px;
   gap: 4px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   box-shadow: none;
 }
 .home-view.home-view :deep(.stat-card.clickable:hover) {
@@ -289,7 +289,7 @@ function navigateTo(path: string) {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   box-shadow: none;
 }
 .home-view.home-view :deep(.insight-heading) {
@@ -352,7 +352,7 @@ function navigateTo(path: string) {
 .home-view.home-view :deep(.alerts-card) {
   min-height: 0;
   padding: 0;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   box-shadow: none;
 }
 .home-view.home-view :deep(.alerts-header) {
@@ -368,7 +368,7 @@ function navigateTo(path: string) {
 .home-view.home-view :deep(.alert-tab) {
   min-height: 24px;
   padding: 2px 5px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   font-size: 10px;
 }
 .home-view.home-view :deep(.alert-tab .bilingual-text),
@@ -429,7 +429,7 @@ function navigateTo(path: string) {
 }
 .home-view.home-view :deep(.skeleton) {
   height: 26px;
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
 }
 .home-view > [role='alert'] {
   padding: 5px 8px;

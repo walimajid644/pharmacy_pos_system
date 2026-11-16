@@ -227,9 +227,9 @@ export function useUsers() {
   function getRoleBadgeClass(role: UserRole): string {
     const classes: Record<UserRole, string> = {
       admin: 'bg-primary-50 text-primary-800',
-      manager: 'bg-info-bg text-info-text',
-      cashier: 'bg-success-bg text-success-text',
-      accountant: 'bg-warning-bg text-warning-text',
+      manager: 'bg-banner-info-bg border-banner-info-border text-info-text',
+      cashier: 'bg-banner-success-bg border-banner-success-border text-success-text',
+      accountant: 'bg-banner-warning-bg border-banner-warning-border text-warning-text',
     };
     return classes[role];
   }

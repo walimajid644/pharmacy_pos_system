@@ -145,7 +145,7 @@ const fixture = {
   importError: false,
   bulkError: false,
   dashboardDelay: 0,
-  dashboardFail: false,
+  dashboardFail: params.get('dashboard-fail') === '1',
   dashboardBillAmount: 100,
 };
 Object.assign(window, { fixture });
@@ -381,6 +381,8 @@ Object.assign(window, {
         };
       if (command === 'database_select') {
         const q = (args.query || '').toLowerCase();
+        if (params.has('product-count') && q.startsWith('select count(*) as count from products'))
+          return [{ count: Number(params.get('product-count')) }];
         if (q.includes('from sales_dashboard')) {
           if (fixture.dashboardDelay)
             await new Promise((resolve) => setTimeout(resolve, fixture.dashboardDelay));

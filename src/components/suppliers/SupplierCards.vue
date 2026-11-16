@@ -36,23 +36,23 @@ defineProps<{
 
         <div class="supplier-details">
           <div v-if="supplier.contact_person" class="detail-row">
-            <span class="detail-icon">👤</span>
+            <span class="detail-icon">♙</span>
             <span>{{ supplier.contact_person }}</span>
           </div>
           <div v-if="supplier.phone_number" class="detail-row">
-            <span class="detail-icon">📞</span>
+            <span class="detail-icon">☎︎</span>
             <span>{{ supplier.phone_number }}</span>
           </div>
           <div v-if="supplier.email" class="detail-row">
-            <span class="detail-icon">📧</span>
+            <span class="detail-icon">@</span>
             <span>{{ supplier.email }}</span>
           </div>
           <div v-if="supplier.city" class="detail-row">
-            <span class="detail-icon">📍</span>
+            <span class="detail-icon">⌖</span>
             <span>{{ supplier.city }}, {{ supplier.country }}</span>
           </div>
           <div class="detail-row">
-            <span class="detail-icon">💰</span>
+            <span class="detail-icon">∑</span>
             <span
               >{{ pick('Received PO balance', 'موصولہ آرڈر کا بقایا') }}:
               {{ formatCurrency(ledgerBalance[supplier.id] || 0) }}</span
