@@ -46,11 +46,27 @@ export function usePosCartLines(onAdded: () => void) {
     return packSize > 1 ? Math.max(0, Math.ceil((units - openUnits) / packSize)) : 0;
   }
 
-  function addToCart(product: Product & { batches: ProductBatch[] }, isLooseSale = false) {
+  function addToCart(
+    product: Product & { batches: ProductBatch[] },
+    isLooseSale = false,
+    quantity = 1,
+    bonusQuantity = 0,
+    discount = 0,
+  ) {
     if (isLooseSale && !product.sell_by_loose_unit) {
       toast.warning('This product cannot be sold as a loose unit');
-      return;
+      return false;
     }
+    if (
+      !Number.isSafeInteger(quantity) ||
+      quantity < 1 ||
+      !Number.isSafeInteger(bonusQuantity) ||
+      bonusQuantity < 0 ||
+      !Number.isFinite(discount) ||
+      discount < 0 ||
+      discount > 100
+    )
+      return false;
     // Use recorded stock in expiry order, then allow the selected balance to go negative.
     const batches = product.batches || [];
     const usable = batches.filter(
@@ -66,14 +82,16 @@ export function usePosCartLines(onAdded: () => void) {
       usable[0] ||
       unallocatedStockBatch(product);
 
-    const existingLoose = cartStore.items.find(
-      (item) => item.batch.id === batch.id && item.isLooseSale,
+    const loosePlanned = cartStore.items.reduce(
+      (sum, item) =>
+        sum +
+        (item.batch.id === batch.id && item.isLooseSale ? item.quantity + item.bonusQuantity : 0),
+      0,
     );
-    const loosePlanned = existingLoose ? existingLoose.quantity + existingLoose.bonusQuantity : 0;
     const needsBreak =
       isLooseSale &&
       stripsNeeded(
-        Math.min(loosePlanned + 1, Math.max(0, batch.quantity_in_stock)),
+        Math.min(loosePlanned + quantity + bonusQuantity, Math.max(0, batch.quantity_in_stock)),
         batch.loose_open_remaining,
         product.pack_size,
       ) >
@@ -91,10 +109,11 @@ export function usePosCartLines(onAdded: () => void) {
         ),
       )
     )
-      return;
-    cartStore.addItem(product, batch, 1, isLooseSale, needsBreak);
+      return false;
+    cartStore.addItem(product, batch, quantity, isLooseSale, needsBreak, bonusQuantity, discount);
     toast.success(`Added ${isLooseSale ? 'loose unit' : 'pack'} of ${product.name}`);
     onAdded();
+    return true;
   }
 
   function removeFromCart(index: number) {

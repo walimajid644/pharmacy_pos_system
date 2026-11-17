@@ -4,14 +4,16 @@ import { executeQuery } from '@/lib/database';
 import { useToast } from '@/composables/useToast';
 import type { Product, ProductBatch } from '@/lib/types';
 import type { PosProduct } from '@/lib/pos';
+import { isExpired } from '@/lib/utils';
+import { isUnallocatedStockBatch } from '@/lib/pos';
 import Input from '@/components/ui/Input.vue';
 
-export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean) => void) {
+export function usePosProductSearch(onSelect: (product: PosProduct, loose: boolean) => void) {
   const toast = useToast();
   const searchQuery = ref('');
   const productSearchOpen = ref(false);
 
-  const searchResults = ref<Array<Product & { batches: ProductBatch[] }>>([]);
+  const searchResults = ref<PosProduct[]>([]);
 
   const searchLoading = ref(false);
 
@@ -27,7 +29,7 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
 
   let productLookup: {
     term: string;
-    promise: Promise<Array<Product & { batches: ProductBatch[] }>>;
+    promise: Promise<PosProduct[]>;
   } | null = null;
 
   // Optimized search input handler:
@@ -55,7 +57,7 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
     }
   }
 
-  async function searchProducts(addFromSearch = false, loose = false) {
+  async function searchProducts(selectFromSearch = false, loose = false) {
     const term = searchQuery.value.trim();
     const queryId = ++productQueryId;
     searchLoading.value = true;
@@ -75,10 +77,10 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
       // If exact barcode match exists, highlight it immediately
       highlightedProductIndex.value = exactMatch ? productsWithBatches.indexOf(exactMatch) : 0;
 
-      if (addFromSearch) {
+      if (selectFromSearch) {
         // Prioritize exact barcode match, then first result
         const product = exactMatch || productsWithBatches[0];
-        if (product) onAdd(product, loose);
+        if (product) onSelect(product, loose);
       }
     } catch {
       if (queryId === productQueryId) {
@@ -106,18 +108,28 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
     // One batch query for the bounded result set, rather than one IPC call per product.
     const batches = products.length
       ? await executeQuery<ProductBatch>(
-          `SELECT * FROM product_batches WHERE product_id IN (${products.map(() => '?').join(',')}) AND (expiry_date>=date('now','localtime') OR id='unallocated-stock:'||product_id) ORDER BY expiry_date,id`,
+          `SELECT * FROM product_batches WHERE product_id IN (${products.map(() => '?').join(',')}) ORDER BY expiry_date,id`,
           products.map((p) => p.id),
         )
       : [];
-    return products.map((product) => ({
-      ...product,
-      batches: batches.filter((b) => b.product_id === product.id),
-    }));
+    return products.map((product) => {
+      const recordedBatches = batches.filter((batch) => batch.product_id === product.id);
+      return {
+        ...product,
+        recordedStock: recordedBatches.reduce(
+          (sum, batch) => sum + Number(batch.quantity_in_stock),
+          0,
+        ),
+        // Show saved balances separately; expired batches stay unavailable for allocation.
+        batches: recordedBatches.filter(
+          (batch) => isUnallocatedStockBatch(batch) || !isExpired(batch.expiry_date),
+        ),
+      };
+    });
   }
 
   // Keyboard selection inside the product-search dialog:
-  // Enter key: Fast-path adds highlighted item immediately without additional search
+  // Enter key: Fast-path selects the highlighted item for entry without additional search
   // Shift+Enter: Same but for loose units
   // Arrow keys: Navigate results; the dialog follows the selected page.
   function handleBarcodeInput(event: KeyboardEvent) {
@@ -139,7 +151,7 @@ export function usePosProductSearch(onAdd: (product: PosProduct, loose: boolean)
 
       // Fast path: if we have a highlighted result, add it immediately
       if (highlighted) {
-        onAdd(highlighted, event.shiftKey);
+        onSelect(highlighted, event.shiftKey);
       } else {
         // No results yet - trigger immediate search and add
         void searchProducts(true, event.shiftKey);

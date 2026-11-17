@@ -166,6 +166,7 @@ Object.assign(window, {
       if (command === 'logout_user' && fixture.logoutMode === 'fail')
         throw new Error('Synthetic bridge failure');
       if (command === 'login_user') return user;
+      if (command === 'next_invoice_number') return '1';
       if (command === 'current_shift')
         return { id: 'shift1', cashierId: user.id, cashierName: user.full_name, status: 'open' };
       if (command === 'save_purchase_order')

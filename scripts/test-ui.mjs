@@ -38,6 +38,7 @@ try {
   const suites = [
     'phase1',
     'compact',
+    'pos_entry',
     'dashboard_refresh',
     'escape',
     'no_scroll',

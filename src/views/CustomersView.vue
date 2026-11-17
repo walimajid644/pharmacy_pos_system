@@ -195,7 +195,7 @@ useDialogKeyboard(formDialog, () => {
       tabindex="-1"
       :aria-label="pick('Customer', 'گاہک')"
       class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      @click.self="showModal = false"
+      @pointerdown.self.prevent
     >
       <Card class="w-full max-w-2xl max-h-[90vh] overflow-auto">
         <div class="p-6 border-b">

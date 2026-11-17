@@ -231,7 +231,7 @@ try {
   await delay(200);
   await fits('.pos-search-dialog');
   await fits('.pos-search-dialog-results');
-  await evaluate("document.querySelector('.pos-search-dialog .pos-product-row').click()");
+  await evaluate("document.querySelector('#pos-modal-product-search').focus()");
   assert.equal(await evaluate('document.activeElement?.id'), 'pos-modal-product-search');
   await evaluate("document.querySelector('.pos-search-dialog-footer > button').focus()");
   await cdp('Input.dispatchKeyEvent', {
@@ -277,7 +277,9 @@ try {
       "document.querySelector('.pos-product-row[aria-selected=true]')?.textContent.includes('Medicine 2')",
     ),
   );
-  await evaluate("document.querySelector('.pos-search-dialog .pos-product-row').click()");
+  await evaluate(
+    "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowUp',bubbles:true}))",
+  );
 
   await evaluate(
     "for(let i=0;i<12;i++)document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true}))",
@@ -298,6 +300,12 @@ try {
   await shot('product-search-dark-1024x600');
   await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Enter', windowsVirtualKeyCode: 13 });
   await cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Enter', windowsVirtualKeyCode: 13 });
+  await until(
+    "!document.querySelector('.pos-search-dialog') && !!document.querySelector('#pos-entry-quantity') && !document.querySelector('#pos-entry-quantity').disabled",
+  );
+  await evaluate(
+    "document.querySelector('#pos-entry-quantity').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
+  );
   await until("testCart.items.length===1&&!document.querySelector('.pos-search-dialog')");
   assert.equal(await evaluate('testCart.items[0].product.name'), 'Medicine 13');
 

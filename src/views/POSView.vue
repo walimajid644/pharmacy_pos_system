@@ -12,6 +12,21 @@ import PosPaymentMethods from '@/components/pos/PosPaymentMethods.vue';
 import { usePosTerminal } from '@/composables/usePosTerminal';
 
 const {
+  invoiceNumber,
+  pendingProduct,
+  itemCode,
+  itemCodeInput,
+  entryQuantityInput,
+  entryQuantity,
+  entryBonus,
+  entryDiscount,
+  entryError,
+  entryPrice,
+  entryStock,
+  selectProductForEntry,
+  commitEntry,
+  clearItemEntry,
+  onItemCodeKeydown,
   t,
   pick,
   formatNumber,
@@ -70,7 +85,6 @@ const {
   chooseCustomer,
   onCustomerKeydown,
   onProductSearchInput,
-  addToCart,
   removeFromCart,
   updateQuantities,
   onLineDiscountAmountChange,
@@ -83,6 +97,8 @@ const {
   formatDate,
 } = usePosTerminal();
 const bindsearchInput = bindTemplateRef(searchInput);
+const bindItemCodeInput = bindTemplateRef(itemCodeInput);
+const bindEntryQuantityInput = bindTemplateRef(entryQuantityInput);
 </script>
 
 <template>
@@ -208,6 +224,10 @@ const bindsearchInput = bindTemplateRef(searchInput);
     <div class="pos-workspace" :inert="productSearchOpen">
       <section class="pos-main" :aria-label="pick('Sale entry and items', 'فروخت کے آئٹم')">
         <div class="pos-entry-strip">
+          <div class="pos-invoice-field">
+            <label for="pos-invoice-number">{{ pick('Invoice No.', 'انوائس نمبر') }}</label>
+            <input id="pos-invoice-number" :value="invoiceNumber" readonly />
+          </div>
           <div class="pos-client-field">
             <label for="pos-customer">{{ pick('Client', 'گاہک') }}</label>
             <div class="pos-combobox">
@@ -279,15 +299,26 @@ const bindsearchInput = bindTemplateRef(searchInput);
             </div>
           </div>
           <div class="pos-item-field">
-            <div class="pos-search-wrap">
+            <div class="pos-search-wrap pos-staged-search">
+              <label for="pos-item-code">{{ pick('ITEM', 'آئٹم') }}</label>
+              <input
+                id="pos-item-code"
+                :ref="bindItemCodeInput"
+                v-model="itemCode"
+                autocomplete="off"
+                :aria-label="pick('Item code — Enter to search', 'آئٹم کوڈ — تلاش کے لیے Enter')"
+                @keydown="onItemCodeKeydown"
+              />
               <Input
                 id="pos-product-search"
                 :ref="bindsearchInput"
-                v-model="searchQuery"
+                :model-value="pendingProduct?.name || searchQuery"
+                :readonly="!!pendingProduct"
+                @update:model-value="searchQuery = String($event ?? '')"
                 size="sm"
                 type="search"
                 autocomplete="off"
-                :label="pick('ITEM', 'آئٹم / بارکوڈ')"
+                :aria-label="pick('Product name or barcode search', 'مصنوعات یا بارکوڈ تلاش')"
                 :title="pick('Product or barcode search (F2)', 'مصنوعات یا بارکوڈ تلاش (F2)')"
                 aria-keyshortcuts="F2"
                 :placeholder="t('scan_or_search')"
@@ -325,8 +356,8 @@ const bindsearchInput = bindTemplateRef(searchInput);
             <p class="pos-entry-hint">
               {{
                 pick(
-                  'Enter opens product search · Select a pack or loose units in the search window.',
-                  'Enter سے مصنوعات تلاش کریں؛ تلاش کی ونڈو میں پیک یا کھلی اکائیاں منتخب کریں۔',
+                  'Enter in ITEM → choose product → enter quantity → Enter or ↓ to add.',
+                  'آئٹم پر Enter → مصنوعات منتخب کریں → مقدار → Enter یا ↓ سے شامل کریں۔',
                 )
               }}
             </p>
@@ -338,6 +369,96 @@ const bindsearchInput = bindTemplateRef(searchInput);
           </div>
         </div>
 
+        <form
+          class="pos-item-entry"
+          :aria-label="pick('Selected item entry', 'منتخب آئٹم کا اندراج')"
+          @submit.prevent="commitEntry($event)"
+        >
+          <label for="pos-entry-quantity"
+            >{{ pick('QTY', 'مقدار') }}
+            <input
+              id="pos-entry-quantity"
+              :ref="bindEntryQuantityInput"
+              v-model="entryQuantity"
+              type="number"
+              min="1"
+              step="1"
+              :disabled="!pendingProduct"
+              @keydown.enter.exact.prevent="commitEntry($event)"
+            />
+          </label>
+          <label for="pos-entry-discount"
+            >{{ pick('DISC %', 'رعایت ٪') }}
+            <input
+              id="pos-entry-discount"
+              v-model="entryDiscount"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              :disabled="!pendingProduct"
+              @keydown.enter.exact.prevent="commitEntry($event)"
+            />
+          </label>
+          <label for="pos-entry-bonus"
+            >{{ pick('BONUS', 'بونس') }}
+            <input
+              id="pos-entry-bonus"
+              v-model="entryBonus"
+              type="number"
+              min="0"
+              step="1"
+              :disabled="!pendingProduct"
+              @keydown.enter.exact.prevent="commitEntry($event)"
+            />
+          </label>
+          <label for="pos-entry-price"
+            >{{ pick('UNIT PRICE', 'فی اکائی قیمت') }}
+            <input
+              id="pos-entry-price"
+              :value="formatCurrency(entryPrice)"
+              readonly
+              :title="
+                pick('Price for the selected pack or loose unit', 'منتخب پیک یا کھلی اکائی کی قیمت')
+              "
+            />
+          </label>
+          <button
+            type="submit"
+            class="pos-entry-add"
+            :disabled="!pendingProduct"
+            :aria-label="pick('Add selected item to sale', 'منتخب آئٹم فروخت میں شامل کریں')"
+            :title="pick('Add item (Enter)', 'آئٹم شامل کریں (Enter)')"
+          >
+            ↓
+          </button>
+          <label for="pos-entry-pack-size"
+            >{{ pick('PACK SIZE', 'پیک سائز') }}
+            <input
+              id="pos-entry-pack-size"
+              :value="pendingProduct ? formatNumber(pendingProduct.pack_size) : ''"
+              readonly
+            />
+          </label>
+          <label for="pos-entry-stock"
+            >{{ pick('CURRENT STOCK', 'موجودہ اسٹاک') }}
+            <input
+              id="pos-entry-stock"
+              :value="pendingProduct ? formatNumber(entryStock) : ''"
+              readonly
+              :title="
+                pick(
+                  'Recorded batch balance in individual units, before this sale',
+                  'فروخت سے پہلے بیچ میں محفوظ انفرادی اکائیوں کا بقایا',
+                )
+              "
+            />
+          </label>
+          <button type="button" :disabled="!pendingProduct" @click="clearItemEntry">
+            {{ pick('Clear', 'صاف کریں') }}
+          </button>
+          <p v-if="entryError" class="pos-entry-error" role="alert">{{ entryError }}</p>
+        </form>
         <PosCartTable
           :t="t"
           :pick="pick"
@@ -494,6 +615,7 @@ const bindsearchInput = bindTemplateRef(searchInput);
           :disabled="
             !cartStore.items.length ||
             prescriptionMissing ||
+            !!pendingProduct ||
             checkoutLoading ||
             sourceDocumentLoading ||
             (paymentMethod === 'credit' && !creditAllowed) ||
@@ -521,7 +643,7 @@ const bindsearchInput = bindTemplateRef(searchInput);
       :unit-price="cartStore.unitPrice"
       @search="onProductSearchInput"
       @keydown-search="handleBarcodeInput"
-      @select="(product, loose) => addToCart(product, loose)"
+      @select="selectProductForEntry"
       @close="resetProductSearch"
     />
   </main>

@@ -65,7 +65,7 @@ async function printLabels() {
 <template>
   <div
     class="compact-dialog barcode-dialog fixed inset-0 z-50 flex items-center justify-center bg-black/60"
-    @click.self="emit('close')"
+    @pointerdown.self.prevent
   >
     <section
       ref="labelDialog"

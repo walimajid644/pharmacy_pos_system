@@ -33,7 +33,7 @@ useDialogKeyboard(formDialog, () => {
     tabindex="-1"
     :aria-label="pick('Product', 'مصنوعات')"
     class="compact-dialog product-dialog fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-    @click.self="emit('close')"
+    @pointerdown.self.prevent
   >
     <Card class="compact-dialog-card product-dialog-card">
       <div class="p-6 border-b">

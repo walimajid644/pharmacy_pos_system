@@ -42,25 +42,29 @@ export const useCartStore = defineStore('cart', () => {
     quantity: number = 1,
     isLooseSale: boolean = false,
     confirmBreak: boolean = false,
+    bonusQuantity: number = 0,
+    discount: number = 0,
   ) {
     const existingIndex = items.value.findIndex(
       (item) =>
         item.product.id === product.id &&
         item.batch.id === batch.id &&
-        item.isLooseSale === isLooseSale,
+        item.isLooseSale === isLooseSale &&
+        item.discount === discount,
     );
 
     if (existingIndex !== -1) {
       items.value[existingIndex].quantity += quantity;
+      items.value[existingIndex].bonusQuantity += bonusQuantity;
       items.value[existingIndex].confirmBreak ||= confirmBreak;
     } else {
       items.value.push({
         product,
         batch,
         quantity,
-        bonusQuantity: 0,
+        bonusQuantity,
         isLooseSale,
-        discount: 0,
+        discount,
         confirmBreak,
       });
     }

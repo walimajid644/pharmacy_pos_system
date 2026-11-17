@@ -235,7 +235,7 @@ const bindvoidDialog = bindTemplateRef(voidDialog);
     <div
       v-if="selected"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-      @click.self="selected = null"
+      @pointerdown.self.prevent
     >
       <form
         :ref="bindvoidDialog"

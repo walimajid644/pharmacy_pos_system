@@ -229,6 +229,12 @@ try {
   await evaluate(
     "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',shiftKey:false,bubbles:true}))",
   );
+  await until(
+    "!document.querySelector('.pos-search-dialog') && !!document.querySelector('#pos-entry-quantity') && !document.querySelector('#pos-entry-quantity').disabled",
+  );
+  await evaluate(
+    "document.querySelector('#pos-entry-quantity').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
+  );
   await until("document.querySelectorAll('.pos-line-description').length===1");
   assert.equal(
     await evaluate(
@@ -334,6 +340,12 @@ try {
   await until("document.querySelector('#pos-modal-product-search')!==null");
   await evaluate(
     "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',shiftKey:true,bubbles:true}))",
+  );
+  await until(
+    "!document.querySelector('.pos-search-dialog') && !!document.querySelector('#pos-entry-quantity') && !document.querySelector('#pos-entry-quantity').disabled",
+  );
+  await evaluate(
+    "document.querySelector('#pos-entry-quantity').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
   );
   await until(
     "document.querySelector('.pos-break-pill')?.textContent.includes('Strip opening confirmed')",

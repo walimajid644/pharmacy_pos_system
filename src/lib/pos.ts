@@ -22,7 +22,7 @@ export type CustomerOption = {
   customer_type: 'retail' | 'wholesale';
 };
 
-export type PosProduct = Product & { batches: ProductBatch[] };
+export type PosProduct = Product & { batches: ProductBatch[]; recordedStock?: number };
 export function roundSaleMoney(amount: number) {
   return Math.round(amount * 100) / 100;
 }

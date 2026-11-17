@@ -124,6 +124,12 @@ try {
     await evaluate(
       "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
     );
+    await until(
+      "!document.querySelector('.pos-search-dialog') && !!document.querySelector('#pos-entry-quantity') && !document.querySelector('#pos-entry-quantity').disabled",
+    );
+    await evaluate(
+      "document.querySelector('#pos-entry-quantity').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
+    );
     await until('testCart.items.length===1');
     await evaluate(
       "testDraft.stage({supplierId:'s1',items:[{productId:'p1',quantity:10}],notes:'Unsaved'})",
@@ -174,6 +180,12 @@ try {
   await evaluate(
     "var search=document.querySelector('#pos-modal-product-search');search.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}));search.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
   );
+  await until(
+    "!document.querySelector('.pos-search-dialog') && !!document.querySelector('#pos-entry-quantity') && !document.querySelector('#pos-entry-quantity').disabled",
+  );
+  await evaluate(
+    "document.querySelector('#pos-entry-quantity').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
+  );
   await until('testCart.items.length===1');
   assert(
     await evaluate(
@@ -217,6 +229,12 @@ try {
   );
   await evaluate(
     "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
+  );
+  await until(
+    "!document.querySelector('.pos-search-dialog') && !!document.querySelector('#pos-entry-quantity') && !document.querySelector('#pos-entry-quantity').disabled",
+  );
+  await evaluate(
+    "document.querySelector('#pos-entry-quantity').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
   );
   await until("testCart.items.length===1&&!document.querySelector('.pos-search-dialog')");
   assert(

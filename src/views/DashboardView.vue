@@ -42,7 +42,7 @@ useDialogKeyboard(helpDialog, () => {
 
     <!-- Footer shortcuts -->
     <DashboardFooter :inert="workspaceMode" />
-    <div v-if="workspaceMode" class="workspace-overlay" @click.self="closeWorkspace">
+    <div v-if="workspaceMode" class="workspace-overlay" @pointerdown.self.prevent>
       <section
         :ref="bindworkspaceDialog"
         class="workspace-dialog"
@@ -75,7 +75,7 @@ useDialogKeyboard(helpDialog, () => {
     <div
       v-if="shortcutHelpOpen"
       class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60"
-      @click.self="shortcutHelpOpen = false"
+      @pointerdown.self.prevent
     >
       <section
         ref="helpDialog"

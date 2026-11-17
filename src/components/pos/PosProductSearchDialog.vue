@@ -37,11 +37,6 @@ function onDialogKeydown(event: KeyboardEvent) {
     emit('keydownSearch', event);
   }
 }
-function selectRow(index: number) {
-  highlightedIndex.value = index;
-  searchField.value?.focus({ preventScroll: true });
-}
-
 const pageSize = computed(() => Math.max(1, Math.floor((height.value - 34) / 44)));
 const page = computed(() => Math.floor(highlightedIndex.value / pageSize.value));
 const pageCount = computed(() => Math.max(1, Math.ceil(props.results.length / pageSize.value)));
@@ -53,7 +48,7 @@ const visibleResults = computed(() =>
 </script>
 
 <template>
-  <div class="pos-search-overlay" @click.self="emit('close')">
+  <div class="pos-search-overlay" @pointerdown.self.prevent>
     <section
       ref="dialog"
       role="dialog"
@@ -91,7 +86,7 @@ const visibleResults = computed(() =>
         />
         <small>{{
           pick(
-            '↑↓ choose · Enter adds pack · Shift+Enter adds loose units',
+            '↑↓ choose · Enter selects pack · Shift+Enter selects loose units',
             '↑↓ منتخب کریں · Enter پیک · Shift+Enter کھلی اکائیاں',
           )
         }}</small>
@@ -135,7 +130,7 @@ const visibleResults = computed(() =>
               <th>{{ pick('Stock', 'اسٹاک') }}</th>
               <th>{{ pick('Pack size', 'پیک سائز') }}</th>
               <th>{{ pick('Pack price', 'پیک قیمت') }}</th>
-              <th>{{ pick('Add to sale', 'فروخت میں شامل کریں') }}</th>
+              <th>{{ pick('Select', 'منتخب کریں') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -146,8 +141,7 @@ const visibleResults = computed(() =>
               :aria-selected="highlightedIndex === index"
               class="pos-product-row"
               :class="{ highlighted: highlightedIndex === index }"
-              @click="selectRow(index)"
-              @dblclick="emit('select', product, false)"
+              @click="emit('select', product, false)"
             >
               <td>
                 <strong :title="product.name">{{ product.name }}</strong><small

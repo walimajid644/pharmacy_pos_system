@@ -15,6 +15,7 @@ import { usePosCustomer } from '@/composables/usePosCustomer';
 import { usePosProductSearch } from '@/composables/usePosProductSearch';
 import { usePosCartLines } from '@/composables/usePosCartLines';
 import { usePosSourceDocument } from '@/composables/usePosSourceDocument';
+import { usePosItemEntry } from '@/composables/usePosItemEntry';
 
 export function usePosTerminal() {
   const toast = useToast();
@@ -59,6 +60,19 @@ export function usePosTerminal() {
 
   const checkoutLoading = ref(false);
 
+  const invoiceNumber = ref('');
+  let invoiceQueryId = 0;
+  async function loadInvoiceNumber() {
+    const queryId = ++invoiceQueryId;
+    try {
+      const next = await invoke<string>('next_invoice_number');
+      if (!disposed && queryId === invoiceQueryId) invoiceNumber.value = next;
+    } catch {
+      if (!disposed && queryId === invoiceQueryId) invoiceNumber.value = '';
+      reportDiagnostic('operation_failed', 'pos');
+    }
+  }
+
   const lastReceipt = ref<SaleReceipt | null>(null);
 
   const lastInvoiceId = ref<string | null>(null);
@@ -90,7 +104,7 @@ export function usePosTerminal() {
     searchInput,
     onProductSearchInput,
     handleBarcodeInput,
-  } = usePosProductSearch((product, loose) => addToCart(product, loose));
+  } = usePosProductSearch((product, loose) => selectProductForEntry(product, loose));
   const {
     lineGross,
     lineDiscount,
@@ -105,6 +119,42 @@ export function usePosTerminal() {
     resetProductSearch();
     searchInput.value?.focus();
   });
+  const {
+    pendingProduct,
+    itemCode,
+    itemCodeInput,
+    entryQuantityInput,
+    entryQuantity,
+    entryBonus,
+    entryDiscount,
+    entryLoose,
+    entryError,
+    entryPrice,
+    entryStock,
+    selectProductForEntry,
+    commitEntry,
+    clearEntry,
+  } = usePosItemEntry(addToCart, resetProductSearch);
+
+  function onItemCodeKeydown(event: KeyboardEvent) {
+    if (
+      event.key !== 'Enter' ||
+      event.repeat ||
+      event.isComposing ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey
+    )
+      return;
+    searchQuery.value =
+      pendingProduct.value && itemCode.value === pendingProduct.value.sku ? '' : itemCode.value;
+    openProductSearch(event);
+  }
+  function clearItemEntry() {
+    clearEntry();
+    resetProductSearch();
+    itemCodeInput.value?.focus({ preventScroll: true });
+  }
   const {
     sourceDocumentId,
     sourceDocumentNumber,
@@ -167,8 +217,9 @@ export function usePosTerminal() {
   });
 
   onMounted(() => {
-    void nextTick(() => searchInput.value?.focus());
+    void nextTick(() => itemCodeInput.value?.focus({ preventScroll: true }));
     void loadShift();
+    void loadInvoiceNumber();
     if (typeof route.query.document === 'string') void loadSourceDocument(route.query.document);
     window.addEventListener('keydown', onPaymentShortcut);
   });
@@ -218,6 +269,16 @@ export function usePosTerminal() {
 
   async function checkout() {
     if (checkoutLoading.value || sourceDocumentLoading.value) return;
+    if (pendingProduct.value) {
+      toast.warning(
+        pick(
+          'Add the selected item with Enter or ↓, or clear it before payment.',
+          'منتخب آئٹم Enter یا ↓ سے شامل کریں یا ادائیگی سے پہلے صاف کریں۔',
+        ),
+      );
+      entryQuantityInput.value?.focus({ preventScroll: true });
+      return;
+    }
     if (paymentMethod.value === 'credit' && !creditAllowed.value) {
       toast.warning(
         pick(
@@ -298,6 +359,8 @@ export function usePosTerminal() {
       if (disposed) return;
       lastReceipt.value = receipt;
       lastInvoiceId.value = receipt.invoiceId;
+      invoiceNumber.value = String(Number(receipt.invoiceNumber) + 1);
+      void loadInvoiceNumber();
       sourceDocumentId.value = null;
       sourceDocumentNumber.value = '';
       toast.success(
@@ -328,6 +391,22 @@ export function usePosTerminal() {
   }
 
   return {
+    invoiceNumber,
+    pendingProduct,
+    itemCode,
+    itemCodeInput,
+    entryQuantityInput,
+    entryQuantity,
+    entryBonus,
+    entryDiscount,
+    entryLoose,
+    entryError,
+    entryPrice,
+    entryStock,
+    selectProductForEntry,
+    commitEntry,
+    clearItemEntry,
+    onItemCodeKeydown,
     t,
     pick,
     formatNumber,

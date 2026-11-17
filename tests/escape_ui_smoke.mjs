@@ -123,6 +123,27 @@ try {
       windowsVirtualKeyCode: 27,
     });
   }
+  async function clickOutside() {
+    await evaluate('window.focusBeforeOutside=document.activeElement');
+    await cdp('Input.dispatchMouseEvent', {
+      type: 'mousePressed',
+      x: 2,
+      y: 2,
+      button: 'left',
+      clickCount: 1,
+    });
+    await cdp('Input.dispatchMouseEvent', {
+      type: 'mouseReleased',
+      x: 2,
+      y: 2,
+      button: 'left',
+      clickCount: 1,
+    });
+    assert(
+      await evaluate('document.activeElement===window.focusBeforeOutside'),
+      'Backdrop click preserves dialog focus',
+    );
+  }
 
   await open('/pos');
   await until("document.querySelector('#pos-product-search')!==null");
@@ -130,6 +151,8 @@ try {
     "document.querySelector('#pos-product-search').focus();document.querySelector('#pos-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
   );
   await until("document.activeElement?.id==='pos-modal-product-search'");
+  await clickOutside();
+  assert(await evaluate("!!document.querySelector('.pos-search-dialog')"));
   await escape();
   await until("document.querySelector('.pos-search-dialog')===null");
   assert.equal(await evaluate('location.pathname'), '/pos');
@@ -146,6 +169,8 @@ try {
   );
   await until("document.querySelector('.product-dialog input')!==null");
   await evaluate("document.querySelector('.product-dialog input').focus()");
+  await clickOutside();
+  assert(await evaluate("!!document.querySelector('.product-dialog')"));
   await escape();
   await until("document.querySelector('.product-dialog')===null");
   assert.equal(await evaluate('location.pathname'), '/products');
@@ -165,6 +190,8 @@ try {
     }
     await until(`document.querySelector('${popup} input')!==null`);
     await evaluate(`document.querySelector('${popup} input').focus()`);
+    await clickOutside();
+    assert(await evaluate(`!!document.querySelector('${popup}')`));
     await escape();
     await until(`document.querySelector('${popup}')===null`);
     assert.equal(await evaluate('location.pathname'), '/products');
@@ -187,6 +214,9 @@ try {
     await open(route);
     await until(`!!document.querySelector('.workspace-dialog ${control}')`);
     await evaluate(`document.querySelector('.workspace-dialog ${control}').focus()`);
+    await clickOutside();
+    assert.equal(await evaluate('location.pathname'), route);
+    assert(await evaluate("!!document.querySelector('.workspace-dialog')"));
     await escape();
     await until("location.pathname==='/'&&!document.querySelector('.workspace-dialog')");
   }
@@ -199,6 +229,8 @@ try {
     await until("document.querySelector('.workspace-body tbody button')!==null");
     await evaluate("document.querySelector('.workspace-body tbody button').click()");
     await until("document.querySelector('.workspace-body [role=dialog]')!==null");
+    await clickOutside();
+    assert(await evaluate("!!document.querySelector('.workspace-body [role=dialog]')"));
     await escape();
     await until("document.querySelector('.workspace-body [role=dialog]')===null");
     assert.equal(await evaluate('location.pathname'), route);
@@ -222,10 +254,19 @@ try {
   await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'F1', windowsVirtualKeyCode: 112 });
   await cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: 'F1', windowsVirtualKeyCode: 112 });
   await until('document.querySelector(\'[aria-label^="Keyboard shortcuts"]\')!==null');
+  await clickOutside();
+  assert(await evaluate('!!document.querySelector(\'[aria-label^="Keyboard shortcuts"]\')'));
   await escape();
   await until('document.querySelector(\'[aria-label^="Keyboard shortcuts"]\')===null');
   results.push(
     'Customer picker and shortcut help respond to Escape without closing the screen underneath',
+  );
+  await open('/pos');
+  await clickOutside();
+  await evaluate("document.querySelector('.workspace-close').click()");
+  await until("location.pathname==='/'");
+  results.push(
+    'Outside clicks preserve every checked workspace and nested dialog; Escape and the X close button still dismiss them',
   );
   console.log(JSON.stringify(results, null, 2));
 } catch (e) {

@@ -22,6 +22,16 @@ cart.clearCart();
 assert.equal(cart.items.length, 0);
 assert.equal(cart.discountAmount, 0);
 console.log('POS cart: pack/loose bonus quantities, discounts, tax and clearing passed');
+cart.addItem(product, batch, 2, false, false, 1, 10);
+cart.addItem(product, batch, 3, false, false, 2, 10);
+assert.equal(cart.items.length, 1);
+assert.equal(cart.items[0].quantity, 5);
+assert.equal(cart.items[0].bonusQuantity, 3);
+assert.equal(cart.lineTotal(cart.items[0]), 112.5);
+cart.addItem(product, batch, 1, false, false, 0, 5);
+assert.equal(cart.items.length, 2, 'Different entry discounts stay on separate sale lines');
+assert.equal(cart.items[0].discount, 10);
+cart.clearCart();
 
 const multiPrice = {
   id: 'multi',

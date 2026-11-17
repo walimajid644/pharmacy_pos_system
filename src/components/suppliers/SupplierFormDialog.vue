@@ -36,7 +36,7 @@ useDialogKeyboard(formDialog, () => {
     tabindex="-1"
     :aria-label="pick('Supplier', 'سپلائر')"
     class="modal-overlay"
-    @click.self="showModal = false"
+    @pointerdown.self.prevent
   >
     <Card class="modal-content">
       <h3 class="modal-title">

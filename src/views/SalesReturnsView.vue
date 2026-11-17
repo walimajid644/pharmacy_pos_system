@@ -109,7 +109,7 @@ useDialogKeyboard(reviewDialog, () => {
       tabindex="-1"
       :aria-label="pick('Sales return details', 'فروخت کی واپسی کی تفصیلات')"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-      @click.self="selected = null"
+      @pointerdown.self.prevent
     >
       <div class="review-detail-dialog w-full max-w-lg rounded-lg bg-background p-6 space-y-4">
         <h3 class="text-xl font-semibold">

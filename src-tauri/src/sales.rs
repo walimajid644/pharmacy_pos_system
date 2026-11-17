@@ -7,6 +7,24 @@ use uuid::Uuid;
 
 const DATABASE_KEY: &str = "sqlite:pharmacy.db";
 
+// Legacy UUID invoice references stay intact and do not advance the numeric sequence.
+const NEXT_INVOICE_NUMBER_SQL: &str = "SELECT COALESCE(MAX(CAST(invoice_number AS INTEGER)),0)+1 FROM sales_invoices WHERE invoice_number <> '' AND invoice_number NOT GLOB '*[^0-9]*'";
+
+#[tauri::command]
+pub async fn next_invoice_number(
+    instances: State<'_, DbInstances>,
+    session: State<'_, SessionState>,
+) -> Result<String, String> {
+    let actor = crate::database_api::current_actor(&session).await?;
+    let pool = crate::database_api::pool(&instances).await?;
+    crate::credit::require_role(&pool, &actor, &["admin", "manager", "cashier"]).await?;
+    let next: i64 = sqlx::query_scalar(NEXT_INVOICE_NUMBER_SQL)
+        .fetch_one(&pool)
+        .await
+        .map_err(|e| e.to_string())?;
+    Ok(next.to_string())
+}
+
 #[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SaleItem {
@@ -400,7 +418,12 @@ pub(crate) async fn record_sale(
         return Err("Sale total changed; refresh the cart before checkout".to_string());
     }
     let invoice_id = Uuid::new_v4().to_string();
-    let invoice_number = format!("INV-{}", Uuid::new_v4());
+    // Allocate within the sale transaction, so cancelled/failed sales consume no number.
+    let next: i64 = sqlx::query_scalar(NEXT_INVOICE_NUMBER_SQL)
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+    let invoice_number = next.to_string();
 
     if request.payment_method == "credit" {
         let id = request

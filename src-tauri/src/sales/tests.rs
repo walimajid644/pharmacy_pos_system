@@ -93,6 +93,54 @@ async fn sale_details_fixture() -> Pool<Sqlite> {
 }
 
 #[tokio::test]
+async fn invoice_numbers_start_at_one_and_only_completed_sales_advance_sequence() {
+    let pool = sale_details_fixture().await;
+    let legacy = record_sale(&pool, request(&[1])).await.unwrap();
+    assert_eq!(legacy.invoice_number, "1");
+    // Existing UUID references are preserved and excluded from the numeric sequence.
+    let legacy_number = format!("INV-{}", Uuid::new_v4());
+    sqlx::query("UPDATE sales_invoices SET invoice_number=? WHERE id=?")
+        .bind(&legacy_number)
+        .bind(&legacy.invoice_id)
+        .execute(&pool)
+        .await
+        .unwrap();
+    let first = record_sale(&pool, request(&[1])).await.unwrap();
+    assert_eq!(first.invoice_number, "1");
+    let mut invalid = request(&[1]);
+    invalid.expected_net_amount = 999.0;
+    assert!(record_sale(&pool, invalid).await.is_err());
+    let second = record_sale(&pool, request(&[1])).await.unwrap();
+    assert_eq!(second.invoice_number, "2");
+    let next: i64 = sqlx::query_scalar(NEXT_INVOICE_NUMBER_SQL)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(next, 3);
+    let saved: String = sqlx::query_scalar("SELECT invoice_number FROM sales_invoices WHERE id=?")
+        .bind(&second.invoice_id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(saved, "2");
+    let old: String = sqlx::query_scalar("SELECT invoice_number FROM sales_invoices WHERE id=?")
+        .bind(&legacy.invoice_id)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(old, legacy_number);
+    for expected in 3..=12 {
+        let receipt = record_sale(&pool, request(&[1])).await.unwrap();
+        assert_eq!(receipt.invoice_number, expected.to_string());
+    }
+    let next: i64 = sqlx::query_scalar(NEXT_INVOICE_NUMBER_SQL)
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(next, 13);
+}
+
+#[tokio::test]
 async fn bonus_cash_and_remarks_persist_without_charging_for_free_stock() {
     let pool = sale_details_fixture().await;
     sqlx::query("INSERT INTO customers (id, customer_code, first_name, last_name, customer_type, current_balance, created_at, updated_at) VALUES ('client', 'C1', 'Test', 'Client', 'retail', 125, 'now', 'now')")
@@ -539,6 +587,13 @@ async fn concurrent_sales_record_each_successful_negative_stock_movement() {
         .await
         .unwrap();
     assert_eq!((stock, invoices), (-4, 2));
+    let numbers: Vec<String> = sqlx::query_scalar(
+        "SELECT invoice_number FROM sales_invoices ORDER BY CAST(invoice_number AS INTEGER)",
+    )
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+    assert_eq!(numbers, vec!["1", "2"]);
     pool.close().await;
     // Windows can briefly retain SQLite's file handle after the pool closes.
     for _ in 0..10 {

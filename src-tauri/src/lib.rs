@@ -39,6 +39,7 @@ pub fn run() {
             backups::backup_status,
             digital_receipts::open_whatsapp_receipt,
             sales::checkout_sale,
+            sales::next_invoice_number,
             credit::save_customer,
             credit::archive_customer,
             credit::customer_statement,
