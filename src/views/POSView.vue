@@ -93,6 +93,13 @@ const {
   getBatchWarning,
   checkout,
   handleBarcodeInput,
+  viewingHistoryInvoice,
+  canGoBackward,
+  canGoForward,
+  goBackward,
+  goForward,
+  editViewingSale,
+  exitHistoryView,
   formatCurrency,
   formatDate,
 } = usePosTerminal();
@@ -158,7 +165,8 @@ const bindEntryQuantityInput = bindTemplateRef(entryQuantityInput);
       </fieldset>
       <div class="pos-header-end">
         <time>{{ formatDate(new Date()) }}</time><small
-          >F2 {{ pick('Search', 'تلاش') }} · F3 {{ pick('Client', 'گاہک') }} · F8–F10
+          >Ctrl+N {{ pick('New', 'نئی') }} · Ctrl+U {{ pick('Prev', 'پچھلی') }} · F2
+          {{ pick('Search', 'تلاش') }} · F3 {{ pick('Client', 'گاہک') }} · F8–F10
           {{ pick('Pay', 'ادائیگی') }}</small
         >
       </div>
@@ -221,12 +229,97 @@ const bindEntryQuantityInput = bindTemplateRef(entryQuantityInput);
         {{ pick('Detach document', 'دستاویز الگ کریں') }}
       </button>
     </div>
+    <div v-if="viewingHistoryInvoice" class="pos-source-document pos-history-banner" role="status">
+      <div>
+        <strong>
+          {{ pick('Viewing Previous Sale', 'پچھلی فروخت دیکھ رہے ہیں') }}
+          #{{ viewingHistoryInvoice.invoice_number }}
+          <span v-if="viewingHistoryInvoice.customer_name"> · {{ viewingHistoryInvoice.customer_name }}</span>
+        </strong>
+        <small>
+          {{ formatDate(viewingHistoryInvoice.invoice_date) }} ·
+          {{ formatCurrency(viewingHistoryInvoice.net_amount) }} ·
+          {{ viewingHistoryInvoice.payment_method }}
+        </small>
+      </div>
+      <div class="pos-history-banner-actions">
+        <button
+          type="button"
+          class="pos-history-nav-btn"
+          :disabled="!canGoBackward"
+          :title="pick('Previous sale (Ctrl+U / ←)', 'پچھلی فروخت (Ctrl+U / ←)')"
+          aria-label="Previous sale"
+          @click="goBackward"
+        >
+          ◀ {{ pick('Prev', 'پچھلی') }}
+        </button>
+        <button
+          type="button"
+          class="pos-history-nav-btn"
+          :disabled="!canGoForward"
+          :title="pick('Next sale (→)', 'اگلی فروخت (→)')"
+          aria-label="Next sale"
+          @click="goForward"
+        >
+          {{ pick('Next', 'اگلی') }} ▶
+        </button>
+        <button
+          type="button"
+          class="pos-history-edit-btn"
+          :title="pick('Edit this sale in POS', 'اس فروخت میں ترمیم کریں')"
+          @click="editViewingSale"
+        >
+          ✏ {{ pick('Edit Sale', 'فروخت میں ترمیم کریں') }}
+        </button>
+        <button
+          type="button"
+          class="pos-history-close-btn"
+          :title="pick('Return to new sale (Ctrl+N / Esc)', 'نئی فروخت پر واپس (Ctrl+N / Esc)')"
+          @click="exitHistoryView"
+        >
+          ✕ {{ pick('New Sale', 'نئی فروخت') }}
+        </button>
+      </div>
+    </div>
     <div class="pos-workspace" :inert="productSearchOpen">
       <section class="pos-main" :aria-label="pick('Sale entry and items', 'فروخت کے آئٹم')">
         <div class="pos-entry-strip">
           <div class="pos-invoice-field">
             <label for="pos-invoice-number">{{ pick('Invoice No.', 'انوائس نمبر') }}</label>
-            <input id="pos-invoice-number" :value="invoiceNumber" readonly />
+            <div class="pos-invoice-input-wrap">
+              <input id="pos-invoice-number" :value="invoiceNumber" readonly />
+              <div class="pos-invoice-nav">
+                <button
+                  type="button"
+                  class="pos-nav-btn prev"
+                  :disabled="!canGoBackward"
+                  :title="pick('Previous sale (Ctrl+U / ←)', 'پچھلی فروخت (Ctrl+U / ←)')"
+                  aria-label="Previous sale"
+                  @click="goBackward"
+                >
+                  ◀
+                </button>
+                <button
+                  type="button"
+                  class="pos-nav-btn next"
+                  :disabled="!canGoForward"
+                  :title="pick('Next sale (→)', 'اگلی فروخت (→)')"
+                  aria-label="Next sale"
+                  @click="goForward"
+                >
+                  ▶
+                </button>
+                <button
+                  v-if="viewingHistoryInvoice"
+                  type="button"
+                  class="pos-nav-btn edit"
+                  :title="pick('Edit this sale in POS', 'اس فروخت میں ترمیم کریں')"
+                  @click="editViewingSale"
+                >
+                  ✏ {{ pick('Edit', 'ترمیم') }}
+                </button>
+              </div>
+            </div>
           </div>
           <div class="pos-client-field">
             <label for="pos-customer">{{ pick('Client', 'گاہک') }}</label>

@@ -278,6 +278,29 @@ try {
   results.push(
     'Closing/reopening Sales clears both the staged item and table; entry controls and table fit without scrolling',
   );
+  await chooseProduct();
+  await fields(2, 0, 0);
+  await post();
+  await until('testCart.items.length===1');
+  await evaluate(
+    "window.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', ctrlKey: true, bubbles: true }))",
+  );
+  await until('testCart.items.length===0');
+  assert(
+    await evaluate(
+      "testCart.items.length===0 && document.querySelector('#pos-item-code').value==='' && document.querySelector('#pos-entry-quantity').disabled",
+    ),
+  );
+  results.push(
+    'Ctrl+N in sales modal resets existing sale to start (clears cart, clears pending item, focuses item code)',
+  );
+  await escape();
+  await until("location.pathname==='/'");
+  await evaluate(
+    "window.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', ctrlKey: true, bubbles: true }))",
+  );
+  await until("location.pathname==='/pos' && !!document.querySelector('#pos-item-code')");
+  results.push('Ctrl+N outside sales modal navigates to /pos and starts new sale');
   console.log(JSON.stringify(results, null, 2));
 } catch (e) {
   console.error(e);

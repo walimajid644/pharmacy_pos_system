@@ -61,6 +61,8 @@ const visibleTasks = computed(() => tasks.filter((task) => auth.hasRole(task.rol
       type="button"
       class="task-card"
       :style="{ '--task-color': task.color }"
+      :title="task.path === '/pos' ? pick('Sales (Ctrl+N)', 'فروخت (Ctrl+N)') : undefined"
+      :aria-keyshortcuts="task.path === '/pos' ? 'Control+N' : undefined"
       @click="router.push(task.path)"
     >
       <span class="task-icon" aria-hidden="true">{{ task.icon }}</span>

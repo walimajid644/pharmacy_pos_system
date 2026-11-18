@@ -143,6 +143,30 @@ export function useDashboardWorkspace() {
     if (event.key === 'F1') {
       event.preventDefault();
       shortcutHelpOpen.value = !shortcutHelpOpen.value;
+    } else if (
+      (event.ctrlKey || event.metaKey) &&
+      !event.altKey &&
+      !event.shiftKey &&
+      event.key.toLowerCase() === 'n' &&
+      authStore.hasRole(['admin', 'manager', 'cashier'])
+    ) {
+      event.preventDefault();
+      shortcutHelpOpen.value = false;
+      if (router.currentRoute.value.path !== '/pos') {
+        void focusOnRoute('/pos', '#pos-item-code');
+      }
+    } else if (
+      (event.ctrlKey || event.metaKey) &&
+      !event.altKey &&
+      !event.shiftKey &&
+      event.key.toLowerCase() === 'u' &&
+      authStore.hasRole(['admin', 'manager', 'cashier'])
+    ) {
+      event.preventDefault();
+      shortcutHelpOpen.value = false;
+      if (router.currentRoute.value.path !== '/pos') {
+        void router.push('/pos?undo=1');
+      }
     } else if (event.key === 'F2' && authStore.hasRole(['admin', 'manager', 'cashier'])) {
       event.preventDefault();
       void focusOnRoute('/pos', '#pos-product-search');

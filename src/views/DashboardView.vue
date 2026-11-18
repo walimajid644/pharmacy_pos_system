@@ -101,7 +101,25 @@ useDialogKeyboard(helpDialog, () => {
           <dt>F1</dt>
           <dd>{{ pick('Show or hide this help', 'مدد دکھائیں یا چھپائیں') }}</dd>
           <template v-if="authStore.hasRole(['admin', 'manager', 'cashier'])"
-            ><dt>F2</dt>
+            ><dt>Ctrl+N</dt>
+            <dd>
+              {{
+                pick(
+                  'Start new sale or restart current sale',
+                  'نئی فروخت شروع کریں یا موجودہ فروخت دوبارہ شروع کریں',
+                )
+              }}
+            </dd>
+            <dt>Ctrl+U</dt>
+            <dd>
+              {{
+                pick(
+                  'Undo and go back to previous sales',
+                  'پچھلی فروخت پر واپس جائیں',
+                )
+              }}
+            </dd>
+            <dt>F2</dt>
             <dd>
               {{ pick('POS product or barcode search', 'پی او ایس مصنوعات یا بار کوڈ تلاش') }}
             </dd>
