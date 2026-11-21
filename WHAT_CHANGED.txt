@@ -1,0 +1,169 @@
+╔══════════════════════════════════════════════════════════════╗
+║          RECEIPT PREVIEW - FINAL UPDATE ✅                   ║
+╚══════════════════════════════════════════════════════════════╝
+
+TWO ISSUES FIXED:
+═════════════════
+
+1. ✅ PREVIEW HEIGHT - MUCH TALLER NOW!
+   
+   BEFORE: max-height: 600px (too small, cut off)
+   AFTER:  max-height: 70vh (70% of screen height!)
+           min-height: 500px
+   
+   → You can now scroll and see the ENTIRE receipt
+   → All 7 items visible
+   → Complete footer visible
+   → Much better viewing experience
+
+2. ✅ LOGO FIELD - NOW AVAILABLE!
+   
+   NEW FIELD: "Pharmacy Logo (Optional)"
+   → Text input at TOP of receipt settings
+   → Enter path to your logo file
+   → Shows placeholder in preview: [LOGO]
+   → Ready for future full implementation
+
+RECEIPT SETTINGS LAYOUT:
+════════════════════════
+
+┌─────────────────────────────────────────┐
+│ Settings → Receipt Tab                  │
+├─────────────────────────────────────────┤
+│                                         │
+│ 1. Pharmacy Logo (Optional) ⭐ NEW!     │
+│    ┌─────────────────────────────────┐ │
+│    │ path/to/logo.png                │ │
+│    └─────────────────────────────────┘ │
+│                                         │
+│ 2. Receipt Header                       │
+│    ┌─────────────────────────────────┐ │
+│    │ Welcome to...                   │ │
+│    └─────────────────────────────────┘ │
+│                                         │
+│ 3. Receipt Footer                       │
+│    ┌─────────────────────────────────┐ │
+│    │ Thank you...                    │ │
+│    └─────────────────────────────────┘ │
+│                                         │
+│ 4. ☑ Show DRAP Registration            │
+│                                         │
+│ 5. Receipt Preview ⭐ MUCH BIGGER!      │
+│    ┌───────────────────────────────┐  │
+│    │ ↕                             │  │
+│    │ [LOGO]          ← NEW!        │  │
+│    │ path/to/logo.png              │  │
+│    │                               │  │
+│    │ Company Name                  │  │
+│    │ Address, Phone                │  │
+│    │ Custom Header                 │  │
+│    │ ─────────────────────────────│  │
+│    │ Date/Time         Cashier     │  │
+│    │ Payment Mode: Cash            │  │
+│    │ BILL/CASH MEMO                │  │
+│    │ Inv #: 55046                  │  │
+│    │                               │  │
+│    │ ITEM NAME   QTY  RATE    AMT │  │
+│    │ ───────────────────────────── │  │
+│    │ HUMULIN...   1  1663.00 1663 │  │
+│    │ TREVIAMET.. 30    32.50  975 │  │
+│    │ TAB                           │  │
+│    │ ZOPENT...   30    38.75 1162 │  │
+│    │ DRAP: 12345-ABC (if enabled)  │  │
+│    │ LEVOPRAID.. 30    26.85  805 │  │
+│    │ CIDINE...   30    35.90 1077 │  │
+│    │ JARDY...    30    31.35  940 │  │
+│    │ BD INSULIN   2    45.00   90 │  │
+│    │ BRAUN                         │  │
+│    │ ───────────────────────────── │  │
+│    │ Items 7       Gross: 6713.50 │  │
+│    │ ───────────────────────────── │  │
+│    │      THANK YOU                │  │
+│    │   for Visiting us.            │  │
+│    │            Total:      6714   │  │
+│    │ ───────────────────────────── │  │
+│    │ Custom Footer                 │  │
+│    │ [Disclaimer]                  │  │
+│    │ Developed By IBS              │  │
+│    │ ↕                             │  │
+│    └───────────────────────────────┘  │
+│    ↕ SCROLL TO SEE ALL ↕              │
+│    (Much taller: 70% of screen!)      │
+└─────────────────────────────────────────┘
+
+PREVIEW SIZE COMPARISON:
+═══════════════════════
+
+BEFORE (600px):         AFTER (70vh ≈ 700-900px):
+┌─────────────┐        ┌─────────────┐
+│             │        │             │
+│             │        │             │
+│   Only 3    │        │             │
+│   items     │        │   All 7     │
+│   visible   │        │   items     │
+│   😞        │        │   visible   │
+│ [Cut off]   │        │   😊        │
+└─────────────┘        │             │
+                       │             │
+                       │             │
+                       └─────────────┘
+                       Much better!
+
+HOW TO USE:
+═══════════
+
+1. OPEN SETTINGS
+   Settings → Receipt tab
+
+2. SEE NEW LOGO FIELD
+   At the very top - "Pharmacy Logo (Optional)"
+   Enter your logo file path
+
+3. PREVIEW IS BIGGER
+   Scroll down to "Receipt Preview"
+   Notice it's MUCH TALLER now
+   Scroll inside preview to see everything
+
+4. VERIFY ALL ITEMS VISIBLE
+   Scroll in preview from top to bottom:
+   ✓ Logo placeholder (if path entered)
+   ✓ Company name
+   ✓ All 7 items
+   ✓ Summary
+   ✓ Thank you
+   ✓ Total
+   ✓ Complete footer
+
+FILE CHANGED:
+═════════════
+
+✓ src/components/settings/ReceiptSettings.vue
+  - Added logo path input field
+  - Changed preview height: 600px → 70vh
+  - Added min-height: 500px
+  - Added logo placeholder display
+
+LOGO FIELD USAGE:
+════════════════
+
+Example paths:
+• ./assets/logo.png
+• logo.png
+• C:/Pharmacy/Images/logo.png
+
+Note: Currently shows placeholder [LOGO]
+Full logo display coming in future update!
+
+QUICK TEST:
+══════════
+
+✓ Open Settings → Receipt
+✓ Enter "logo.png" in Logo field
+✓ See [LOGO] box appear in preview
+✓ Scroll preview - see all 7 items
+✓ Scroll to bottom - see complete footer
+✓ Preview should be MUCH taller than before
+
+═══════════════════════════════════════════════════════════════
+ALL DONE! Both issues fixed! ✅
+═══════════════════════════════════════════════════════════════

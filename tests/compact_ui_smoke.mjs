@@ -49,6 +49,11 @@ try {
   const pending = new Map();
   socket.addEventListener('message', (e) => {
     const m = JSON.parse(e.data);
+    if (m.method === 'Runtime.exceptionThrown') {
+      console.error(
+        m.params.exceptionDetails.exception?.description || m.params.exceptionDetails.text,
+      );
+    }
     if (m.id) {
       const task = pending.get(m.id);
       pending.delete(m.id);
@@ -80,6 +85,11 @@ try {
   }
   await cdp('Page.enable');
   await cdp('Runtime.enable');
+  await cdp('Page.addScriptToEvaluateOnNewDocument', {
+    source: `window.refreshErrors = [];
+      window.addEventListener('error', event => window.refreshErrors.push(event.message));
+      window.addEventListener('unhandledrejection', event => window.refreshErrors.push(String(event.reason)));`,
+  });
   await cdp('Emulation.setDeviceMetricsOverride', {
     width: 1024,
     height: 600,
@@ -138,7 +148,62 @@ try {
     "!!document.querySelector('.alerts-table tbody tr') && !!document.querySelector('.bill-row')",
   );
   await delay(250);
+  await evaluate(`
+    window.refreshFlashes = [];
+    window.refreshBill = document.querySelector('.bill-row');
+    window.refreshObserver = new MutationObserver(() => {
+      if (document.querySelector('.home-view .skeleton')) window.refreshFlashes.push('skeleton');
+    });
+    window.refreshObserver.observe(document.querySelector('.home-view'), { childList: true, subtree: true });
+  `);
+  for (const [width, height] of [
+    [1366, 768],
+    [1280, 720],
+    [1024, 600],
+  ]) {
+    await cdp('Emulation.setDeviceMetricsOverride', {
+      width,
+      height,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
+    await evaluate(
+      "fixture.dashboardDelay = 100; document.querySelector('.refresh-action').click()",
+    );
+    await until(
+      "!document.querySelector('.refresh-action').disabled && !!document.querySelector('.bill-row')",
+    );
+    await delay(150);
+  }
+  assert.deepEqual(
+    await evaluate('window.refreshErrors'),
+    [],
+    'Refresh must not raise frontend errors',
+  );
+  assert.deepEqual(
+    await evaluate('window.refreshFlashes'),
+    [],
+    'Manual Refresh must preserve the populated dashboard',
+  );
+  assert(await evaluate("window.refreshBill === document.querySelector('.bill-row')"));
+  await evaluate('window.refreshObserver.disconnect()');
+  results.push(
+    'Manual Refresh preserves dashboard cards without frontend errors at 1366×768, 1280×720 and 1024×600',
+  );
   for (const selector of ['.home-view', '.insights-grid', '.alerts-content']) await fits(selector);
+  for (const selector of ['.dashboard-tasks', '.dashboard-footer']) await fits(selector);
+  assert(
+    await evaluate(`(() => {
+    const top = [...document.querySelectorAll('.dashboard-tasks button')];
+    const bottom = [...document.querySelectorAll('.dashboard-footer button')];
+    return top.length === 7 && bottom.length === 9 && [...top, ...bottom].every(button => {
+      const box = button.getBoundingClientRect();
+      return box.height >= 60 && box.top >= 0 && box.bottom <= innerHeight &&
+        button.scrollWidth <= button.clientWidth + 1 && button.scrollHeight <= button.clientHeight + 1;
+    });
+  })()`),
+    'Top and bottom shortcuts stay visible without scrolling or clipped labels',
+  );
   assert(
     await evaluate(
       "[...document.querySelectorAll('.home-view .compact-page-content')].every(e => e.scrollHeight <= e.clientHeight + 1 && e.scrollWidth <= e.clientWidth + 1)",
@@ -153,6 +218,17 @@ try {
     '18px',
   );
   await shot('dashboard-populated-1024x600');
+  await evaluate(
+    'document.querySelector(\'.dashboard-footer [data-path="/item-search"]\').click()',
+  );
+  await until(
+    "location.pathname === '/item-search' && !!document.querySelector('.workspace-dialog')",
+  );
+  await escape();
+  await until("location.pathname === '/'");
+  results.push(
+    'Seven top shortcuts and nine bottom shortcuts fit 1024×600; bottom actions open directly with one click',
+  );
   async function assertSoftMetrics() {
     assert(
       await evaluate(`(() => {
@@ -230,10 +306,10 @@ try {
   await until("document.querySelector('.pos-search-dialog .pos-product-row')!==null");
   await delay(200);
   await fits('.pos-search-dialog');
-  await fits('.pos-search-dialog-results');
+  inside(await evaluate(rect('.pos-search-dialog-results')), 'Search results');
   await evaluate("document.querySelector('#pos-modal-product-search').focus()");
   assert.equal(await evaluate('document.activeElement?.id'), 'pos-modal-product-search');
-  await evaluate("document.querySelector('.pos-search-dialog-footer > button').focus()");
+  await evaluate("document.querySelector('.pos-search-close').focus()");
   await cdp('Input.dispatchKeyEvent', {
     type: 'keyDown',
     key: 'ArrowDown',
@@ -290,8 +366,16 @@ try {
       "document.querySelector('.pos-search-dialog .pos-product-row.highlighted')?.textContent.includes('Medicine 13')",
     ),
   );
-  await fits('.pos-search-dialog-results');
+  inside(await evaluate(rect('.pos-search-dialog-results')), 'Search results');
   assert(await evaluate('testCart.items.length===0'));
+  assert(
+    await evaluate(`(() => {
+    const region = document.querySelector('.pos-search-dialog-results').getBoundingClientRect();
+    const row = document.querySelector('.pos-product-row.highlighted').getBoundingClientRect();
+    return row.top >= region.top && row.bottom <= region.bottom;
+  })()`),
+    'Keyboard selection scrolls the highlighted row into view',
+  );
   await shot('product-search-paged-1024x600');
   await evaluate(
     "document.documentElement.dataset.theme='dark';document.documentElement.classList.add('dark')",
@@ -310,7 +394,7 @@ try {
   assert.equal(await evaluate('testCart.items[0].product.name'), 'Medicine 13');
 
   results.push(
-    'Product-search dialog pages long result lists; keyboard navigation keeps the highlighted row visible without scrolling',
+    'Product-search dialog scrolls long result lists; keyboard navigation keeps the highlighted row visible',
   );
   await open('/products');
   await until("document.querySelector('.inventory-table tbody tr') !== null");

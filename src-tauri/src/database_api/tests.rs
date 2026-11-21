@@ -2,6 +2,96 @@ use super::*;
 use sqlx::sqlite::SqlitePoolOptions;
 
 #[tokio::test]
+async fn product_registration_metadata_survives_upgrade_edit_and_restart() {
+    let p = SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    sqlx::raw_sql(include_str!("../../migrations/001_app_schema.sql"))
+        .execute(&p)
+        .await
+        .unwrap();
+    sqlx::raw_sql(include_str!("../../migrations/002_app_sample.sql"))
+        .execute(&p)
+        .await
+        .unwrap();
+    let before: (String, f64, f64, i64) = sqlx::query_as(
+        "SELECT id,unit_price,cost_price,pack_size FROM products ORDER BY id LIMIT 1",
+    )
+    .fetch_one(&p)
+    .await
+    .unwrap();
+    initialize(&p).await.unwrap();
+    let defaults: (String, i64, String) =
+        sqlx::query_as("SELECT uom,maintain_batch,shelf_location FROM products WHERE id=?")
+            .bind(&before.0)
+            .fetch_one(&p)
+            .await
+            .unwrap();
+    assert_eq!(defaults, ("box".into(), 0, "".into()));
+    sqlx::query("INSERT INTO shelf_locations(id,name,is_active,created_at,updated_at) VALUES('registration-test-shelf','Shelf A',1,'now','now')")
+        .execute(&p).await.unwrap();
+    let actor = "00000000-0000-0000-0000-000000000001";
+    execute_safe(&p, actor,
+        "UPDATE products SET shelf_location=?,remarks=?,uom=?,pack_type=?,ext_disc_percent=?,stm_level=?,maintain_batch=?,fridge_item=?,registration_date=? WHERE id=?".into(),
+        vec![serde_json::json!("Shelf A"), serde_json::json!("Keep chilled"), serde_json::json!("bottle"),
+             serde_json::json!("100 ml"), serde_json::json!(7.25), serde_json::json!(12),
+             serde_json::json!(1), serde_json::json!(1), serde_json::json!("2026-11-21"), serde_json::json!(before.0)],
+    ).await.unwrap();
+    initialize(&p).await.unwrap();
+    let row = sqlx::query("SELECT * FROM products WHERE id=?")
+        .bind(&before.0)
+        .fetch_one(&p)
+        .await
+        .unwrap();
+    assert_eq!(row.get::<String, _>("shelf_location"), "Shelf A");
+    assert_eq!(row.get::<String, _>("remarks"), "Keep chilled");
+    assert_eq!(row.get::<String, _>("uom"), "bottle");
+    assert_eq!(row.get::<String, _>("pack_type"), "100 ml");
+    assert_eq!(row.get::<f64, _>("ext_disc_percent"), 7.25);
+    assert_eq!(row.get::<i64, _>("stm_level"), 12);
+    assert_eq!(row.get::<i64, _>("maintain_batch"), 1);
+    assert_eq!(row.get::<i64, _>("fridge_item"), 1);
+    assert_eq!(row.get::<String, _>("registration_date"), "2026-11-21");
+    assert_eq!(
+        (
+            row.get::<f64, _>("unit_price"),
+            row.get::<f64, _>("cost_price"),
+            row.get::<i64, _>("pack_size")
+        ),
+        (before.1, before.2, before.3)
+    );
+    for assignment in [
+        "ext_disc_percent=101",
+        "stm_level=-1",
+        "stm_level=1.5",
+        "uom='invalid'",
+        "fridge_item=2",
+        "registration_date='2026-02-30'",
+        "registration_date='2026-99-99'",
+    ] {
+        assert!(execute_safe(
+            &p,
+            actor,
+            format!("UPDATE products SET {assignment} WHERE id=?"),
+            vec![serde_json::json!(before.0)]
+        )
+        .await
+        .is_err());
+    }
+    execute_safe(&p, actor, "UPDATE products SET shelf_location='',remarks='',pack_type='',ext_disc_percent=0,stm_level=0,maintain_batch=0,fridge_item=0,registration_date=NULL WHERE id=?".into(), vec![serde_json::json!(before.0)]).await.unwrap();
+    let cleared: (i64, i64, Option<String>) = sqlx::query_as(
+        "SELECT maintain_batch,fridge_item,registration_date FROM products WHERE id=?",
+    )
+    .bind(&before.0)
+    .fetch_one(&p)
+    .await
+    .unwrap();
+    assert_eq!(cleared, (0, 0, None));
+}
+
+#[tokio::test]
 async fn fresh_database_initializes_in_rust() {
     let pool = SqlitePoolOptions::new()
         .max_connections(1)

@@ -165,6 +165,47 @@ try {
     evaluate(
       "document.querySelector('#pos-entry-quantity').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
     );
+  await evaluate(
+    "document.querySelector('#pos-item-code').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
+  );
+  await until("!!document.querySelector('.pos-product-row')");
+  assert.equal(await evaluate('document.activeElement?.id'), 'pos-modal-product-search');
+  assert.equal(await evaluate("document.querySelectorAll('.pos-search-dialog th').length"), 6);
+  const gridRect = await evaluate(rect('.pos-search-dialog-results'));
+  const searchRect = await evaluate(rect('#pos-modal-product-search'));
+  assert(gridRect.bottom <= searchRect.y, 'Search input belongs below the medicine grid');
+  await evaluate(
+    "var input = document.querySelector('#pos-modal-product-search'); input.value = 'Medicine 1'; input.dispatchEvent(new Event('input', { bubbles: true }))",
+  );
+  await evaluate(
+    "document.querySelector('#pos-search-matching-words').click(); document.querySelector('#pos-search-generic').click()",
+  );
+  await until("fixture.calls.some(c => c.query?.includes('generic_name LIKE'))");
+  await evaluate(
+    "document.querySelector('#pos-search-matching-words').click(); document.querySelector('#pos-search-generic').click()",
+  );
+  await evaluate(
+    "var input = document.querySelector('#pos-modal-product-search'); input.value = ''; input.dispatchEvent(new Event('input', { bubbles: true }))",
+  );
+  await until("!!document.querySelector('.pos-product-row')");
+  assert(
+    await evaluate(`(() => {
+    const probe = document.createElement('span');
+    probe.style.backgroundColor = 'var(--color-primary-600)';
+    document.querySelector('.pos-search-dialog').append(probe);
+    const expected = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return ['.pos-product-row.highlighted', '.pos-search-dialog-query'].every(selector =>
+      getComputedStyle(document.querySelector(selector)).backgroundColor === expected);
+  })()`),
+    'Search uses universal theme colors',
+  );
+  await shot('search-reference-1024x600');
+  await escape();
+  await until("!document.querySelector('.pos-search-dialog')");
+  results.push(
+    'Reference search grid has six columns, a focused bottom search input, working search options, and Escape dismissal',
+  );
   await chooseProduct();
   assert.equal(await evaluate('testCart.items.length'), 0, 'Selection only fills the entry row');
   assert(
@@ -195,6 +236,36 @@ try {
   );
   results.push(
     'Mini ITEM Enter opens search; selecting a product stages it; quantity Enter posts quantity/bonus/discount once and resets entry',
+  );
+  await evaluate(`(() => {
+    const percent = document.querySelector('#pos-invoice-discount-percent');
+    percent.value = '10';
+    percent.dispatchEvent(new Event('change', { bubbles: true }));
+  })()`);
+  await until('testCart.discountAmount === 27');
+  await evaluate(`(() => {
+    const flat = document.querySelector('#pos-invoice-discount-flat');
+    flat.value = '54';
+    flat.dispatchEvent(new Event('change', { bubbles: true }));
+  })()`);
+  await until(`document.querySelector('#pos-invoice-discount-percent').value === '20.00'`);
+  await evaluate(`(() => {
+    const percent = document.querySelector('#pos-invoice-discount-percent');
+    percent.value = '101';
+    percent.dispatchEvent(new Event('change', { bubbles: true }));
+  })()`);
+  assert(await evaluate('testCart.discountAmount === 54'));
+  await evaluate(
+    `Array.from(document.querySelectorAll('.pos-detail-actions button')).find(b => b.textContent.includes('Sale detail')).click()`,
+  );
+  await until(`!!document.querySelector('dialog[open]')`);
+  await evaluate(
+    `window.dispatchEvent(new KeyboardEvent('keydown', { key: 'n', ctrlKey: true, bubbles: true }))`,
+  );
+  assert(await evaluate('testCart.items.length === 1'), 'Detail dialog blocks sale shortcuts');
+  await evaluate(`document.querySelector('dialog').close(); testCart.setDiscountAmount(0)`);
+  results.push(
+    'Percentage and flat invoice discounts stay synchronized; invalid percentages are rejected; sale detail preserves the draft',
   );
   await chooseProduct(false, true);
   assert.equal(await evaluate('testCart.items.length'), 1, 'Click stages without adding');

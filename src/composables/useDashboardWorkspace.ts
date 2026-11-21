@@ -81,6 +81,9 @@ export function useDashboardWorkspace() {
 
   const pageTitle = computed(() => {
     const titles: [string, string, string][] = [
+      ['/categories', 'Categories', 'زمرے'],
+      ['/manufacturers', 'Companies / Manufacturers', 'کمپنیاں / مینوفیکچررز'],
+      ['/shelf-locations', 'Shelves / Locations', 'شیلف / مقامات'],
       ['/catalog-import', 'Catalog Import', 'فہرست کی درآمد'],
       ['/catalog-bulk', 'Bulk Catalog Setup', 'فہرست کی اجتماعی ترتیب'],
       ['/controlled-sales', 'Controlled Sales', 'کنٹرول شدہ فروخت'],

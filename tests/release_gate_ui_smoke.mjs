@@ -189,7 +189,7 @@ try {
   await until('testCart.items.length===1');
   assert(
     await evaluate(
-      "testCart.items[0].quantity===1&&fixture.calls.filter(c=>c.command==='database_select'&&(c.query.includes('SELECT * FROM products')||c.query.includes('SELECT * FROM product_batches'))).length===2",
+      "testCart.items[0].quantity===1&&fixture.calls.filter(c=>c.command==='database_select'&&(c.query.includes('FROM products')||c.query.includes('SELECT * FROM product_batches'))).length===2",
     ),
   );
   results.push(
@@ -221,11 +221,10 @@ try {
   await evaluate(
     "testCart.clearCart();fixture.noProductStock=true;var input=document.querySelector('#pos-product-search');input.value='Test medicine';input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",
   );
-  await until("document.querySelector('.pos-search-stock-warning')!==null");
+  await until("document.querySelector('.pos-product-row')!==null");
+  assert(await evaluate("document.querySelector('.pos-search-stock-warning')===null"));
   assert(
-    await evaluate(
-      "[...document.querySelectorAll('.pos-search-add-actions button')].every(button=>!button.disabled)",
-    ),
+    await evaluate("!!document.querySelector('.pos-search-bottom-status button:not(:disabled)')"),
   );
   await evaluate(
     "document.querySelector('#pos-modal-product-search').dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true}))",

@@ -23,6 +23,16 @@ export interface Product {
   manufacturer_id: string | null;
   unit_price: number;
   wholesale_price?: number | null;
+  shelf_location?: string;
+  shelf_location_id?: string | null;
+  remarks?: string;
+  uom?: 'box' | 'strip' | 'unit' | 'bottle';
+  pack_type?: string;
+  ext_disc_percent?: number;
+  stm_level?: number;
+  maintain_batch?: boolean;
+  fridge_item?: boolean;
+  registration_date?: string | null;
   cost_price: number;
   pack_size: number;
   sell_by_loose_unit: boolean;

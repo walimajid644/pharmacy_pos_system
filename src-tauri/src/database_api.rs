@@ -353,8 +353,69 @@ pub async fn initialize(pool: &Pool<Sqlite>) -> Result<(), String> {
             .map_err(|e| e.to_string())?;
         tx.commit().await.map_err(|e| e.to_string())?;
     }
+    let product_details: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM schema_migrations WHERE version='015_product_registration_details'",
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+    if product_details == 0 {
+        let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
+        sqlx::raw_sql(include_str!(
+            "../migrations/015_product_registration_details.sql"
+        ))
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+        sqlx::query(
+            "INSERT INTO schema_migrations(version) VALUES('015_product_registration_details')",
+        )
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+        tx.commit().await.map_err(|e| e.to_string())?;
+    }
+    let registers: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM schema_migrations WHERE version='016_catalog_registers'",
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+    if registers == 0 {
+        let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
+        sqlx::raw_sql(include_str!("../migrations/016_catalog_registers.sql"))
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        sqlx::query("INSERT INTO schema_migrations(version) VALUES('016_catalog_registers')")
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        tx.commit().await.map_err(|e| e.to_string())?;
+    }
     sqlx::query("INSERT INTO app_settings (id, company_name, tax_rate, currency_symbol, theme, created_at, updated_at) SELECT ?, 'Pharmacy POS', 0, 'Rs', 'light', datetime('now'), datetime('now') WHERE NOT EXISTS (SELECT 1 FROM app_settings)")
         .bind(Uuid::new_v4().to_string()).execute(pool).await.map_err(|e| e.to_string())?;
+    
+    // Enhanced purchase receipt fields migration
+    let has_enhanced_purchase: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM schema_migrations WHERE version='017_enhanced_purchase_receipt'"
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+    if has_enhanced_purchase == 0 {
+        let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
+        sqlx::raw_sql(include_str!("../../migrations/add_enhanced_purchase_receipt_fields.sql"))
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        sqlx::query("INSERT INTO schema_migrations(version) VALUES('017_enhanced_purchase_receipt')")
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        tx.commit().await.map_err(|e| e.to_string())?;
+    }
+    
     Ok(())
 }
 

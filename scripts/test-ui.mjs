@@ -39,6 +39,8 @@ try {
     'phase1',
     'compact',
     'pos_entry',
+    'product_registration',
+    'catalog_registers',
     'dashboard_refresh',
     'escape',
     'no_scroll',

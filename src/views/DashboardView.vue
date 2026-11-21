@@ -112,12 +112,7 @@ useDialogKeyboard(helpDialog, () => {
             </dd>
             <dt>Ctrl+U</dt>
             <dd>
-              {{
-                pick(
-                  'Undo and go back to previous sales',
-                  'پچھلی فروخت پر واپس جائیں',
-                )
-              }}
+              {{ pick('Undo and go back to previous sales', 'پچھلی فروخت پر واپس جائیں') }}
             </dd>
             <dt>F2</dt>
             <dd>
@@ -282,7 +277,7 @@ useDialogKeyboard(helpDialog, () => {
   display: flex;
   flex-direction: column;
 }
-@media (min-width: 1000px) and (min-height: 500px) {
+@media (min-width: 900px) and (min-height: 500px) {
   .dashboard-overview {
     height: 100dvh;
     min-height: 0;
@@ -301,11 +296,21 @@ useDialogKeyboard(helpDialog, () => {
   }
 }
 .dashboard-overview :deep(.dashboard-footer) {
+  display: grid;
+  grid-template-columns: repeat(var(--shortcut-count), minmax(0, 1fr));
   flex-shrink: 0;
   padding: 4px 12px;
   gap: 5px;
 }
 .dashboard-overview :deep(.footer-btn) {
+  width: 100%;
+  min-width: 0;
+  height: 72px;
+  gap: 3px;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  white-space: normal;
   padding: 3px 7px;
   font:
     11px/1.2 Arial,
@@ -313,5 +318,9 @@ useDialogKeyboard(helpDialog, () => {
     sans-serif;
   min-height: 24px;
   border-radius: var(--radius-sm);
+}
+.dashboard-overview :deep(.footer-icon) {
+  font-size: 24px;
+  height: 26px;
 }
 </style>

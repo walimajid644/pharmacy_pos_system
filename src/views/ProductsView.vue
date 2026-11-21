@@ -21,6 +21,7 @@ const {
   products,
   categories,
   manufacturers,
+  shelfLocations,
   searchQuery,
   loading,
   showModal,
@@ -79,6 +80,20 @@ function openLabel(product: Product) {
         </div>
       </div>
 
+      <nav
+        class="product-register-links"
+        :aria-label="pick('Product registers', 'مصنوعات کے رجسٹر')"
+      >
+        <Button size="sm" variant="outline" @click="router.push('/categories')">{{
+          pick('Categories', 'زمرے')
+        }}</Button>
+        <Button size="sm" variant="outline" @click="router.push('/manufacturers')">{{
+          pick('Companies', 'کمپنیاں')
+        }}</Button>
+        <Button size="sm" variant="outline" @click="router.push('/shelf-locations')">{{
+          pick('Shelves / Locations', 'شیلف / مقامات')
+        }}</Button>
+      </nav>
       <!-- Search -->
       <div class="inventory-search">
         <Input
@@ -146,6 +161,7 @@ function openLabel(product: Product) {
       :loading="loading"
       :categories="categories"
       :manufacturers="manufacturers"
+      :shelf-locations="shelfLocations"
       @close="showModal = false"
       @save="saveProduct"
     />
@@ -164,3 +180,13 @@ function openLabel(product: Product) {
     />
   </div>
 </template>
+
+<style scoped>
+.product-register-links {
+  display: flex;
+  flex-shrink: 0;
+  gap: 6px;
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--border);
+}
+</style>

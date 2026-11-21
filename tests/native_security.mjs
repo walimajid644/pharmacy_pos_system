@@ -48,6 +48,31 @@ export async function verifyNativeSecurity({ evaluate, invoke, query, out, ident
     /unknown field|invalid/i,
   );
   await invoke('record_diagnostic', { request: { event: 'operation_failed', source: 'pos' } });
+  await invoke('record_diagnostic', {
+    request: {
+      event: 'operation_failed',
+      source: 'catalog',
+      context: {
+        operation: 'product_save',
+        reason: 'schema_mismatch',
+        supportId: 'ERR-012345ABCDEF',
+      },
+    },
+  });
+  await assert.rejects(
+    invoke('record_diagnostic', {
+      request: {
+        event: 'operation_failed',
+        source: 'catalog',
+        context: {
+          operation: 'product_save',
+          reason: 'schema_mismatch',
+          supportId: 'SYNTHETIC_SECRET_MUST_NOT_BE_LOGGED',
+        },
+      },
+    }),
+    /invalid/i,
+  );
   const dataDir = await evaluate('nativeAcceptance.appDataDir()');
   assert(dataDir.includes(identifier), 'Diagnostics must use the isolated test application');
   const contents = await readFile(path.join(dataDir, 'logs', 'diagnostics.log'), 'utf8');
@@ -56,8 +81,19 @@ export async function verifyNativeSecurity({ evaluate, invoke, query, out, ident
     .trim()
     .split('\n')
     .map((line) => JSON.parse(line));
-  for (const record of records)
-    assert.deepEqual(Object.keys(record).sort(), ['event', 'source', 'timestamp', 'version']);
+  for (const record of records) {
+    assert.deepEqual(
+      Object.keys(record).sort(),
+      record.context
+        ? ['context', 'event', 'source', 'timestamp', 'version']
+        : ['event', 'source', 'timestamp', 'version'],
+    );
+    if (record.context) {
+      assert.deepEqual(Object.keys(record.context).sort(), ['operation', 'reason', 'supportId']);
+      assert.match(record.context.supportId, /^ERR-[A-F0-9]{12}$/);
+    }
+  }
+  assert(records.some((record) => record.context?.supportId === 'ERR-012345ABCDEF'));
   assert(records.some((record) => record.event === 'operation_failed' && record.source === 'pos'));
   const result = {
     date: new Date().toISOString(),
@@ -67,7 +103,7 @@ export async function verifyNativeSecurity({ evaluate, invoke, query, out, ident
     sqliteVersion: version,
     policy,
     diagnostics:
-      'enum-only payload; extra fields rejected; bounded rotation/rate covered by Rust tests',
+      'enum-only context and validated support codes; private text rejected; bounded rotation/rate covered by Rust tests',
   };
   await writeFile(path.join(out, 'security.json'), JSON.stringify(result, null, 2));
   console.log(JSON.stringify(result, null, 2));

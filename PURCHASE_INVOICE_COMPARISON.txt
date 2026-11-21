@@ -1,0 +1,310 @@
+╔══════════════════════════════════════════════════════════════════╗
+║        PURCHASE INVOICE - SAMPLE vs YOUR SYSTEM                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+SAMPLE (Inspire POS) LAYOUT:
+════════════════════════════
+
+┌────────────────────────────────────────────────────────────────┐
+│ [Inspire Logo]                              [Purchase Seller]  │
+├────────────────────────────────────────────────────────────────┤
+│ Invoice No: 1      Bill #: 511409    Payment: Cash ▼          │
+│ Supplier: AL-HAMZA TRADER [🔍]           Date: 29 Oct 26      │
+│ ITEM: [________________] [🔍]                                  │
+├────────────────────────────────────────────────────────────────┤
+│ QTY │ PUR.PRICE │ SALE PRICE │ Disc/Item% │ GST/ITEM │  [↓]  │
+├────────────────────────────────────────────────────────────────┤
+│ PACK/LOOSE [___]   Current Stock [_____]                       │
+├───┬───────────────────┬────┬──────┬────────┬──────┬────────┬───┤
+│Sr │ Description       │Qty │Bonus │Pur Pr  │Disc% │Disc Amt│...│
+├───┼───────────────────┼────┼──────┼────────┼──────┼────────┼───┤
+│ 1 │XINOXY 3G EYE      │ 7  │  0   │ 59.25  │  0   │ 0.00   │...│
+│ 2 │BARILUBE 3.5GM     │ 28 │  0   │ 153    │  0   │ 0.00   │...│
+│ 3 │BLEPHABAR SOP      │ 48 │  0   │ 149.17 │  0   │ 0.00   │...│
+│...│ (14 items total)  │    │      │        │      │        │   │
+├───┴───────────────────┴────┴──────┴────────┴──────┴────────┴───┤
+│ Items: 14   Item Disc: 0.00   GST: 0                           │
+│                                                                 │
+│ Invoice Advance Tax:  %: [0]  [Calculate Imported Item %]      │
+│ Invoice Discount: %: [0]  Flat: [0.00]                         │
+│                                                                 │
+│ Payment: [0]                       Net Payable: 325524.98      │
+│ Balance: [0]                              [Finalized] ●        │
+├─────────────────────────────────────────────────────────────────┤
+│ [First][Previous][Next][Last][Print][New][Edit][Save][Exit]   │
+└─────────────────────────────────────────────────────────────────┘
+
+                     [Calculate]
+                [Imported Item %]    [Item History]
+                   [Pur Detail]      [Sale Detail]
+
+
+KEY FEATURES IN SAMPLE:
+═══════════════════════
+
+1. HEADER SECTION:
+   ✓ Invoice number (auto)
+   ✓ Supplier bill number
+   ✓ Supplier dropdown
+   ✓ Payment method dropdown
+   ✓ Date picker
+   ✓ Item search
+
+2. QUICK ENTRY ROW:
+   ✓ QTY input
+   ✓ Purchase price
+   ✓ Sale price
+   ✓ Discount %
+   ✓ GST/Tax
+   ✓ Add button (↓)
+   ✓ Pack/Loose toggle
+   ✓ Current stock display
+
+3. ITEMS TABLE (12 COLUMNS):
+   ✓ Sr (Serial #)
+   ✓ Description (Product name)
+   ✓ Qty (Quantity)
+   ✓ Bonus (Free items)
+   ✓ Pur Price (Purchase price)
+   ✓ Disc % (Discount %)
+   ✓ Disc Amt (Discount amount)
+   ✓ AdvTax% (Advance tax %)
+   ✓ AdvAmount (Advance tax amt)
+   ✓ Total (Line total)
+   ✓ Sale Price (Retail price)
+   ✓ Margin % (Profit margin)
+
+4. FOOTER CALCULATIONS:
+   ✓ Items count
+   ✓ Total item discount
+   ✓ Total GST
+   ✓ Invoice advance tax (%)
+   ✓ Invoice discount (% or flat)
+   ✓ Payment amount
+   ✓ Balance due
+   ✓ Net Payable (large, bold)
+   ✓ Finalized status
+
+5. NAVIGATION:
+   ✓ First/Previous/Next/Last
+   ✓ Browse existing invoices
+   ✓ Edit mode
+
+6. ACTIONS:
+   ✓ Calculate button
+   ✓ Print invoice
+   ✓ New invoice
+   ✓ Edit invoice
+   ✓ Save invoice
+   ✓ Item history
+   ✓ Purchase detail
+   ✓ Sale detail
+
+
+YOUR CURRENT SYSTEM:
+═══════════════════
+
+Purchase Order Receive View:
+┌────────────────────────────────────────────────────────┐
+│ Receive Purchase Order                                 │
+├────────────────────────────────────────────────────────┤
+│ PO Number: [dropdown]                                  │
+│ Supplier: [display]                                    │
+│ Order Date: [display]                                  │
+├────────────────────────────────────────────────────────┤
+│ Items:                                                 │
+│ Product │ Ordered │ Received │ Price │ Batch │ Expiry │
+│ ────────┼─────────┼──────────┼───────┼───────┼────────│
+│ Item 1  │   10    │  [__]    │ 100   │ [___] │ [____] │
+│ Item 2  │   20    │  [__]    │ 200   │ [___] │ [____] │
+├────────────────────────────────────────────────────────┤
+│ Notes: [___________]                                   │
+│                                                        │
+│ [Cancel] [Save]                                        │
+└────────────────────────────────────────────────────────┘
+
+
+WHAT'S MISSING IN YOUR SYSTEM:
+══════════════════════════════
+
+❌ Invoice number (separate from PO)
+❌ Supplier bill number field
+❌ Direct item search & add (not from PO)
+❌ Quick entry row
+❌ Bonus quantity field
+❌ Item-level discount (% and amount)
+❌ Advance tax fields
+❌ Sale price entry
+❌ Margin % calculation
+❌ Invoice-level discount
+❌ Invoice advance tax
+❌ Payment amount field
+❌ Balance calculation
+❌ Pack/Loose toggle
+❌ Current stock display
+❌ Navigation buttons (First/Prev/Next/Last)
+❌ Item history button
+❌ Print functionality
+❌ Edit existing invoices
+❌ Real-time calculations
+❌ Finalized status
+
+
+WHAT TO IMPLEMENT:
+═════════════════
+
+OPTION A: Enhance Existing Receive View
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Add to PurchaseOrderReceiveView.vue:
+✓ Invoice number generation
+✓ Supplier bill number input
+✓ Bonus quantity column
+✓ Discount % and amount columns
+✓ Advance tax columns
+✓ Sale price column
+✓ Margin % column (auto-calculated)
+✓ Invoice footer with adjustments
+✓ Payment fields
+✓ Net payable calculation
+✓ Real-time calculations
+
+
+OPTION B: Create New Purchase Invoice Screen
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Create PurchaseInvoiceView.vue (NEW):
+✓ Complete independent purchase entry
+✓ Not tied to purchase orders
+✓ Direct purchase recording
+✓ All features from sample
+✓ Item search and quick add
+✓ Full navigation
+✓ Print functionality
+
+
+RECOMMENDED APPROACH:
+════════════════════
+
+Option B - Create NEW Purchase Invoice Screen
+
+WHY?
+────
+1. Cleaner separation of concerns
+2. Purchase Orders = Planning/Ordering
+3. Purchase Invoices = Receiving/Recording actual purchases
+4. More flexibility
+5. Matches sample exactly
+6. Professional workflow:
+   
+   Purchase Order → Send to Supplier
+                 ↓
+   Goods Arrive with Supplier Bill
+                 ↓
+   Create Purchase Invoice (this new screen)
+                 ↓
+   Inventory Updated
+
+
+CALCULATION FORMULAS:
+════════════════════
+
+Item Level:
+───────────
+Disc Amt = (Pur Price × Qty) × (Disc % / 100)
+Before Tax = (Pur Price × Qty) - Disc Amt
+AdvAmount = Before Tax × (AdvTax% / 100)
+Line Total = Before Tax + AdvAmount
+Margin % = ((Sale Price - Pur Price) / Pur Price) × 100
+
+Invoice Level:
+──────────────
+Subtotal = Sum of all Line Totals
+Invoice Disc = Subtotal × (Inv Disc % / 100) OR Flat Amount
+After Disc = Subtotal - Invoice Disc
+Invoice AdvTax = After Disc × (Inv AdvTax % / 100)
+Net Payable = After Disc + Invoice AdvTax
+Balance = Net Payable - Payment
+
+
+DATA STRUCTURE:
+══════════════
+
+purchase_invoices:
+  - id
+  - invoice_number
+  - supplier_id
+  - supplier_bill_number
+  - purchase_date
+  - payment_method
+  - subtotal
+  - invoice_discount_percent
+  - invoice_discount_amount
+  - invoice_advance_tax_percent
+  - invoice_advance_tax_amount
+  - net_amount
+  - payment_amount
+  - balance
+  - status (draft/finalized)
+  - created_at
+  - updated_at
+
+purchase_invoice_items:
+  - id
+  - invoice_id
+  - product_id
+  - quantity
+  - bonus_quantity
+  - purchase_price
+  - sale_price
+  - discount_percent
+  - discount_amount
+  - advance_tax_percent
+  - advance_tax_amount
+  - line_total
+  - margin_percent
+  - batch_number
+  - expiry_date
+  - pack_size
+  - is_loose
+
+
+NEXT STEPS:
+══════════
+
+1. Decide: Option A (enhance) or B (create new)
+2. Create database schema
+3. Build UI components
+4. Implement calculations
+5. Add navigation
+6. Add printing
+7. Test with real data
+
+
+QUESTIONS FOR YOU:
+═════════════════
+
+1. Do you want to enhance existing receive view?
+   OR create completely new purchase invoice screen?
+
+2. Do you need both Purchase Orders AND Purchase Invoices?
+   (Most pharmacies need both)
+
+3. What payment methods do you use?
+   (Cash, Credit, Bank Transfer, etc)
+
+4. Do you track advance tax in Pakistan?
+   (Withholding tax on purchases)
+
+5. Do you want to print purchase invoices?
+   (For records/audit trail)
+
+╔══════════════════════════════════════════════════════════════════╗
+║                    RECOMMENDATION                                ║
+║                                                                  ║
+║  Create NEW Purchase Invoice screen (Option B)                  ║
+║  Matching the sample exactly                                    ║
+║  This gives you professional purchase recording                 ║
+║                                                                  ║
+║  READY TO PROCEED? Let me know and I'll build it!              ║
+╚══════════════════════════════════════════════════════════════════╝

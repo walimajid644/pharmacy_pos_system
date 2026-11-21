@@ -209,7 +209,7 @@ try {
   await until("document.querySelector('.pos-search-dialog .pos-product-row')!==null");
   assert(await evaluate('testCart.items.length===0'));
   await shot('product-search-modal-1024x600');
-  await evaluate("document.querySelector('.pos-search-dialog-footer > button').focus()");
+  await evaluate("document.querySelector('.pos-search-close').focus()");
   await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Tab', windowsVirtualKeyCode: 9 });
   await cdp('Input.dispatchKeyEvent', { type: 'keyUp', key: 'Tab', windowsVirtualKeyCode: 9 });
   assert.equal(await evaluate('document.activeElement?.id'), 'pos-modal-product-search');
@@ -238,7 +238,7 @@ try {
   await until("document.querySelectorAll('.pos-line-description').length===1");
   assert.equal(
     await evaluate(
-      "fixture.calls.filter(c=>c.command==='database_select'&&(c.query.includes('SELECT * FROM products')||c.query.includes('SELECT * FROM product_batches'))).length",
+      "fixture.calls.filter(c=>c.command==='database_select'&&(c.query.includes('FROM products')||c.query.includes('SELECT * FROM product_batches'))).length",
     ),
     2,
   );

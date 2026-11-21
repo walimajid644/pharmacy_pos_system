@@ -32,7 +32,9 @@ const {
   lowStockItems,
   nearExpiryItems,
   loading,
+  refreshing,
   loadError,
+  supportCode,
   loadDashboardData,
 } = useDashboardData();
 const activeTab = ref<AlertTab>('lowStock');
@@ -63,12 +65,13 @@ function navigateTo(path: string) {
   <div class="home-view" :class="{ 'has-load-error': loadError }">
     <!-- Dashboard actions -->
     <div class="welcome-header">
-      <DashboardTasks v-if="auth.hasRole(['admin', 'manager', 'cashier'])" />
+      <DashboardTasks />
       <div class="dashboard-actions">
         <button
           type="button"
           class="dashboard-action refresh-action"
-          :disabled="loading"
+          :disabled="loading || refreshing"
+          :aria-busy="refreshing"
           @click="loadDashboardData({ background: false })"
         >
           <span aria-hidden="true">↻</span> {{ pick('Refresh', 'تازہ کریں') }}
@@ -87,6 +90,9 @@ function navigateTo(path: string) {
           'ڈیش بورڈ کا ڈیٹا لوڈ نہیں ہو سکا۔ تازہ کریں۔',
         )
       }}
+      <span v-if="supportCode">
+        {{ pick('Support code', 'سپورٹ کوڈ') }}: <bdi>{{ supportCode }}</bdi></span
+      >
     </div>
 
     <!-- Stats Grid -->
@@ -184,7 +190,7 @@ function navigateTo(path: string) {
 .dashboard-actions {
   margin-inline-start: auto;
 }
-.home-view.home-view :deep(button:not(.stat-card):not(.bill-row):not(.alert-tab)) {
+.home-view.home-view :deep(button:not(.stat-card):not(.bill-row):not(.alert-tab):not(.task-card)) {
   height: 28px;
   min-height: 0;
   width: auto;
@@ -215,16 +221,28 @@ function navigateTo(path: string) {
   outline-offset: 1px;
 }
 .home-view.home-view :deep(.dashboard-tasks) {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  min-width: 0;
   gap: 6px;
 }
 .home-view.home-view :deep(.task-card) {
-  min-width: 95px;
+  width: 100%;
+  min-width: 0;
+  height: 66px;
+  flex-direction: column;
+  justify-content: center;
+  padding: 5px;
+  font-size: 11px;
+  text-align: center;
+  white-space: normal;
   border-bottom: 2px solid var(--brand-600);
 }
 .home-view.home-view :deep(.task-icon) {
-  width: 20px;
-  height: 18px;
-  font-size: 14px;
+  width: 28px;
+  height: 26px;
+  font-size: 24px;
   background: transparent;
 }
 .quick-actions {
@@ -439,11 +457,11 @@ function navigateTo(path: string) {
   .home-view {
     height: 100%;
     display: grid;
-    grid-template-rows: auto auto minmax(110px, 0.9fr) minmax(120px, 1fr);
+    grid-template-rows: auto auto minmax(80px, 0.9fr) minmax(90px, 1fr);
     overflow: hidden;
   }
   .home-view.has-load-error {
-    grid-template-rows: auto auto auto minmax(100px, 0.9fr) minmax(100px, 1fr);
+    grid-template-rows: auto auto auto minmax(70px, 0.9fr) minmax(80px, 1fr);
   }
 }
 @media (max-width: 899px) {

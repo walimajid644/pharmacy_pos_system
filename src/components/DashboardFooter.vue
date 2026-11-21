@@ -12,8 +12,8 @@ const { pick } = useI18n();
 const links = [
   {
     path: '/payments',
-    en: 'Payments & Receipts',
-    ur: 'ادائیگیاں اور وصولیاں',
+    en: 'Receipts',
+    ur: 'وصولیاں',
     icon: '↔',
     roles: ['admin', 'manager', 'accountant'],
   },
@@ -22,6 +22,34 @@ const links = [
     en: 'Expenses',
     ur: 'اخراجات',
     icon: '▥',
+    roles: ['admin', 'manager', 'accountant'],
+  },
+  {
+    path: '/preorders',
+    en: 'Sale Orders',
+    ur: 'فروخت آرڈر',
+    icon: '📦',
+    roles: ['admin', 'manager', 'cashier'],
+  },
+  {
+    path: '/customers',
+    en: 'Clients',
+    ur: 'گاہک',
+    icon: '♙',
+    roles: ['admin', 'manager', 'cashier'],
+  },
+  {
+    path: '/suppliers',
+    en: 'Suppliers',
+    ur: 'سپلائرز',
+    icon: '▧',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/sales-history',
+    en: 'Sales History',
+    ur: 'فروخت کی تاریخ',
+    icon: '◷',
     roles: ['admin', 'manager', 'accountant'],
   },
   {
@@ -51,12 +79,18 @@ const visibleLinks = computed(() => links.filter((l) => auth.hasRole(l.roles as 
 </script>
 
 <template>
-  <footer v-if="visibleLinks.length" class="dashboard-footer">
+  <footer
+    v-if="visibleLinks.length"
+    class="dashboard-footer"
+    :style="{ '--shortcut-count': visibleLinks.length }"
+    :aria-label="pick('Quick actions', 'فوری اختیارات')"
+  >
     <button
       v-for="link in visibleLinks"
       :key="link.path"
       type="button"
       class="footer-btn"
+      :data-path="link.path"
       @click="router.push(link.path)"
     >
       <span class="footer-icon" aria-hidden="true">{{ link.icon }}</span>

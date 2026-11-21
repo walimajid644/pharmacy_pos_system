@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed, ref, watch } from 'vue';
+import { executeQuery } from '@/lib/database';
 import { bindTemplateRef } from '@/lib/templateRefs';
 import SavedSaleActions from '@/components/SavedSaleActions.vue';
 import Button from '@/components/ui/Button.vue';
@@ -51,6 +53,8 @@ const {
   showCost,
   selectedCustomer,
   searchQuery,
+  searchMatchingWords,
+  searchGeneric,
   productSearchOpen,
   openProductSearch,
   resetProductSearch,
@@ -90,6 +94,8 @@ const {
   onLineDiscountAmountChange,
   onLineDiscountChange,
   onInvoiceDiscountChange,
+  setInvoiceDiscount,
+  resetSale,
   getBatchWarning,
   checkout,
   handleBarcodeInput,
@@ -98,6 +104,7 @@ const {
   canGoForward,
   goBackward,
   goForward,
+  goToHistoryBoundary,
   editViewingSale,
   exitHistoryView,
   formatCurrency,
@@ -106,6 +113,49 @@ const {
 const bindsearchInput = bindTemplateRef(searchInput);
 const bindItemCodeInput = bindTemplateRef(itemCodeInput);
 const bindEntryQuantityInput = bindTemplateRef(entryQuantityInput);
+const detailDialog = ref<HTMLDialogElement | null>(null);
+const detailMode = ref<'sale' | 'client' | 'item'>('sale');
+const saleStartedAt = ref(new Date().toISOString());
+watch(invoiceNumber, () => {
+  saleStartedAt.value = new Date().toISOString();
+});
+const saleDate = computed(() => viewingHistoryInvoice.value?.invoice_date || saleStartedAt.value);
+const itemHistory = ref<
+  {
+    invoice_number: string;
+    invoice_date: string;
+    quantity: number;
+    is_loose_sale: number;
+    line_total: number;
+  }[]
+>([]);
+const historyLoading = ref(false);
+const historyError = ref(false);
+async function openDetail(mode: 'sale' | 'client' | 'item') {
+  detailMode.value = mode;
+  detailDialog.value?.showModal();
+  if (mode !== 'item' || !pendingProduct.value) return;
+  itemHistory.value = [];
+  historyError.value = false;
+  historyLoading.value = true;
+  try {
+    const cashierOnly = authStore.currentUser?.role === 'cashier';
+    itemHistory.value = await executeQuery(
+      `SELECT si.invoice_number, si.invoice_date, sii.quantity, sii.is_loose_sale, sii.line_total
+       FROM sales_invoice_items sii JOIN sales_invoices si ON si.id = sii.invoice_id
+       WHERE sii.product_id = ? AND si.status = 'completed'
+       ${cashierOnly ? 'AND si.cashier_id = ?' : ''}
+       ORDER BY si.invoice_date DESC, sii.rowid DESC LIMIT 30`,
+      cashierOnly
+        ? [pendingProduct.value.id, authStore.currentUser!.id]
+        : [pendingProduct.value.id],
+    );
+  } catch {
+    historyError.value = true;
+  } finally {
+    historyLoading.value = false;
+  }
+}
 </script>
 
 <template>
@@ -234,7 +284,9 @@ const bindEntryQuantityInput = bindTemplateRef(entryQuantityInput);
         <strong>
           {{ pick('Viewing Previous Sale', 'پچھلی فروخت دیکھ رہے ہیں') }}
           #{{ viewingHistoryInvoice.invoice_number }}
-          <span v-if="viewingHistoryInvoice.customer_name"> · {{ viewingHistoryInvoice.customer_name }}</span>
+          <span v-if="viewingHistoryInvoice.customer_name">
+            · {{ viewingHistoryInvoice.customer_name }}</span
+          >
         </strong>
         <small>
           {{ formatDate(viewingHistoryInvoice.invoice_date) }} ·
@@ -284,6 +336,20 @@ const bindEntryQuantityInput = bindTemplateRef(entryQuantityInput);
     <div class="pos-workspace" :inert="productSearchOpen">
       <section class="pos-main" :aria-label="pick('Sale entry and items', 'فروخت کے آئٹم')">
         <div class="pos-entry-strip">
+          <div class="pos-sale-meta">
+            <span
+              >{{ pick('Date', 'تاریخ') }} <bdi>{{ formatDate(saleDate) }}</bdi></span
+            >
+            <span
+              >{{ pick('Sale time', 'فروخت کا وقت') }}
+              <bdi>{{
+                new Date(saleDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              }}</bdi></span
+            >
+            <span
+              >{{ pick('Payment', 'ادائیگی') }} <bdi>{{ paymentMethod }}</bdi></span
+            >
+          </div>
           <div class="pos-invoice-field">
             <label for="pos-invoice-number">{{ pick('Invoice No.', 'انوائس نمبر') }}</label>
             <div class="pos-invoice-input-wrap">
@@ -460,6 +526,31 @@ const bindEntryQuantityInput = bindTemplateRef(entryQuantityInput);
               }}</label
             >
           </div>
+          <div class="pos-client-account">
+            <label
+              >{{ pick('Client code', 'گاہک کوڈ')
+              }}<input :value="selectedCustomer?.customer_code || '0'" readonly
+            /></label>
+            <label
+              >{{ pick('Pre bal', 'سابقہ بقایا')
+              }}<input :value="formatCurrency(selectedCustomer?.current_balance || 0)" readonly
+            /></label>
+            <label
+              >{{ pick('Phone', 'فون')
+              }}<input :value="selectedCustomer?.phone_number || ''" readonly
+            /></label>
+          </div>
+          <div class="pos-detail-actions">
+            <button type="button" :disabled="!pendingProduct" @click="openDetail('item')">
+              {{ pick('Item history', 'آئٹم کی سابقہ فروخت') }}
+            </button>
+            <button type="button" @click="openDetail('sale')">
+              {{ pick('Sale detail', 'فروخت کی تفصیل') }}
+            </button>
+            <button type="button" :disabled="!selectedCustomer" @click="openDetail('client')">
+              {{ pick('Client detail', 'گاہک کی تفصیل') }}
+            </button>
+          </div>
         </div>
 
         <form
@@ -580,6 +671,7 @@ const bindEntryQuantityInput = bindTemplateRef(entryQuantityInput);
           :total="total"
           :max-invoice-discount="maxInvoiceDiscount"
           :on-invoice-discount-change="onInvoiceDiscountChange"
+          :set-invoice-discount="setInvoiceDiscount"
           :format-currency="formatCurrency"
         />
       </section>
@@ -725,10 +817,148 @@ const bindEntryQuantityInput = bindTemplateRef(entryQuantityInput);
           }}
         </Button>
       </aside>
+      <nav
+        class="pos-action-bar"
+        :inert="productSearchOpen"
+        :aria-label="pick('Sale actions', 'فروخت کے اختیارات')"
+      >
+        <button
+          type="button"
+          :disabled="!canGoBackward || checkoutLoading"
+          @click="goToHistoryBoundary(true)"
+          :title="pick('Oldest of the latest 50 sales', 'آخری 50 فروخت میں سب سے پرانی')"
+        >
+          {{ pick('First', 'پہلی') }}
+        </button>
+        <button type="button" :disabled="checkoutLoading" @click="resetSale">
+          {{ pick('New', 'نئی') }} <kbd>Ctrl+N</kbd>
+        </button>
+        <button type="button" :disabled="!canGoBackward || checkoutLoading" @click="goBackward">
+          ◀ {{ pick('Previous', 'پچھلی') }}
+        </button>
+        <button type="button" :disabled="!canGoForward || checkoutLoading" @click="goForward">
+          {{ pick('Next', 'اگلی') }} ▶
+        </button>
+        <button
+          type="button"
+          :disabled="(!canGoBackward && !canGoForward) || checkoutLoading"
+          @click="goToHistoryBoundary(false)"
+        >
+          {{ pick('Last', 'آخری') }}
+        </button>
+        <button
+          type="button"
+          :disabled="!viewingHistoryInvoice || checkoutLoading"
+          @click="editViewingSale"
+        >
+          {{ pick('Edit', 'ترمیم') }} <kbd>Ctrl+E</kbd>
+        </button>
+        <button type="button" :disabled="!lastReceipt" @click="savedActions?.print()">
+          {{ pick('Print last', 'آخری رسید پرنٹ') }}
+        </button>
+        <button type="button" @click="openProductSearch()">
+          {{ pick('Search', 'تلاش') }} <kbd>F2</kbd>
+        </button>
+      </nav>
     </div>
+    <dialog
+      ref="detailDialog"
+      class="pos-detail-dialog"
+      @click="$event.target === detailDialog && detailDialog?.close()"
+    >
+      <header>
+        <h2>
+          {{
+            detailMode === 'item'
+              ? pick('Item history', 'آئٹم کی سابقہ فروخت')
+              : detailMode === 'sale'
+                ? pick('Sale detail', 'فروخت کی تفصیل')
+                : pick('Client detail', 'گاہک کی تفصیل')
+          }}
+        </h2>
+        <button type="button" @click="detailDialog?.close()">
+          {{ pick('Close', 'بند کریں') }}
+        </button>
+      </header>
+      <dl v-if="detailMode === 'sale'">
+        <dt>{{ pick('Invoice No.', 'انوائس نمبر') }}</dt>
+        <dd>{{ invoiceNumber }}</dd>
+        <dt>{{ pick('Client', 'گاہک') }}</dt>
+        <dd>
+          {{
+            selectedCustomer
+              ? `${selectedCustomer.first_name} ${selectedCustomer.last_name}`
+              : pick('Casual client', 'عام گاہک')
+          }}
+        </dd>
+        <dt>{{ pick('Payment', 'ادائیگی') }}</dt>
+        <dd>{{ paymentMethod }}</dd>
+        <dt>{{ pick('Items', 'اشیاء') }}</dt>
+        <dd>{{ formatNumber(cartStore.itemCount) }}</dd>
+        <dt>{{ pick('Invoice discount', 'انوائس رعایت') }}</dt>
+        <dd>{{ formatCurrency(cartStore.discountAmount) }}</dd>
+        <dt>{{ pick('Total', 'کل') }}</dt>
+        <dd>{{ formatCurrency(total) }}</dd>
+        <dt>{{ pick('Remarks', 'نوٹس') }}</dt>
+        <dd>{{ saleRemarks || '—' }}</dd>
+      </dl>
+      <dl v-else-if="detailMode === 'client' && selectedCustomer">
+        <dt>{{ pick('Client', 'گاہک') }}</dt>
+        <dd>{{ selectedCustomer.first_name }} {{ selectedCustomer.last_name }}</dd>
+        <dt>{{ pick('Code', 'کوڈ') }}</dt>
+        <dd>{{ selectedCustomer.customer_code }}</dd>
+        <dt>{{ pick('Phone', 'فون') }}</dt>
+        <dd>{{ selectedCustomer.phone_number || '—' }}</dd>
+        <dt>{{ pick('Previous balance', 'سابقہ بقایا') }}</dt>
+        <dd>{{ formatCurrency(selectedCustomer.current_balance) }}</dd>
+        <dt>{{ pick('Credit limit', 'کریڈٹ حد') }}</dt>
+        <dd>{{ formatCurrency(selectedCustomer.credit_limit) }}</dd>
+      </dl>
+      <section v-else-if="detailMode === 'item'" class="pos-item-history">
+        <p>
+          <strong>{{ pendingProduct?.name }}</strong> ·
+          {{ pick('Latest 30 sale lines', 'آخری 30 فروخت آئٹم') }}
+        </p>
+        <p v-if="historyLoading" role="status">{{ pick('Loading…', 'لوڈ ہو رہا ہے…') }}</p>
+        <p v-else-if="historyError" role="alert">
+          {{
+            pick(
+              'Could not load item history. Close and try again.',
+              'سابقہ فروخت لوڈ نہیں ہو سکی۔ دوبارہ کوشش کریں۔',
+            )
+          }}
+        </p>
+        <p v-else-if="!itemHistory.length">
+          {{ pick('No completed sales for this item.', 'اس آئٹم کی کوئی مکمل فروخت نہیں۔') }}
+        </p>
+        <table v-else>
+          <thead>
+            <tr>
+              <th>{{ pick('Invoice', 'انوائس') }}</th>
+              <th>{{ pick('Date', 'تاریخ') }}</th>
+              <th>{{ pick('Qty', 'تعداد') }}</th>
+              <th>{{ pick('Total', 'کل') }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(line, index) in itemHistory" :key="index">
+              <td>{{ line.invoice_number }}</td>
+              <td>{{ formatDate(line.invoice_date) }}</td>
+              <td>
+                {{ formatNumber(line.quantity) }}
+                {{ line.is_loose_sale ? pick('units', 'اکائیاں') : pick('packs', 'پیک') }}
+              </td>
+              <td>{{ formatCurrency(line.line_total) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </dialog>
     <PosProductSearchDialog
       v-if="productSearchOpen"
       v-model:query="searchQuery"
+      v-model:matching-words="searchMatchingWords"
+      v-model:generic="searchGeneric"
       v-model:highlighted-index="highlightedProductIndex"
       :results="searchResults"
       :loading="searchLoading"

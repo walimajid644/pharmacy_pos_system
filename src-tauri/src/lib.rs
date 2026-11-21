@@ -4,6 +4,7 @@ use tauri::Manager;
 mod audit;
 mod backups;
 mod catalog;
+mod commands;
 mod commercial;
 mod controlled;
 mod credit;
@@ -13,8 +14,10 @@ mod diagnostics;
 mod digital_receipts;
 mod expiry;
 mod fbr;
+mod models;
 mod purchase_orders;
 mod recovery;
+mod registers;
 mod sales;
 mod shifts;
 mod submissions;
@@ -49,6 +52,8 @@ pub fn run() {
             catalog::preview_catalog_import,
             catalog::import_catalog,
             catalog::bulk_update_catalog,
+            registers::list_catalog_register,
+            registers::save_catalog_register,
             suggestions::purchase_suggestions,
             recovery::saved_sale,
             recovery::cashier_performance,
@@ -69,7 +74,10 @@ pub fn run() {
             submissions::submit_sales_return,
             decisions::decide_stock_adjustment,
             decisions::decide_sales_return,
-            decisions::add_product_batch
+            decisions::add_product_batch,
+            commands::purchase_receive_enhanced::receive_purchase_with_details,
+            commands::purchase_receive_enhanced::get_next_purchase_invoice_number,
+            commands::purchase_receive_enhanced::search_products_for_purchase
         ])
         .setup(|app| {
             diagnostics::install_panic_hook(app.handle().clone());

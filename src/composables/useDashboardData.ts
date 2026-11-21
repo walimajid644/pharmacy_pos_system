@@ -1,4 +1,5 @@
 import { reportDiagnostic } from '@/lib/diagnostics';
+import { diagnosticReason } from '@/lib/diagnosticContext';
 import { ref, type Ref } from 'vue';
 import { executeQuery } from '@/lib/database';
 import { localDateKey, localDayBounds } from '@/lib/businessDay';
@@ -22,7 +23,9 @@ export function useDashboardData() {
   const nearExpiryItems = ref<NearExpiryItem[]>([]);
 
   const loading = ref(true);
+  const refreshing = ref(false);
   const loadError = ref(false);
+  const supportCode = ref('');
   let hasLoaded = false;
   let loadVersion = 0;
   function updateList<T>(current: Ref<T[]>, next: T[]) {
@@ -32,14 +35,19 @@ export function useDashboardData() {
   async function loadDashboardData(options: { background?: boolean } = {}) {
     const version = ++loadVersion;
     const silent = hasLoaded && options.background !== false;
-    loading.value = !silent;
-    if (!silent) loadError.value = false;
+    // Keep mounted cards and pagers stable while refreshing existing data.
+    loading.value = !hasLoaded;
+    refreshing.value = true;
+    if (!silent) {
+      loadError.value = false;
+      supportCode.value = '';
+    }
     // Inventory totals must remain available even if a sales/report query fails.
     const productsRequest = executeQuery<{ count: number }>(
       'SELECT COUNT(*) as count FROM products WHERE deleted_at IS NULL AND is_active = 1',
     ).then(
       (rows) => ({ ok: true, count: Number(rows[0]?.count ?? 0) }),
-      () => ({ ok: false, count: 0 }),
+      (error: unknown) => ({ ok: false, count: 0, reason: diagnosticReason(error) }),
     );
     try {
       const [dayStart, dayEnd] = localDayBounds(localDateKey());
@@ -130,8 +138,13 @@ export function useDashboardData() {
       nearExpiryCount.value = expiryCount?.count || 0;
       hasLoaded = true;
       loadError.value = false;
-    } catch {
-      reportDiagnostic('operation_failed', 'reports');
+      supportCode.value = '';
+    } catch (error) {
+      const code = reportDiagnostic('operation_failed', 'reports', {
+        operation: 'dashboard_refresh',
+        reason: diagnosticReason(error),
+      });
+      if (version === loadVersion) supportCode.value = code;
       if (version === loadVersion && !silent) loadError.value = true;
     } finally {
       const products = await productsRequest;
@@ -140,10 +153,14 @@ export function useDashboardData() {
           totalProducts.value = products.count;
           hasLoaded = true;
         } else {
-          reportDiagnostic('operation_failed', 'reports');
+          supportCode.value = reportDiagnostic('operation_failed', 'reports', {
+            operation: 'dashboard_refresh',
+            reason: 'reason' in products ? products.reason : 'unknown',
+          });
           if (!silent) loadError.value = true;
         }
         loading.value = false;
+        refreshing.value = false;
       }
     }
   }
@@ -161,7 +178,9 @@ export function useDashboardData() {
     lowStockItems,
     nearExpiryItems,
     loading,
+    refreshing,
     loadError,
+    supportCode,
     loadDashboardData,
   };
 }

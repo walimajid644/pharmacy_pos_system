@@ -23,6 +23,24 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         {
+          path: '/categories',
+          name: 'categories',
+          component: () => import('@/views/CatalogRegisterView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager'] },
+        },
+        {
+          path: '/manufacturers',
+          name: 'manufacturers',
+          component: () => import('@/views/CatalogRegisterView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager'] },
+        },
+        {
+          path: '/shelf-locations',
+          name: 'shelf-locations',
+          component: () => import('@/views/CatalogRegisterView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager'] },
+        },
+        {
           path: '/catalog-import',
           name: 'catalog-import',
           component: () => import('@/views/CatalogImportView.vue'),

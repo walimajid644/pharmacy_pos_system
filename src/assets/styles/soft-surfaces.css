@@ -132,7 +132,6 @@
   :is(
     .workspace-dialog,
     .compact-dialog-card,
-    .pos-search-dialog,
     .commercial-dialog,
     .modal-content,
     .review-detail-dialog,
@@ -157,7 +156,10 @@
 #app [role='dialog'].fixed > .ui-card {
   overflow: hidden;
 }
-#app [role='dialog']:not(.fixed):not(.workspace-dialog):not(.compact-dialog):not(.modal-overlay) {
+#app
+  [role='dialog']:not(.fixed):not(.workspace-dialog):not(.compact-dialog):not(.modal-overlay):not(
+    .pos-search-dialog
+  ) {
   border-radius: var(--radius-lg);
 }
 :is(#app, .compact-dialog)

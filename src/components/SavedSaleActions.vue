@@ -10,12 +10,31 @@ import {
 } from '@/lib/savedSale';
 const props = defineProps<{ invoiceId?: string | null }>(),
   emit = defineEmits<{ loaded: [sale: SavedInvoice] }>();
-const { pick, formatCurrency, formatDateTime } = useI18n(),
+const { pick, formatCurrency } = useI18n(),
   sale = ref<SavedSale | null>(null),
   busy = ref(false),
   error = ref(''),
   printing = ref(false),
   copyFallback = ref(false);
+
+// Format date/time for receipt header (e.g., "21-Nov-2026  01:22 PM")
+function formatReceiptDateTime(dateStr: string) {
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, '0');
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = monthNames[date.getMonth()];
+  const year = date.getFullYear();
+  const hours = date.getHours();
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  const hours12 = hours % 12 || 12;
+  return `${day}-${month}-${year}  ${String(hours12).padStart(2, '0')}:${minutes} ${ampm}`;
+}
+
+// Format amount without currency symbol, with 2 decimals
+function formatAmount(amount: number) {
+  return amount.toFixed(2);
+}
 const text = computed(() => (sale.value ? savedSaleText(sale.value, formatCurrency) : ''));
 let version = 0;
 async function load() {
@@ -148,90 +167,132 @@ defineExpose({ print, copy, whatsapp, load });
   </section>
   <Teleport to="body"
     ><section v-if="printing && sale" class="saved-sale-print">
-      <header>
-        <h1>{{ sale.shop?.company_name || 'Pharmacy POS' }}</h1>
-        <p>{{ sale.shop?.company_address }}</p>
-        <p>{{ sale.shop?.company_phone }}</p>
-        <p>{{ sale.shop?.receipt_header }}</p>
-        <h2>{{ pick('Sales receipt', 'فروخت کی رسید') }}</h2>
-      </header>
-      <p>{{ sale.invoice.invoice_number }}</p>
-      <p>{{ formatDateTime(sale.invoice.invoice_date) }}</p>
-      <p>{{ pick('Customer', 'گاہک') }}: {{ sale.invoice.customer_name }}</p>
-      <p>{{ pick('Cashier', 'کیشئر') }}: {{ sale.invoice.cashier_name }}</p>
-      <p>
-        {{ pick('Payment', 'ادائیگی') }}:
-        {{
+      <!-- Logo - AT THE VERY TOP -->
+      <div v-if="sale.shop?.receipt_logo_path" class="receipt-logo">
+        <!-- Show actual image if it's a data URL -->
+        <img 
+          v-if="sale.shop.receipt_logo_path.startsWith('data:image')"
+          :src="sale.shop.receipt_logo_path"
+          alt="Logo"
+          class="receipt-logo-image"
+        />
+        <!-- Show placeholder otherwise -->
+        <template v-else>
+          <div class="receipt-logo-placeholder">[LOGO]</div>
+          <div class="receipt-logo-note">{{ sale.shop.receipt_logo_path }}</div>
+        </template>
+      </div>
+      
+      <!-- Company Name -->
+      <div class="receipt-company-name">
+        {{ sale.shop?.company_name || 'Pharmacy POS' }}
+      </div>
+      
+      <!-- Company Address and Phone -->
+      <div v-if="sale.shop?.company_address || sale.shop?.company_phone" class="receipt-company-info">
+        <div v-if="sale.shop?.company_address">{{ sale.shop.company_address }}</div>
+        <div v-if="sale.shop?.company_phone">{{ sale.shop.company_phone }}</div>
+      </div>
+      
+      <!-- Receipt Header (Custom) -->
+      <div v-if="sale.shop?.receipt_header" class="receipt-custom-header">
+        {{ sale.shop.receipt_header }}
+      </div>
+      
+      <div class="receipt-divider"></div>
+      
+      <!-- Date/Time and User at top right -->
+      <div class="receipt-header-line">
+        <span class="receipt-datetime">{{ formatReceiptDateTime(sale.invoice.invoice_date) }}</span>
+        <span class="receipt-user">{{ sale.invoice.cashier_name }}</span>
+      </div>
+
+      <!-- Payment Mode -->
+      <div class="receipt-payment-mode">
+        <span>Payment Mode:</span>
+        <strong>{{
           sale.invoice.payment_method === 'credit'
-            ? pick('Credit / Udhar', 'کریڈٹ / ادھار')
-            : sale.invoice.payment_method
-        }}
-      </p>
-      <p v-if="sale.invoice.patient_name">
-        {{ pick('Patient', 'مریض') }}: {{ sale.invoice.patient_name }}
-      </p>
-      <p v-if="sale.invoice.doctor_name">
-        {{ pick('Doctor', 'ڈاکٹر') }}: {{ sale.invoice.doctor_name }}
-      </p>
-      <p v-if="sale.invoice.prescription_note">
-        {{ pick('Prescription', 'نسخہ') }}: {{ sale.invoice.prescription_note }}
-      </p>
-      <table>
+            ? 'Credit'
+            : sale.invoice.payment_method === 'cash'
+              ? 'Cash'
+              : sale.invoice.payment_method
+        }}</strong>
+      </div>
+
+      <!-- Invoice Section Header -->
+      <div class="receipt-section-title">BILL/CASH MEMO</div>
+
+      <!-- Invoice Number -->
+      <div class="receipt-invoice">
+        <span>Inv #:</span>
+        <strong>{{ sale.invoice.invoice_number }}</strong>
+      </div>
+
+      <!-- Client Name -->
+      <div class="receipt-client">
+        <span>Client Name:</span>
+        <div>{{ sale.invoice.customer_name || 'Walk-in Customer' }}</div>
+      </div>
+
+      <!-- Items Table -->
+      <table class="receipt-items-table">
         <thead>
           <tr>
-            <th>{{ pick('Item / batch', 'آئٹم / بیچ') }}</th>
-            <th>{{ pick('Qty', 'تعداد') }}</th>
-            <th>{{ pick('Total', 'کل') }}</th>
+            <th class="col-item">ITEM NAME</th>
+            <th class="col-qty">QTY</th>
+            <th class="col-rate">RATE</th>
+            <th class="col-amt">AMT</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="l in sale.items" :key="l.id">
-            <td>
-              {{ l.product_name }}<small>{{ l.batch_number }}</small
-              ><small
+            <td class="col-item">
+              <div class="item-name">{{ l.product_name }}</div>
+              <div v-if="l.batch_number" class="item-batch">{{ l.batch_number }}</div>
+              <div
                 v-if="sale.shop?.show_drap && l.controlled_substance && l.drap_registration_number"
-                >DRAP: {{ l.drap_registration_number }}</small
+                class="item-drap"
               >
+                DRAP: {{ l.drap_registration_number }}
+              </div>
             </td>
-            <td>
-              {{ l.sale_quantity ?? l.quantity }}
-              {{
-                l.sale_quantity == null
-                  ? pick('units', 'اکائیاں')
-                  : l.is_loose_sale
-                    ? pick('loose', 'کھلی')
-                    : pick('packs', 'پیک')
-              }}<small v-if="l.bonus_quantity"
-                >+{{ l.bonus_quantity }} {{ pick('free', 'مفت') }}</small
-              >
-            </td>
-            <td>{{ formatCurrency(l.line_total) }}</td>
+            <td class="col-qty">{{ l.sale_quantity ?? l.quantity }}</td>
+            <td class="col-rate">{{ formatAmount(l.line_total / (l.sale_quantity ?? l.quantity)) }}</td>
+            <td class="col-amt">{{ formatAmount(l.line_total) }}</td>
           </tr>
         </tbody>
       </table>
-      <p>{{ pick('Subtotal', 'ذیلی کل') }}: {{ formatCurrency(sale.invoice.total_amount) }}</p>
-      <p>{{ pick('Tax', 'ٹیکس') }}: {{ formatCurrency(sale.invoice.tax_amount) }}</p>
-      <p>{{ pick('Discount', 'رعایت') }}: {{ formatCurrency(sale.invoice.discount_amount) }}</p>
-      <h2>
-        {{
-          sale.invoice.payment_method === 'credit'
-            ? pick('Charged to account', 'کھاتے میں درج رقم')
-            : pick('Paid', 'ادا شدہ')
-        }}: {{ formatCurrency(sale.invoice.net_amount) }}
-      </h2>
-      <p v-if="sale.invoice.payment_method === 'credit'">
-        {{ pick('Account balance at this sale', 'اس فروخت پر کھاتے کا بقایا') }}:
-        {{ formatCurrency(Number(sale.invoice.previous_balance || 0) + sale.invoice.net_amount) }}
-      </p>
-      <p>{{ pick('Received', 'وصول') }}: {{ formatCurrency(sale.invoice.received_amount || 0) }}</p>
-      <p>{{ pick('Change', 'واپسی') }}: {{ formatCurrency(sale.invoice.change_amount || 0) }}</p>
-      <p>{{ sale.invoice.notes }}</p>
-      <footer>
-        {{
-          sale.shop?.receipt_footer ||
-          pick('Thank you for your purchase.', 'آپ کی خریداری کا شکریہ۔')
-        }}
-      </footer>
+
+      <!-- Items count and Gross -->
+      <div class="receipt-summary-line">
+        <span>Items <strong>{{ sale.items.length }}</strong></span>
+        <span>Gross: <strong>{{ formatAmount(sale.invoice.total_amount) }}</strong></span>
+      </div>
+
+      <!-- Thank you message -->
+      <div class="receipt-thankyou">
+        <div>THANK YOU</div>
+        <div>for Visiting us.</div>
+      </div>
+
+      <!-- Total -->
+      <div class="receipt-total-line">
+        <span>Total:</span>
+        <strong>{{ Math.round(sale.invoice.net_amount) }}</strong>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <!-- Receipt Footer (Custom) -->
+      <div v-if="sale.shop?.receipt_footer" class="receipt-custom-footer">
+        {{ sale.shop.receipt_footer }}
+      </div>
+
+      <!-- Footer disclaimer -->
+      <div class="receipt-footer">
+        <p>Please ensure that medicines and other item tally with your prescription/demand and is not expired and no claim / return / exchange would be entertained after leaving counter.</p>
+        <p class="receipt-developer">Developed By IBS: (0304-5117454)</p>
+      </div>
     </section></Teleport
   >
 </template>
@@ -292,45 +353,251 @@ defineExpose({ print, copy, whatsapp, load });
     background: white;
     color: black;
     font:
-      9pt Arial,
-      sans-serif;
+      8pt 'Courier New',
+      monospace;
+    padding: 2mm;
   }
-  .saved-sale-print header,
-  .saved-sale-print footer {
+
+  /* Logo - AT THE VERY TOP */
+  .receipt-logo {
     text-align: center;
+    margin-bottom: 2mm;
   }
-  .saved-sale-print h1 {
-    font-size: 15pt;
+
+  .receipt-logo-image {
+    max-width: 60mm;
+    max-height: 20mm;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 2mm auto;
+  }
+
+  .receipt-logo-placeholder {
+    font-size: 9pt;
+    font-weight: bold;
+    color: #999;
+    margin-bottom: 1mm;
+    padding: 2mm;
+    border: 1px dashed #ccc;
+  }
+
+  .receipt-logo-note {
+    font-size: 6pt;
+    color: #999;
+  }
+
+  /* Company Name */
+  .receipt-company-name {
+    text-align: center;
+    font-weight: bold;
+    font-size: 10pt;
+    margin-bottom: 1mm;
+  }
+
+  /* Company Info (Address/Phone) */
+  .receipt-company-info {
+    text-align: center;
+    font-size: 7pt;
+    margin-bottom: 1mm;
+    line-height: 1.3;
+  }
+
+  /* Custom Header */
+  .receipt-custom-header {
+    text-align: center;
+    font-size: 7pt;
+    color: #555;
+    margin: 2mm 0;
+    white-space: pre-line;
+    line-height: 1.3;
+  }
+
+  /* Divider */
+  .receipt-divider {
+    border-top: 1px dashed #999;
+    margin: 2mm 0;
+  }
+
+  /* Header with date/time and user */
+  .receipt-header-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    margin-bottom: 2mm;
+  }
+  
+  .receipt-datetime {
+    font-weight: normal;
+  }
+  
+  .receipt-user {
+    text-align: right;
     font-weight: bold;
   }
-  .saved-sale-print h2 {
-    font-size: 11pt;
-    font-weight: bold;
-    margin: 3mm 0;
+
+  /* Payment Mode */
+  .receipt-payment-mode {
+    font-size: 8pt;
+    margin-bottom: 1mm;
   }
-  .saved-sale-print table {
+  
+  .receipt-payment-mode strong {
+    font-weight: bold;
+  }
+
+  /* Section title */
+  .receipt-section-title {
+    text-align: center;
+    font-weight: bold;
+    font-size: 9pt;
+    margin: 2mm 0;
+  }
+
+  /* Invoice number */
+  .receipt-invoice {
+    font-size: 8pt;
+    margin-bottom: 2mm;
+  }
+  
+  .receipt-invoice strong {
+    font-weight: bold;
+  }
+
+  /* Client name */
+  .receipt-client {
+    font-size: 8pt;
+    margin-bottom: 3mm;
+  }
+  
+  .receipt-client span {
+    display: block;
+    margin-bottom: 1mm;
+  }
+
+  /* Items table */
+  .receipt-items-table {
     width: 100%;
     border-collapse: collapse;
-    table-layout: fixed;
+    font-size: 8pt;
+    margin-bottom: 2mm;
+  }
+  
+  .receipt-items-table thead {
+    border-bottom: 1px solid black;
+  }
+  
+  .receipt-items-table th {
+    text-align: left;
+    padding: 1mm 0;
+    font-weight: bold;
+    font-size: 8pt;
+  }
+  
+  .receipt-items-table td {
+    text-align: left;
+    padding: 1mm 0;
+    vertical-align: top;
+    border-bottom: 1px dotted #999;
+  }
+  
+  .receipt-items-table .col-item {
+    width: 42%;
+  }
+  
+  .receipt-items-table .col-qty {
+    width: 12%;
+    text-align: center;
+  }
+  
+  .receipt-items-table .col-rate {
+    width: 23%;
+    text-align: right;
+  }
+  
+  .receipt-items-table .col-amt {
+    width: 23%;
+    text-align: right;
+  }
+  
+  .item-name {
+    font-weight: normal;
+    word-wrap: break-word;
+  }
+  
+  .item-batch {
+    font-size: 7pt;
+    color: #555;
+  }
+
+  .item-drap {
+    font-size: 6.5pt;
+    color: #555;
+  }
+
+  /* Summary line (Items count and Gross) */
+  .receipt-summary-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    padding: 2mm 0;
+    border-top: 1px solid black;
+    border-bottom: 1px solid black;
+    margin: 2mm 0;
+  }
+  
+  .receipt-summary-line strong {
+    font-weight: bold;
+  }
+
+  /* Thank you section */
+  .receipt-thankyou {
+    text-align: center;
+    font-size: 9pt;
+    font-weight: bold;
     margin: 3mm 0;
   }
-  .saved-sale-print th,
-  .saved-sale-print td {
-    text-align: start;
-    vertical-align: top;
-    padding: 2mm 1mm;
-    border-bottom: 1px solid #999;
-    overflow-wrap: anywhere;
+
+  /* Total line */
+  .receipt-total-line {
+    text-align: right;
+    font-size: 10pt;
+    font-weight: bold;
+    margin: 3mm 0;
+    padding-right: 2mm;
   }
-  .saved-sale-print th:first-child {
-    width: 45%;
+  
+  .receipt-total-line strong {
+    font-size: 12pt;
+    margin-left: 5mm;
   }
-  .saved-sale-print small {
-    display: block;
+
+  /* Custom Footer */
+  .receipt-custom-footer {
+    text-align: center;
+    font-size: 7pt;
+    color: #555;
+    margin: 2mm 0;
+    white-space: pre-line;
+    line-height: 1.3;
   }
-  .saved-sale-print p {
-    margin: 1mm 0;
-    overflow-wrap: anywhere;
+
+  /* Footer */
+  .receipt-footer {
+    font-size: 6.5pt;
+    text-align: center;
+    margin-top: 3mm;
+    line-height: 1.3;
+  }
+  
+  .receipt-footer p {
+    margin: 2mm 0;
+  }
+  
+  .receipt-developer {
+    font-weight: bold;
+    margin-top: 2mm;
   }
 }
 </style>

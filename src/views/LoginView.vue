@@ -15,7 +15,7 @@ import BilingualText from '@/components/ui/BilingualText.vue';
 
 const router = useRouter();
 const authStore = useAuthStore();
-const { t, pick } = useI18n();
+const { pick } = useI18n();
 const loading = ref(false);
 const errorMessage = ref('');
 const rememberMe = ref(false);
@@ -96,11 +96,11 @@ async function onSubmit() {
         </div>
         <form class="login-form" @submit.prevent="onSubmit">
           <div class="form-field">
-            <label for="username" class="form-label"><BilingualText textKey="username" /></label
-            ><Input
+            <span class="form-label">{{ pick('Username', 'صارف نام') }}</span>
+            <Input
               id="username"
               v-model="username"
-              :placeholder="t('username')"
+              :placeholder="pick('Enter your username', 'صارف نام درج کریں')"
               :error="errors.username"
               :disabled="loading"
               autocomplete="username"
@@ -108,12 +108,12 @@ async function onSubmit() {
             />
           </div>
           <div class="form-field">
-            <label for="password" class="form-label"><BilingualText textKey="password" /></label
-            ><Input
+            <span class="form-label">{{ pick('Password', 'پاس ورڈ') }}</span>
+            <Input
               id="password"
               v-model="password"
               type="password"
-              :placeholder="t('password')"
+              :placeholder="pick('Enter your password', 'پاس ورڈ درج کریں')"
               :error="errors.password"
               :disabled="loading"
               autocomplete="current-password"

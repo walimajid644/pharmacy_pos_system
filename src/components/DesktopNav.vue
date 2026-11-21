@@ -20,6 +20,21 @@ const groups: NavGroup[] = [
     en: 'Register',
     ur: 'رجسٹر',
     items: [
+      { path: '/categories', en: 'Categories', ur: 'زمرے', icon: '▤', roles: ['admin', 'manager'] },
+      {
+        path: '/manufacturers',
+        en: 'Companies / Manufacturers',
+        ur: 'کمپنیاں / مینوفیکچررز',
+        icon: '▧',
+        roles: ['admin', 'manager'],
+      },
+      {
+        path: '/shelf-locations',
+        en: 'Shelves / Locations',
+        ur: 'شیلف / مقامات',
+        icon: '▦',
+        roles: ['admin', 'manager'],
+      },
       {
         path: '/catalog-import',
         en: 'Catalog Import',

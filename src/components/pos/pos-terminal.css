@@ -422,8 +422,127 @@
   align-items: center;
 }
 .pos-terminal .pos-summary-discount input {
-  width: 82px;
+  width: 66px;
   max-width: 85%;
+}
+.pos-terminal .pos-summary-discount label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+.pos-terminal .pos-sale-meta {
+  grid-column: 2 / 4;
+  grid-row: 1;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-height: 22px;
+  flex-wrap: wrap;
+  font-size: 10px;
+}
+.pos-terminal .pos-sale-meta bdi {
+  margin-inline-start: 4px;
+  font-weight: 700;
+}
+.pos-terminal .pos-client-account {
+  grid-column: 2;
+  grid-row: 4;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+.pos-terminal .pos-client-account label {
+  min-width: 0;
+  flex: 1;
+  font-size: 10px;
+}
+.pos-terminal .pos-client-account input {
+  display: block;
+  width: 100%;
+}
+.pos-terminal .pos-detail-actions {
+  grid-column: 3;
+  grid-row: 4;
+  display: flex;
+  gap: 5px;
+  align-self: end;
+}
+.pos-terminal .pos-detail-actions button,
+.pos-terminal .pos-action-bar button,
+.pos-terminal .pos-detail-dialog button {
+  padding: 4px 8px;
+  border: 1px solid var(--pos-rule);
+  border-radius: var(--radius-sm);
+  background: var(--pos-field);
+  color: var(--pos-ink);
+  white-space: nowrap;
+}
+.pos-terminal .pos-action-bar {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 4px 12px;
+  background: var(--pos-panel);
+  border-top: 1px solid var(--pos-rule);
+  font-size: 11px;
+}
+.pos-terminal .pos-detail-actions button {
+  flex: 1;
+  min-width: 0;
+  padding: 3px;
+  font-size: 10px;
+  white-space: normal;
+}
+.pos-terminal .pos-action-bar kbd {
+  margin-inline-start: 6px;
+  font: inherit;
+  opacity: 0.7;
+}
+.pos-terminal .pos-detail-dialog {
+  width: min(460px, calc(100vw - 32px));
+  max-height: 80dvh;
+  margin: auto;
+  padding: 16px;
+  border: 1px solid var(--pos-rule);
+  border-radius: var(--radius-sm);
+  background: var(--pos-field);
+  color: var(--pos-ink);
+}
+.pos-terminal .pos-detail-dialog::backdrop {
+  background: #0006;
+}
+.pos-terminal .pos-detail-dialog header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.pos-terminal .pos-detail-dialog h2 {
+  font-size: 18px;
+  font-weight: 700;
+}
+.pos-terminal .pos-detail-dialog dl {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+.pos-terminal .pos-detail-dialog dt {
+  font-weight: 700;
+}
+.pos-terminal .pos-item-history table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  text-align: start;
+}
+.pos-terminal .pos-item-history :is(th, td) {
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--pos-rule);
+  text-align: start;
 }
 .pos-terminal .pos-summary-total small,
 .pos-terminal .pos-summary-total strong {
@@ -649,11 +768,24 @@
   }
 }
 @media (max-height: 650px) {
+  .pos-terminal .pos-entry-strip {
+    grid-template-rows: 24px 24px 22px auto;
+    gap: 2px 12px;
+    padding-block: 4px;
+  }
+  .pos-terminal .pos-item-entry {
+    padding-block: 3px;
+  }
+  .pos-terminal .pos-dock {
+    padding-block: 3px;
+  }
   .pos-terminal .pos-header {
-    min-height: 54px;
+    min-height: 46px;
+    padding-block: 2px;
   }
   .pos-terminal .pos-summary {
     min-height: 52px;
+    padding-block: 4px;
   }
   .pos-terminal .pos-summary-total strong {
     font-size: 16px;
@@ -745,168 +877,208 @@
 [data-theme='dark'] .pos-terminal .pos-summary-total strong {
   color: var(--brand-300);
 }
-/* Search opens as a separate, keyboard-accessible desktop dialog. */
-.pos-terminal .pos-search-overlay {
+/* Dense desktop lookup: results above, search and matching options below. */
+#app .pos-terminal .pos-search-overlay {
   position: fixed;
   inset: 0;
   z-index: 80;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 16px;
-  background: #0006;
+  padding: 32px 12px 12px;
+  background: var(--overlay);
 }
-.pos-terminal .pos-search-dialog {
+#app .pos-terminal .pos-search-dialog {
   display: flex;
   flex-direction: column;
-  width: min(940px, 100%);
-  height: min(490px, calc(100dvh - 32px));
+  width: min(1010px, 100%);
+  height: min(360px, calc(100dvh - 44px));
   min-width: 0;
   min-height: 0;
   overflow: hidden;
   border: 1px solid var(--pos-rule);
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   background: var(--color-surface);
   color: var(--color-text-primary);
-  box-shadow: 0 8px 32px #0003;
+  box-shadow: var(--shadow-xl);
 }
-.pos-terminal .pos-search-dialog-header,
-.pos-terminal .pos-search-dialog-footer {
+#app .pos-terminal .pos-search-dialog-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
+  min-height: 28px;
   gap: 8px;
-  padding: 7px 12px;
-  background: var(--pos-panel);
-  color: var(--pos-ink);
+  padding: 2px 5px 2px 8px;
+  background: var(--color-surface);
+  border-bottom: 2px solid var(--color-primary-600);
 }
-.pos-terminal .pos-search-dialog-header h2 {
+#app .pos-terminal .pos-search-dialog-header h2 {
+  margin: 0;
   font:
-    bold 18px/1.2 Arial,
+    12px/1.2 Arial,
     Tahoma,
     sans-serif;
-  margin: 0;
 }
-.pos-terminal .pos-search-dialog-header span {
-  font-size: 10px;
+#app .pos-terminal .pos-search-dialog .pos-search-close {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--color-danger);
+  color: var(--text-inverse);
+  font-size: 16px;
 }
-.pos-terminal .pos-search-dialog-query {
-  display: grid;
-  gap: 4px;
-  flex-shrink: 0;
-  padding: 7px 12px;
-  background: var(--pos-entry);
-  color: var(--pos-ink);
-}
-.pos-terminal .pos-search-dialog-query label {
-  font-size: 11px;
-  font-weight: 700;
-}
-.pos-terminal .pos-search-dialog-query input {
-  width: 100%;
-  height: 26px;
-}
-.pos-terminal .pos-search-dialog-query small {
-  font-size: 10px;
-}
-.pos-terminal .pos-search-dialog-results {
+#app .pos-terminal .pos-search-dialog-results {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: auto;
+  scrollbar-gutter: stable;
+  background: var(--pos-entry);
 }
-.pos-terminal .pos-search-dialog-results > p {
+#app .pos-terminal .pos-search-dialog-results > p {
+  margin: 0;
   padding: 12px;
-  font-size: 12px;
+  background: var(--color-surface);
 }
-.pos-terminal .pos-search-dialog-results > p[role='alert'] {
+#app .pos-terminal .pos-search-dialog-results > p[role='alert'] {
   color: var(--color-danger);
 }
-.pos-terminal .pos-search-dialog-results table {
+#app .pos-terminal .pos-search-dialog-results table {
   width: 100%;
   table-layout: fixed;
-  border-collapse: collapse;
-  font-size: 12px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font:
+    700 13px/1.15 Arial,
+    Tahoma,
+    sans-serif;
+  background: var(--color-surface);
 }
-.pos-terminal .pos-search-dialog-results th {
-  height: 34px;
-  padding: 3px 7px;
-  font-size: 11px;
-  font-weight: 400;
-  text-align: start;
-  background: var(--pos-panel);
-  color: var(--pos-ink);
+#app .pos-terminal .pos-search-code-col {
+  width: 12%;
 }
-.pos-terminal .pos-search-dialog-results th:first-child {
-  width: 30%;
+#app .pos-terminal .pos-search-name-col {
+  width: 28%;
 }
-.pos-terminal .pos-search-dialog-results th:nth-child(3),
-.pos-terminal .pos-search-dialog-results th:nth-child(4) {
+#app .pos-terminal .pos-search-pack-col {
   width: 10%;
 }
-.pos-terminal .pos-search-dialog-results th:last-child {
-  width: 20%;
+#app .pos-terminal .pos-search-price-col {
+  width: 11%;
 }
-.pos-terminal .pos-search-dialog-results tr {
-  height: 44px;
+#app .pos-terminal .pos-search-stock-col {
+  width: 9%;
 }
-.pos-terminal .pos-search-dialog-results td {
-  padding: 3px 7px;
+#app .pos-terminal .pos-search-brand-col {
+  width: 30%;
+}
+#app .pos-terminal .pos-search-dialog-results :is(th, td) {
+  height: 23px;
+  padding: 3px 5px;
+  border-inline-end: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
-  font-size: 11px;
-  overflow-wrap: anywhere;
-}
-.pos-terminal .pos-search-dialog-results td strong,
-.pos-terminal .pos-search-dialog-results td small {
-  display: block;
+  text-align: start;
   overflow: hidden;
-  white-space: nowrap;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.pos-terminal .pos-search-dialog-results td small {
-  font-size: 10px;
-  color: var(--color-text-secondary);
+#app .pos-terminal .pos-search-dialog-results th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  font-size: 12px;
+  background: var(--color-surface);
 }
-.pos-terminal .pos-search-dialog-results tr.highlighted {
+#app .pos-terminal .pos-product-row {
+  cursor: pointer;
+}
+#app .pos-terminal .pos-product-row:hover:not(.highlighted) {
   background: var(--pos-panel);
-  box-shadow: inset 3px 0 0 var(--brand-600);
-  color: var(--pos-ink);
 }
-.pos-terminal .pos-search-dialog button {
-  height: 24px;
-  padding: 2px 7px;
-  border: 1px solid var(--pos-rule);
-  border-radius: var(--radius-sm);
-  background: var(--pos-field);
-  color: var(--pos-ink);
-  font-size: 11px;
-}
-.pos-terminal .pos-search-add-actions button {
-  margin-inline-end: 3px;
-}
-.pos-terminal .pos-search-add-actions button:first-child {
+#app .pos-terminal .pos-search-dialog-results tr.highlighted {
   background: var(--color-primary-600);
   color: var(--text-inverse);
 }
-.pos-terminal .pos-search-dialog-footer {
-  font-size: 11px;
+#app .pos-terminal .pos-stock-negative {
+  color: var(--color-danger);
 }
-.pos-terminal .pos-search-dialog-footer nav {
-  display: flex;
+#app .pos-terminal .highlighted .pos-stock-negative {
+  color: inherit;
+}
+#app .pos-terminal .pos-search-dialog-query {
+  flex-shrink: 0;
+  display: grid;
+  gap: 4px;
+  padding: 6px;
+  background: var(--color-primary-600);
+  color: var(--text-inverse);
+}
+#app .pos-terminal .pos-search-bottom-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
   align-items: center;
   gap: 8px;
 }
-.pos-terminal .pos-search-dialog-results thead tr {
-  height: 34px;
+#app .pos-terminal .pos-search-bottom-row > input {
+  width: 100%;
+  height: 25px;
+  border-radius: 0;
 }
-.pos-terminal .pos-search-stock-warning {
-  margin: 2px 0 0;
-  padding: 4px 6px;
+#app .pos-terminal .pos-search-options {
+  display: grid;
+  gap: 4px;
+}
+#app .pos-terminal .pos-search-options label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  font-size: 10px;
+}
+#app .pos-terminal .pos-search-options input {
+  margin: 0;
+  flex-shrink: 0;
+}
+#app .pos-terminal .pos-search-bottom-status {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  font-size: 10px;
+}
+#app .pos-terminal .pos-search-bottom-status small {
+  flex: 1;
+  font-size: 10px;
+}
+#app .pos-terminal .pos-search-bottom-status button {
+  padding: 2px 5px;
+  border: 1px solid var(--pos-rule);
+  border-radius: 0;
+  background: var(--pos-field);
+  color: var(--pos-ink);
+  font-size: 10px;
+}
+#app .pos-terminal .pos-search-stock-warning {
+  margin: 0;
+  padding: 3px 5px;
   border: 1px solid var(--color-warning);
   background: var(--banner-warning-bg);
   color: var(--color-warning-text);
-  font-size: 11px;
-  line-height: 1.3;
+  font-size: 10px;
+  line-height: 1.2;
+}
+@media (max-width: 600px) {
+  #app .pos-terminal .pos-search-overlay {
+    padding: 12px;
+  }
+  #app .pos-terminal .pos-search-dialog-results table {
+    min-width: 700px;
+  }
+  #app .pos-terminal .pos-search-bottom-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 /* Select a medicine, prepare its quantities, then explicitly post it to the sale. */

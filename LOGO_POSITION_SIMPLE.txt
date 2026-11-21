@@ -1,0 +1,127 @@
+═══════════════════════════════════════════════════════════
+         WHERE WILL THE LOGO APPEAR ON THE RECEIPT?
+═══════════════════════════════════════════════════════════
+
+ANSWER: AT THE VERY TOP! ⬆️
+The logo is the FIRST thing on the receipt.
+
+
+RECEIPT LAYOUT (TOP TO BOTTOM):
+═══════════════════════════════════════════════════════════
+
+    ┌─────────────────────────────────────┐
+    │                                     │
+ 1. │  ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓   │  ⬅️ LOGO HERE
+    │  ┃         [LOGO]             ┃   │  (AT THE VERY TOP)
+    │  ┃    path/to/logo.png        ┃   │
+    │  ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛   │
+    │                                     │
+ 2. │    City Medical Pharmacy            │  ⬅️ Company Name
+    │                                     │
+ 3. │    123 Main Street, Karachi         │  ⬅️ Company Address
+    │                                     │
+ 4. │    Phone: 021-1234567               │  ⬅️ Company Phone
+    │                                     │
+ 5. │    Welcome to our pharmacy!         │  ⬅️ Custom Header
+    │    Your health is our priority      │     (optional)
+    │                                     │
+    │  ─────────────────────────────────  │  ⬅️ Divider
+    │                                     │
+ 6. │  21-Nov-2026  01:22 PM      ADMIN  │  ⬅️ Date/Time/User
+    │                                     │
+ 7. │  Payment Mode: Cash                 │
+    │                                     │
+ 8. │        BILL/CASH MEMO               │
+    │                                     │
+ 9. │  Inv #: 55046                       │
+    │                                     │
+10. │  Client Name:                       │
+    │  Walk-in Customer                   │
+    │                                     │
+    │  ITEM NAME      QTY  RATE     AMT  │
+    │  ─────────────────────────────────  │
+    │  HUMULIN...      1  1663.00 1663   │
+    │  TREVIAMET...   30    32.50  975   │
+    │  [more items...]                    │
+    │  ─────────────────────────────────  │
+    │  Items 7          Gross: 6713.50   │
+    │  ─────────────────────────────────  │
+    │       THANK YOU                     │
+    │    for Visiting us.                 │
+    │               Total:      6714      │
+    │  ─────────────────────────────────  │
+    │  Custom footer message here         │
+    │  [Disclaimer]                       │
+    │  Developed By IBS: (0304-5117454)  │
+    └─────────────────────────────────────┘
+
+
+LOGO IS ELEMENT #1 = THE VERY FIRST THING!
+═══════════════════════════════════════════════════════════
+
+
+HOW TO ADD YOUR LOGO:
+═════════════════════
+
+1. Go to: Settings → Receipt tab
+
+2. Find: "Pharmacy Logo (Optional)" 
+   (It's at the TOP of the form)
+
+3. Enter your logo file path:
+   Examples:
+   • logo.png
+   • ./assets/logo.png
+   • C:/Pharmacy/logo.png
+
+4. Check the preview:
+   - Scroll to the TOP of the preview
+   - You'll see: [LOGO] box at the very top
+   - Below it: your file path
+
+
+LOGO APPEARS:
+════════════
+
+✓ In Settings preview (as [LOGO] placeholder)
+✓ On printed receipts (currently as placeholder)
+✓ ALWAYS at the very top, above company name
+✓ Only if you enter a logo path (optional)
+
+
+WITHOUT LOGO:                WITH LOGO:
+═══════════════             ═════════════════
+
+┌────────────────┐          ┌────────────────┐
+│                │          │ ╔════════════╗ │ ← Logo!
+│ Company Name   │          │ ║  [LOGO]    ║ │
+│ Address        │          │ ╚════════════╝ │
+│ Phone          │          │                │
+│ ...            │          │ Company Name   │
+│                │          │ Address        │
+└────────────────┘          │ Phone          │
+                            │ ...            │
+                            └────────────────┘
+
+
+LOGO SIZE RECOMMENDATIONS:
+═════════════════════════
+
+Width:  200-300 pixels
+Height: 50-100 pixels (keep it SHORT)
+Format: PNG or JPG
+Style:  Simple, high contrast
+
+
+SUMMARY:
+═══════
+
+🔝 Logo position: VERY TOP (element #1)
+📦 Logo box: Centered, with border
+📁 Path: You enter in settings
+👁️ Preview: Shows [LOGO] placeholder
+🖨️ Print: Will show at top of receipt
+
+The logo is the FIRST thing customers see! ⬆️
+
+═══════════════════════════════════════════════════════════

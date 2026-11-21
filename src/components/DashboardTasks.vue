@@ -18,6 +18,14 @@ const tasks = [
     roles: ['admin', 'manager', 'cashier'],
   },
   {
+    path: '/item-search',
+    en: 'General Search',
+    ur: 'عام تلاش',
+    icon: '⌕',
+    color: 'var(--color-primary)',
+    roles: ['admin', 'manager', 'cashier', 'accountant'],
+  },
+  {
     path: '/products',
     en: 'Products',
     ur: 'مصنوعات',
@@ -32,6 +40,14 @@ const tasks = [
     icon: '📦',
     color: 'var(--color-warning)',
     roles: ['admin', 'manager'],
+  },
+  {
+    path: '/',
+    en: 'Dashboard',
+    ur: 'ڈیش بورڈ',
+    icon: '▥',
+    color: 'var(--color-primary)',
+    roles: ['admin', 'manager', 'cashier', 'accountant'],
   },
   {
     path: '/daily-closing',
@@ -60,6 +76,7 @@ const visibleTasks = computed(() => tasks.filter((task) => auth.hasRole(task.rol
       :key="task.path"
       type="button"
       class="task-card"
+      :data-path="task.path"
       :style="{ '--task-color': task.color }"
       :title="task.path === '/pos' ? pick('Sales (Ctrl+N)', 'فروخت (Ctrl+N)') : undefined"
       :aria-keyshortcuts="task.path === '/pos' ? 'Control+N' : undefined"

@@ -11,6 +11,8 @@ import Input from '@/components/ui/Input.vue';
 export function usePosProductSearch(onSelect: (product: PosProduct, loose: boolean) => void) {
   const toast = useToast();
   const searchQuery = ref('');
+  const searchMatchingWords = ref(false);
+  const searchGeneric = ref(false);
   const productSearchOpen = ref(false);
 
   const searchResults = ref<PosProduct[]>([]);
@@ -28,7 +30,7 @@ export function usePosProductSearch(onSelect: (product: PosProduct, loose: boole
   let productQueryId = 0;
 
   let productLookup: {
-    term: string;
+    key: string;
     promise: Promise<PosProduct[]>;
   } | null = null;
 
@@ -63,8 +65,9 @@ export function usePosProductSearch(onSelect: (product: PosProduct, loose: boole
     searchLoading.value = true;
     searchError.value = false;
     // Barcode input and its following Enter share one bounded IPC lookup.
+    const key = JSON.stringify([term, searchMatchingWords.value, searchGeneric.value]);
     const lookup =
-      productLookup?.term === term ? productLookup : { term, promise: queryProducts(term) };
+      productLookup?.key === key ? productLookup : { key, promise: queryProducts(term) };
     productLookup = lookup;
     try {
       const productsWithBatches = await lookup.promise;
@@ -96,14 +99,18 @@ export function usePosProductSearch(onSelect: (product: PosProduct, loose: boole
   }
 
   async function queryProducts(term: string) {
-    const query = `%${term}%`;
-    const products = await executeQuery<Product>(
-      `SELECT * FROM products
-         WHERE (? = '' OR name LIKE ? OR generic_name LIKE ? OR sku LIKE ? OR barcode = ?)
+    // Treat scanned/user-entered characters literally, including LIKE wildcards.
+    const pattern = (value: string) => `%${value.replace(/[\\%_]/g, '\\$&')}%`;
+    const words = searchMatchingWords.value ? term.split(/\s+/).filter(Boolean) : [term];
+    const column = searchGeneric.value ? 'generic_name' : 'name';
+    const textConditions = words.map(() => `${column} LIKE ? ESCAPE '\\'`).join(' AND ') || '1 = 1';
+    const products = await executeQuery<Product & { manufacturer_name: string | null }>(
+      `SELECT *, (SELECT m.name FROM manufacturers m WHERE m.id = products.manufacturer_id AND m.deleted_at IS NULL) AS manufacturer_name FROM products
+         WHERE (? = '' OR (${textConditions}) OR sku LIKE ? ESCAPE '\\' OR barcode = ?)
          AND is_active = 1 AND deleted_at IS NULL
          ORDER BY CASE WHEN ? <> '' AND barcode = ? THEN 0 ELSE 1 END,
            TRIM(name) COLLATE NOCASE, sku COLLATE NOCASE, id LIMIT 50`,
-      [term, query, query, query, term, term, term],
+      [term, ...words.map(pattern), pattern(term), term, term, term],
     );
     // One batch query for the bounded result set, rather than one IPC call per product.
     const batches = products.length
@@ -202,6 +209,8 @@ export function usePosProductSearch(onSelect: (product: PosProduct, loose: boole
 
   return {
     searchQuery,
+    searchMatchingWords,
+    searchGeneric,
     productSearchOpen,
     openProductSearch,
     resetProductSearch,

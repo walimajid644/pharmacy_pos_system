@@ -111,6 +111,7 @@
   --text-secondary: var(--neutral-600);
   --text-tertiary: var(--neutral-500);
   --text-inverse: #ffffff;
+  --overlay: rgba(0, 0, 0, 0.28);
 
   --border-primary: var(--neutral-200);
   --border-secondary: var(--neutral-300);

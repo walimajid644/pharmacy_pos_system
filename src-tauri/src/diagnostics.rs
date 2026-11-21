@@ -40,6 +40,61 @@ pub enum Source {
 pub struct DiagnosticRequest {
     event: Event,
     source: Source,
+    #[serde(default)]
+    context: Option<Context>,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Operation {
+    General,
+    ProductLoad,
+    ProductSave,
+    RegisterLoad,
+    RegisterSave,
+    DashboardRefresh,
+    FrontendRender,
+    FrontendEvent,
+    FrontendWatch,
+    AsyncTask,
+    WindowError,
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Reason {
+    Unknown,
+    ConstraintViolation,
+    DatabaseUnavailable,
+    SchemaMismatch,
+    PermissionDenied,
+    SessionExpired,
+    TypeError,
+    ReferenceError,
+    RangeError,
+    ModuleLoad,
+    ResizeObserver,
+    Network,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct Context {
+    operation: Operation,
+    reason: Reason,
+    #[serde(deserialize_with = "support_id")]
+    support_id: String,
+}
+
+fn support_id<'de, D: serde::Deserializer<'de>>(deserializer: D) -> Result<String, D::Error> {
+    let value = String::deserialize(deserializer)?;
+    if value.len() != 16
+        || !value.starts_with("ERR-")
+        || !value[4..].bytes().all(|byte| byte.is_ascii_hexdigit())
+    {
+        return Err(serde::de::Error::custom("Invalid diagnostic support code"));
+    }
+    Ok(value)
 }
 
 #[derive(Serialize)]
@@ -48,6 +103,8 @@ struct Entry {
     version: &'static str,
     event: Event,
     source: Source,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    context: Option<Context>,
 }
 
 #[derive(Default)]
@@ -102,6 +159,10 @@ fn append(dir: &Path, entry: &Entry, limit: u64) -> Result<(), std::io::Error> {
 }
 
 pub fn record(app: &AppHandle, event: Event, source: Source) {
+    record_context(app, event, source, None);
+}
+
+fn record_context(app: &AppHandle, event: Event, source: Source, context: Option<Context>) {
     let Some(state) = app.try_state::<Diagnostics>() else {
         return;
     };
@@ -120,13 +181,14 @@ pub fn record(app: &AppHandle, event: Event, source: Source) {
         version: env!("CARGO_PKG_VERSION"),
         event,
         source,
+        context,
     };
     let _ = append(&dir.join("logs"), &entry, MAX_BYTES);
 }
 
 #[tauri::command]
 pub fn record_diagnostic(app: AppHandle, request: DiagnosticRequest) {
-    record(&app, request.event, request.source);
+    record_context(&app, request.event, request.source, request.context);
 }
 
 pub fn install_panic_hook(app: AppHandle) {
@@ -156,6 +218,7 @@ mod tests {
             version: "test",
             event: Event::OperationFailed,
             source: Source::Pos,
+            context: None,
         };
         let json = serde_json::to_value(entry).unwrap();
         assert_eq!(json.as_object().unwrap().len(), 4);
@@ -174,6 +237,30 @@ mod tests {
     }
 
     #[test]
+    fn diagnostics_accept_bounded_context_and_reject_private_text() {
+        let valid = r#"{"event":"operation_failed","source":"catalog","context":{"operation":"product_save","reason":"constraint_violation","supportId":"ERR-012345ABCDEF"}}"#;
+        let request: DiagnosticRequest = serde_json::from_str(valid).unwrap();
+        let entry = Entry {
+            timestamp: "synthetic".into(),
+            version: "test",
+            event: request.event,
+            source: request.source,
+            context: request.context,
+        };
+        let json = serde_json::to_value(entry).unwrap();
+        assert_eq!(json["context"]["operation"], "product_save");
+        assert_eq!(json["context"]["supportId"], "ERR-012345ABCDEF");
+        for invalid in [
+            valid.replace("constraint_violation", "patient/password/SQL"),
+            valid.replace("ERR-012345ABCDEF", "SYNTHETIC_SECRET"),
+            valid.replace("product_save", "arbitrary operation"),
+            valid.replace("\"reason\":", "\"message\":\"secret\",\"reason\":"),
+        ] {
+            assert!(serde_json::from_str::<DiagnosticRequest>(&invalid).is_err());
+        }
+    }
+
+    #[test]
     fn diagnostics_rotate_only_owned_log_files() {
         let dir =
             std::env::temp_dir().join(format!("pharmacy-diagnostics-{}", uuid::Uuid::new_v4()));
@@ -182,6 +269,7 @@ mod tests {
             version: "test",
             event: Event::OperationFailed,
             source: Source::Database,
+            context: None,
         };
         let limit = (serde_json::to_vec(&entry).unwrap().len() + 1) as u64 * 2;
         for _ in 0..7 {

@@ -95,6 +95,8 @@ export function usePosTerminal() {
   } = usePosCustomer();
   const {
     searchQuery,
+    searchMatchingWords,
+    searchGeneric,
     productSearchOpen,
     openProductSearch,
     resetProductSearch,
@@ -423,6 +425,14 @@ export function usePosTerminal() {
     }
   }
 
+  async function goToHistoryBoundary(oldest: boolean) {
+    if (checkoutLoading.value) return;
+    if (historyIndex.value === -1) await goBackward();
+    if (historyIndex.value === -1 || !recentInvoices.value.length) return;
+    historyIndex.value = oldest ? recentInvoices.value.length - 1 : 0;
+    await loadHistorySale(recentInvoices.value[historyIndex.value].id);
+  }
+
   function editViewingSale() {
     if (!viewingHistoryInvoice.value) return;
     const num = viewingHistoryInvoice.value.invoice_number;
@@ -434,10 +444,7 @@ export function usePosTerminal() {
       itemCodeInput.value?.focus({ preventScroll: true });
     });
     toast.info(
-      pick(
-        `Loaded invoice #${num} for editing`,
-        `انوائس #${num} ترمیم کے لیے لوڈ ہو گئی`,
-      ),
+      pick(`Loaded invoice #${num} for editing`, `انوائس #${num} ترمیم کے لیے لوڈ ہو گئی`),
     );
   }
 
@@ -596,6 +603,7 @@ export function usePosTerminal() {
   }
 
   function onPaymentShortcut(event: KeyboardEvent) {
+    if (document.querySelector('dialog[open]')) return;
     if (event.repeat || event.isComposing) return;
     if (
       (event.ctrlKey || event.metaKey) &&
@@ -669,17 +677,19 @@ export function usePosTerminal() {
     }
   }
 
-  function onInvoiceDiscountChange(event: Event) {
-    const input = event.target as HTMLInputElement;
-    const discount = Number(input.value);
+  function setInvoiceDiscount(discount: number) {
     if (!Number.isFinite(discount) || discount < 0 || discount > maxInvoiceDiscount.value) {
       toast.warning(
         `Invoice discount must be between 0 and ${formatCurrency(maxInvoiceDiscount.value)}`,
       );
-      input.value = cartStore.discountAmount.toFixed(2);
       return;
     }
     cartStore.setDiscountAmount(Math.round(discount * 100) / 100);
+  }
+
+  function onInvoiceDiscountChange(event: Event) {
+    const input = event.target as HTMLInputElement;
+    setInvoiceDiscount(Number(input.value));
     input.value = cartStore.discountAmount.toFixed(2);
   }
 
@@ -817,6 +827,8 @@ export function usePosTerminal() {
   }
 
   return {
+    searchMatchingWords,
+    searchGeneric,
     invoiceNumber,
     pendingProduct,
     itemCode,
@@ -899,6 +911,7 @@ export function usePosTerminal() {
     onLineDiscountAmountChange,
     onLineDiscountChange,
     onInvoiceDiscountChange,
+    setInvoiceDiscount,
     getBatchWarning,
     checkout,
     handleBarcodeInput,
@@ -909,6 +922,7 @@ export function usePosTerminal() {
     canGoForward,
     goBackward,
     goForward,
+    goToHistoryBoundary,
     editViewingSale,
     exitHistoryView,
     ref,
