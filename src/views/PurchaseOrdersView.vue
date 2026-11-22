@@ -35,16 +35,25 @@ const {
     <!-- Header -->
     <div class="view-header">
       <div>
-        <h2 class="view-title">{{ uiLabel('Purchases') }}</h2>
-        <p class="view-subtitle">{{ purchaseOrders.length }} {{ uiLabel('total orders') }}</p>
+        <h2 class="view-title">{{ pick('Purchase Register', 'خریداری رجسٹر') }}</h2>
+        <p class="view-subtitle">
+          {{
+            uiLabel(
+              'Review purchases, receive existing orders, or enter a new distributor invoice.',
+            )
+          }}
+        </p>
       </div>
       <Button variant="outline" @click="router.push('/purchase-suggestions')">{{
         pick('Purchase Suggestions', 'خریداری کی تجاویز')
       }}</Button>
-      <Button @click="createNewPO" size="lg">
+      <Button variant="outline" @click="createNewPO">
         <span class="button-icon">+</span>
         {{ uiLabel('Create Purchase Order') }}
       </Button>
+      <Button permission="purchases.receive" @click="router.push('/purchases')"
+        >+ {{ pick('New Purchase', 'نئی خریداری') }}</Button
+      >
     </div>
 
     <!-- Status Tabs -->
@@ -119,7 +128,7 @@ const {
             uiLabel(
               searchQuery || statusFilter !== 'all'
                 ? 'Try adjusting your filters'
-                : 'Create your first purchase order',
+                : 'Enter your first distributor invoice',
             )
           }}
         </p>
@@ -172,3 +181,15 @@ const {
 </template>
 
 <style src="@/components/purchases/PurchaseOrders.css"></style>
+
+<style scoped>
+.view-header > div {
+  min-width: 0;
+  flex: 1;
+}
+.purchase-orders-view.purchase-terminal .view-header :deep(button) {
+  flex-shrink: 0;
+  padding-block: 0;
+  line-height: 1.15;
+}
+</style>

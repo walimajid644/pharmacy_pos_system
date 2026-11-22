@@ -3,7 +3,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReceivePurchaseRequest {
+    #[serde(default)]
     pub po_id: String,
+    #[serde(default)]
+    pub supplier_id: Option<String>,
+    #[serde(default)]
+    pub submission_id: Option<String>,
     pub invoice_number: String,
     pub supplier_bill_number: String,
     pub payment_method: String,
@@ -11,6 +16,10 @@ pub struct ReceivePurchaseRequest {
     pub invoice_discount_percent: f64,
     pub invoice_advance_tax_percent: f64,
     pub payment_amount: f64,
+    #[serde(default)]
+    pub invoice_discount_flat: f64,
+    #[serde(default)]
+    pub receive_date: Option<String>,
     pub user_id: String,
 }
 

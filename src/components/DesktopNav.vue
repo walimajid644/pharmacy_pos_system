@@ -106,6 +106,20 @@ const groups: NavGroup[] = [
     ur: 'لین دین',
     items: [
       {
+        path: '/purchases',
+        en: 'Purchase Invoice',
+        ur: 'خریداری انوائس',
+        icon: '▤',
+        roles: ['admin', 'manager'],
+      },
+      {
+        path: '/purchase-orders',
+        en: 'Purchase Register',
+        ur: 'خریداری رجسٹر',
+        icon: '▦',
+        roles: ['admin', 'manager'],
+      },
+      {
         path: '/estimates',
         en: 'Estimates',
         ur: 'تخمینے',

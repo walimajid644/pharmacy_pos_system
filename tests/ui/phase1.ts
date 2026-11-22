@@ -167,6 +167,8 @@ Object.assign(window, {
         throw new Error('Synthetic bridge failure');
       if (command === 'login_user') return user;
       if (command === 'next_invoice_number') return '1';
+      if (command === 'get_next_purchase_invoice_number') return 'PI-000001';
+      if (command === 'receive_purchase_with_details') return { invoiceNumber: 'PI-000001' };
       if (command === 'current_shift')
         return { id: 'shift1', cashierId: user.id, cashierName: user.full_name, status: 'open' };
       if (command === 'save_purchase_order')
@@ -533,6 +535,7 @@ Object.assign(window, {
               product_name: 'Medicine ' + (index + 1),
               quantity_ordered: 3,
               quantity_received: 0,
+              unit_price: 10,
               unit_cost: 5,
               tax_rate: 0,
               discount_percent: 0,
@@ -554,6 +557,33 @@ Object.assign(window, {
             }));
         }
 
+        if (params.get('purchases') === '1' && q.includes('from purchase_orders'))
+          return [
+            {
+              id: 'po-receive',
+              po_number: 'PO-RECEIVE',
+              supplier_id: 's1',
+              supplier_name: 'Test Distributor',
+              order_date: localDateKey(),
+              status: 'sent',
+              total_amount: 30,
+            },
+          ];
+        if (params.get('purchases') === '1' && q.includes('from purchase_order_items'))
+          return [
+            {
+              id: 'receive-line',
+              product_id: 'p1',
+              product_name: 'Distributor Medicine',
+              quantity_ordered: 5,
+              quantity_received: 2,
+              unit_cost: 10,
+              unit_price: 15,
+              tax_rate: 0,
+              discount_percent: 0,
+              current_stock: 2,
+            },
+          ];
         if (q.includes('from purchase_orders') && q.includes('where id = ?'))
           return [
             {
@@ -660,6 +690,17 @@ Object.assign(window, {
               name: product.name,
               batch_number: batch.batch_number,
               expiry_date: batch.expiry_date,
+            },
+          ];
+        if (q.includes('as invoice_count') && q.includes('from sales_invoices'))
+          return [
+            {
+              invoice_count: 2,
+              total_sales: 100,
+              total_cash: 70,
+              total_card: 20,
+              total_mobile: 10,
+              total_credit: 0,
             },
           ];
         if (q.includes('count(')) return [{ count: 1, total: 1 }];

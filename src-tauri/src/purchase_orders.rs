@@ -43,19 +43,19 @@ pub struct OrderReceipt {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReceiptLine {
-    po_item_id: String,
-    quantity: i64,
-    batch_number: String,
-    expiry_date: String,
+    pub(crate) po_item_id: String,
+    pub(crate) quantity: i64,
+    pub(crate) batch_number: String,
+    pub(crate) expiry_date: String,
 }
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ReceiveOrderRequest {
-    po_id: String,
-    user_id: String,
-    timestamp: String,
-    items: Vec<ReceiptLine>,
+    pub(crate) po_id: String,
+    pub(crate) user_id: String,
+    pub(crate) timestamp: String,
+    pub(crate) items: Vec<ReceiptLine>,
 }
 
 fn money(value: f64) -> f64 {
@@ -70,7 +70,7 @@ async fn database_pool(instances: &DbInstances) -> Result<Pool<Sqlite>, String> 
     }
 }
 
-async fn authorized_user(
+pub(crate) async fn authorized_user(
     tx: &mut sqlx::Transaction<'_, Sqlite>,
     user_id: &str,
 ) -> Result<(), String> {
@@ -339,15 +339,25 @@ pub(crate) async fn receive_order(
     pool: &Pool<Sqlite>,
     request: ReceiveOrderRequest,
 ) -> Result<String, String> {
+    let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
+    let status = receive_order_in_transaction(&mut tx, &request, None).await?;
+    tx.commit().await.map_err(|e| e.to_string())?;
+    Ok(status)
+}
+
+pub(crate) async fn receive_order_in_transaction(
+    tx: &mut sqlx::Transaction<'_, Sqlite>,
+    request: &ReceiveOrderRequest,
+    details: Option<&[crate::models::enhanced_purchase_receipt::ReceiveItemDetail]>,
+) -> Result<String, String> {
     if request.items.is_empty() {
         return Err("Enter a quantity to receive".to_string());
     }
     let mut seen = HashSet::new();
-    let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
-    authorized_user(&mut tx, &request.user_id).await?;
+    authorized_user(tx, &request.user_id).await?;
     let order = sqlx::query("SELECT status FROM purchase_orders WHERE id = ?")
         .bind(&request.po_id)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut **tx)
         .await
         .map_err(|e| e.to_string())?
         .ok_or("Purchase order not found")?;
@@ -371,7 +381,7 @@ pub(crate) async fn receive_order(
         )
         .bind(&line.expiry_date)
         .bind(&line.expiry_date)
-        .fetch_one(&mut *tx)
+        .fetch_one(&mut **tx)
         .await
         .map_err(|e| e.to_string())?;
         if future == 0 {
@@ -383,7 +393,7 @@ pub(crate) async fn receive_order(
         )
         .bind(&line.po_item_id)
         .bind(&request.po_id)
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut **tx)
         .await
         .map_err(|e| e.to_string())?
         .ok_or("Purchase order item not found")?;
@@ -393,13 +403,26 @@ pub(crate) async fn receive_order(
             return Err("Receipt quantity exceeds remaining order quantity".to_string());
         }
         let product_id: String = item.get("product_id");
-        let unit_cost: f64 = item.get("unit_cost");
+        let detail = details.and_then(|items| {
+            items
+                .iter()
+                .find(|detail| detail.po_item_id == line.po_item_id)
+        });
+        if detail.is_some_and(|detail| detail.product_id != product_id) {
+            return Err("Receipt product does not match the order line".into());
+        }
+        let stock_quantity = line
+            .quantity
+            .checked_add(detail.map_or(0, |detail| detail.bonus_quantity))
+            .ok_or("Receipt quantity is too large")?;
+        let unit_cost: f64 =
+            detail.map_or_else(|| item.get("unit_cost"), |detail| detail.unit_cost);
         let existing_batch = sqlx::query(
             "SELECT id, expiry_date FROM product_batches WHERE product_id = ? AND batch_number = ?",
         )
         .bind(&product_id)
         .bind(line.batch_number.trim())
-        .fetch_optional(&mut *tx)
+        .fetch_optional(&mut **tx)
         .await
         .map_err(|e| e.to_string())?;
         let batch_id = if let Some(batch) = existing_batch {
@@ -411,10 +434,10 @@ pub(crate) async fn receive_order(
             sqlx::query(
                 "UPDATE product_batches SET quantity_in_stock = quantity_in_stock + ?, updated_at = ? WHERE id = ?",
             )
-            .bind(line.quantity)
+            .bind(stock_quantity)
             .bind(&request.timestamp)
             .bind(&id)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await
             .map_err(|e| e.to_string())?;
             id
@@ -429,15 +452,27 @@ pub(crate) async fn receive_order(
             .bind(&product_id)
             .bind(line.batch_number.trim())
             .bind(&line.expiry_date)
-            .bind(line.quantity)
+            .bind(stock_quantity)
             .bind(unit_cost)
             .bind(&request.timestamp)
             .bind(&request.timestamp)
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await
             .map_err(|e| e.to_string())?;
             id
         };
+        if let Some(detail) = detail {
+            sqlx::query(
+                "UPDATE products SET unit_price = ?, cost_price = ?, updated_at = ? WHERE id = ?",
+            )
+            .bind(detail.sale_price)
+            .bind(detail.unit_cost)
+            .bind(&request.timestamp)
+            .bind(&product_id)
+            .execute(&mut **tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        }
         let changed = sqlx::query(
             "UPDATE purchase_order_items SET quantity_received = quantity_received + ? \
              WHERE id = ? AND po_id = ? AND quantity_received + ? <= quantity_ordered",
@@ -446,7 +481,7 @@ pub(crate) async fn receive_order(
         .bind(&line.po_item_id)
         .bind(&request.po_id)
         .bind(line.quantity)
-        .execute(&mut *tx)
+        .execute(&mut **tx)
         .await
         .map_err(|e| e.to_string())?;
         if changed.rows_affected() != 1 {
@@ -460,12 +495,12 @@ pub(crate) async fn receive_order(
         .bind(Uuid::new_v4().to_string())
         .bind(&product_id)
         .bind(&batch_id)
-        .bind(line.quantity)
+        .bind(stock_quantity)
         .bind(&request.po_id)
         .bind(&request.user_id)
         .bind(&request.timestamp)
         .bind(&request.timestamp)
-        .execute(&mut *tx)
+        .execute(&mut **tx)
         .await
         .map_err(|e| e.to_string())?;
     }
@@ -476,7 +511,7 @@ pub(crate) async fn receive_order(
          FROM purchase_order_items WHERE po_id = ?",
     )
     .bind(&request.po_id)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut **tx)
     .await
     .map_err(|e| e.to_string())?;
     let status = if totals.get::<i64, _>("received") == totals.get::<i64, _>("ordered") {
@@ -494,10 +529,9 @@ pub(crate) async fn receive_order(
     .bind(&request.user_id)
     .bind(&request.timestamp)
     .bind(&request.po_id)
-    .execute(&mut *tx)
+    .execute(&mut **tx)
     .await
     .map_err(|e| e.to_string())?;
-    tx.commit().await.map_err(|e| e.to_string())?;
     Ok(status.to_string())
 }
 

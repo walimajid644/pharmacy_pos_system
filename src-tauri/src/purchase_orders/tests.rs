@@ -332,3 +332,177 @@ async fn receipt_failure_rolls_back_batches_movements_and_quantities() {
         .await
         .is_err());
 }
+
+#[tokio::test]
+async fn enhanced_receipt_posts_bonus_prices_invoice_and_rolls_back_on_failure() {
+    use crate::commands::purchase_receive_enhanced::receive_detailed;
+    use crate::models::enhanced_purchase_receipt::{ReceiveItemDetail, ReceivePurchaseRequest};
+    let pool = fixture().await;
+    sqlx::raw_sql(include_str!(
+        "../../migrations/017_enhanced_purchase_receipt.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
+    let saved = save_order(&pool, order_request(None)).await.unwrap();
+    let first: String = sqlx::query_scalar(
+        "SELECT id FROM purchase_order_items WHERE po_id = ? AND product_id = 'p1'",
+    )
+    .bind(&saved.id)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    let request = |quantity: i64, flat: f64| ReceivePurchaseRequest {
+        po_id: saved.id.clone(),
+        supplier_id: None,
+        submission_id: None,
+        invoice_number: "ignored-client-number".into(),
+        supplier_bill_number: "DIST-123".into(),
+        payment_method: "credit".into(),
+        invoice_discount_percent: 0.0,
+        invoice_discount_flat: flat,
+        invoice_advance_tax_percent: 10.0,
+        payment_amount: 0.0,
+        user_id: ADMIN.into(),
+        receive_date: None,
+        items: vec![ReceiveItemDetail {
+            po_item_id: first.clone(),
+            product_id: "p1".into(),
+            quantity,
+            bonus_quantity: 1,
+            unit_cost: 10.0,
+            sale_price: 15.0,
+            discount_percent: 10.0,
+            advance_tax_percent: 5.0,
+            batch_number: "BONUS".into(),
+            expiry_date: "2099-12-31".into(),
+        }],
+    };
+    assert!(receive_detailed(&pool, request(6, 0.0)).await.is_err());
+    // Failure after stock changes must roll back the entire receipt.
+    assert!(receive_detailed(&pool, request(3, 1000.0)).await.is_err());
+    let stock: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM product_batches")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(stock, 0);
+    let result = receive_detailed(&pool, request(3, 2.0)).await.unwrap();
+    assert_eq!(result.invoice_number, "PI-000001");
+    assert!((result.net_payable - 28.99).abs() < 0.001);
+    let stock: i64 = sqlx::query_scalar(
+        "SELECT quantity_in_stock FROM product_batches WHERE batch_number = 'BONUS'",
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    let received: i64 =
+        sqlx::query_scalar("SELECT quantity_received FROM purchase_order_items WHERE id = ?")
+            .bind(&first)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    let movement: i64 = sqlx::query_scalar("SELECT SUM(quantity) FROM stock_movements")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    let prices: (f64, f64) =
+        sqlx::query_as("SELECT cost_price, unit_price FROM products WHERE id = 'p1'")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!((stock, received, movement, prices), (4, 3, 4, (10.0, 15.0)));
+    // Subsequent partial receipt gets a distinct invoice number and cannot exceed the remainder.
+    assert!(receive_detailed(&pool, request(3, 0.0)).await.is_err());
+    let second = receive_detailed(&pool, request(2, 0.0)).await.unwrap();
+    assert_eq!(second.invoice_number, "PI-000002");
+    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM purchase_receipts")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(count, 2);
+}
+
+#[tokio::test]
+async fn direct_invoice_creates_and_receives_atomically_without_an_existing_order() {
+    use crate::commands::purchase_receive_enhanced::receive_detailed;
+    let pool = fixture().await;
+    sqlx::raw_sql(include_str!(
+        "../../migrations/017_enhanced_purchase_receipt.sql"
+    ))
+    .execute(&pool)
+    .await
+    .unwrap();
+    let submission = uuid::Uuid::new_v4().to_string();
+    let request = |expiry: &str, product: &str, supplier: &str| {
+        serde_json::from_value(serde_json::json!({
+        "supplierId": supplier, "submissionId": submission, "invoiceNumber":"", "supplierBillNumber":"DIRECT-123",
+        "paymentMethod":"credit","paymentAmount":0,"userId":ADMIN,"invoiceDiscountPercent":0,"invoiceDiscountFlat":2,
+        "invoiceAdvanceTaxPercent":10,"items":[{"poItemId":"client-row","productId":product,"quantity":3,"bonusQuantity":1,
+        "unitCost":10,"salePrice":15,"discountPercent":10,"advanceTaxPercent":5,"batchNumber":"DIRECT-BATCH","expiryDate":expiry}]
+    })).unwrap()
+    };
+    assert!(
+        receive_detailed(&pool, request("2000-01-01", "p1", "sup-1"))
+            .await
+            .is_err()
+    );
+    assert!(
+        receive_detailed(&pool, request("2099-12-31", "missing", "sup-1"))
+            .await
+            .is_err()
+    );
+    assert!(
+        receive_detailed(&pool, request("2099-12-31", "p1", "missing"))
+            .await
+            .is_err()
+    );
+    for table in [
+        "purchase_orders",
+        "purchase_order_items",
+        "purchase_receipts",
+        "product_batches",
+        "stock_movements",
+    ] {
+        let count: i64 = sqlx::query_scalar(&format!("SELECT COUNT(*) FROM {table}"))
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        assert_eq!(count, 0, "failed direct invoice must not leave {table}");
+    }
+    let saved = receive_detailed(&pool, request("2099-12-31", "p1", "sup-1"))
+        .await
+        .unwrap();
+    assert_eq!(saved.invoice_number, "PI-000001");
+    assert!((saved.net_payable - 28.99).abs() < 0.001);
+    let order: (String, String, f64) =
+        sqlx::query_as("SELECT po_number,status,total_amount FROM purchase_orders WHERE id = ?")
+            .bind(&submission)
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+    assert_eq!(order, ("PI-000001".into(), "received".into(), 28.99));
+    let quantities: (i64, i64) = sqlx::query_as(
+        "SELECT quantity_ordered, quantity_received FROM purchase_order_items WHERE po_id = ?",
+    )
+    .bind(&submission)
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert_eq!(quantities, (3, 3));
+    let stock: i64 = sqlx::query_scalar("SELECT SUM(quantity_in_stock) FROM product_batches")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(stock, 4);
+    assert!(
+        receive_detailed(&pool, request("2099-12-31", "p1", "sup-1"))
+            .await
+            .is_err(),
+        "retry must not duplicate stock or the invoice"
+    );
+    let stock: i64 = sqlx::query_scalar("SELECT SUM(quantity_in_stock) FROM product_batches")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(stock, 4);
+}

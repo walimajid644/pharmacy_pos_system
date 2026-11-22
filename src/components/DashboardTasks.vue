@@ -34,7 +34,7 @@ const tasks = [
     roles: ['admin', 'manager'],
   },
   {
-    path: '/purchase-orders',
+    path: '/purchases',
     en: 'Purchases',
     ur: 'خریداری',
     icon: '📦',

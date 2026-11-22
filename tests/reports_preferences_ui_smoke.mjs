@@ -118,9 +118,9 @@ try {
       if(command==='database_execute'&&q.includes('update app_settings')){settingsSaves.push(args);let i=0;for(const name of args.query.matchAll(/([a-z_]+) = [?]/g)){purchaseSettings[name[1]]=args.values[i++];}return;}
       if(command==='database_select'&&q.includes('as stock from products')){reportCalls.push(args);if(window.reportFailure)throw 'Synthetic report failure';return reportRows;}
       if(command==='database_select'&&q.includes('from purchase_orders'))return [{id:'po-1',po_number:'PO-TEST',supplier_id:'s1',supplier_name:'Test Supplier',status:'sent',order_date:'2026-01-01',total_amount:16.5,discount_amount:0,shipping_cost:0}];
-      if(command==='database_select'&&q.includes('from purchase_order_items'))return [{id:'po-line',po_id:'po-1',product_id:'p1',product_name:'Test medicine',quantity_ordered:3,quantity_received:1,unit_cost:5,tax_rate:10,discount_percent:0,line_total:16.5}];
+      if(command==='database_select'&&q.includes('from purchase_order_items'))return [{id:'po-line',po_id:'po-1',product_id:'p1',product_name:'Test medicine',quantity_ordered:3,quantity_received:1,unit_cost:5,unit_price:10,tax_rate:10,discount_percent:0,line_total:16.5}];
       if(command==='save_purchase_order'){savedOrders.push(args.request);return 'po-1';}
-      if(command==='receive_purchase_order'){receipts.push(args.request);return;}
+      if(command==='receive_purchase_with_details'){receipts.push(args.request);return {invoiceNumber:'PI-000001'};}
       return original(command,args);
     };
     window.print=()=>{window.printedRows=document.querySelectorAll('.finance-print-root tbody tr').length;};
@@ -198,16 +198,28 @@ try {
   await evaluate('testRouter.push("/purchase-orders/po-1/receive")');
   await until("document.querySelector('input[aria-label^=\"Receive quantity\"]')?.value==='0'");
   await field('input[aria-label^="Receive quantity"]', '2');
-  await click('Receive Stock');
+  await click('Save & Update Stock');
   assert.equal(await evaluate('receipts.length'), 0);
+  await field('input[aria-label="Distributor bill number"]', 'DIST-TEST');
   await field('input[aria-label^="Batch number"]', 'B-TEST');
   await field('input[aria-label^="Expiry date"]', '2099-12-31');
-  await fits('.money-terminal');
+  await fits('.purchase-receive-enhanced');
   await shot('purchase-receive-1024');
-  await click('Receive Stock');
+  await click('Save & Update Stock');
   await until('receipts.length===1');
   assert.deepEqual(await evaluate('receipts[0].items'), [
-    { poItemId: 'po-line', quantity: 2, batchNumber: 'B-TEST', expiryDate: '2099-12-31' },
+    {
+      poItemId: 'po-line',
+      productId: 'p1',
+      quantity: 2,
+      bonusQuantity: 0,
+      unitCost: 5,
+      salePrice: 10,
+      discountPercent: 0,
+      advanceTaxPercent: 10,
+      batchNumber: 'B-TEST',
+      expiryDate: '2099-12-31',
+    },
   ]);
   results.push(
     'Reports paginate at 1024x600, CSV/print include all 70 rows, errors clear stale data; settings persist and validate, saved order tax stays visible, receiving validates batch and submits canonical stock transaction',

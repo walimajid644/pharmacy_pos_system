@@ -207,7 +207,7 @@ try {
     ['/products', '#products-search'],
     ['/purchase-orders', '.filters-grid input'],
     ['/purchase-orders/new', '.form-select'],
-    ['/purchase-orders/po-existing/receive', '.col-batch input'],
+    ['/purchase-orders/po-existing/receive', 'input[aria-label^="Batch number"]'],
     ['/customers', 'input'],
     ['/suppliers', 'input'],
   ]) {

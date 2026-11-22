@@ -2,7 +2,20 @@
 import { useWorkspaceLabels } from '@/lib/workspaceLabels';
 const uiLabel = useWorkspaceLabels();
 
-import type { Ref } from 'vue';
+import { ref, computed, type Ref } from 'vue';
+import { useElementSize } from '@vueuse/core';
+const previewViewport = ref<HTMLElement | null>(null);
+const previewPaper = ref<HTMLElement | null>(null);
+const viewportSize = useElementSize(previewViewport);
+const paperSize = useElementSize(previewPaper, { width: 302, height: 1 }, { box: 'border-box' });
+const previewScale = computed(() =>
+  Math.min(
+    1,
+    (viewportSize.width.value - 12) / (paperSize.width.value || 302),
+    (viewportSize.height.value - 12) / (paperSize.height.value || 1),
+  ),
+);
+
 import type { useSettingsForm } from '@/composables/useSettingsForm';
 
 type ViewValue<T> = T extends Ref<infer Value> ? Value : T;
@@ -59,7 +72,7 @@ function clearLogo() {
 </script>
 
 <template>
-  <div v-if="activeTab === 'receipt'" class="settings-fields max-w-2xl space-y-6">
+  <div v-if="activeTab === 'receipt'" class="settings-fields receipt-fields max-w-2xl space-y-6">
     <div>
       <label for="field-receiptsettings-logo" class="block text-sm font-medium mb-2">{{
         pick('Pharmacy Logo (Optional)', 'فارمیسی کا لوگو (اختیاری)')
@@ -163,15 +176,16 @@ function clearLogo() {
       </p>
     </div>
 
-    <div class="p-4 bg-gray-50 border border-gray-200 rounded-md">
+    <div class="receipt-preview">
       <div class="font-semibold mb-2">{{ pick('Receipt Preview', 'رسید کا نمونہ') }}</div>
 
       <!-- Scrollable container for the receipt with increased height -->
-      <div
-        class="overflow-y-auto border rounded bg-white"
-        style="max-height: 70vh; min-height: 500px"
-      >
-        <div class="text-xs font-mono p-3 max-w-md mx-auto" style="width: 80mm">
+      <div ref="previewViewport" class="receipt-preview-viewport">
+        <div
+          ref="previewPaper"
+          class="receipt-preview-paper text-xs p-3"
+          :style="{ transform: `translateX(-50%) scale(${Math.max(0, previewScale)})` }"
+        >
           <!-- Logo placeholder or actual image -->
           <div v-if="formData.receipt_logo_path" class="text-center mb-2">
             <!-- Show actual image if it's a data URL (base64) -->
@@ -255,97 +269,111 @@ function clearLogo() {
           <!-- Items -->
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
-              <tr>
-                <td class="text-left" style="width: 41%">
-                  <div>HUMULIN 70/30 VIAL</div>
-                </td>
-                <td class="text-center" style="width: 15%">1</td>
-                <td class="text-right" style="width: 22%">1663.00</td>
-                <td class="text-right" style="width: 22%">1663.00</td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td class="text-left" style="width: 41%">
+                    <div>HUMULIN 70/30 VIAL</div>
+                  </td>
+                  <td class="text-center" style="width: 15%">1</td>
+                  <td class="text-right" style="width: 22%">1663.00</td>
+                  <td class="text-right" style="width: 22%">1663.00</td>
+                </tr>
+              </tbody>
             </table>
           </div>
 
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
-              <tr>
-                <td class="text-left" style="width: 41%">
-                  <div>TREVIAMET 50/850MG</div>
-                  <div class="text-gray-500" style="font-size: 0.65rem">TAB</div>
-                </td>
-                <td class="text-center" style="width: 15%">30</td>
-                <td class="text-right" style="width: 22%">32.50</td>
-                <td class="text-right" style="width: 22%">975.00</td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td class="text-left" style="width: 41%">
+                    <div>TREVIAMET 50/850MG</div>
+                    <div class="text-gray-500" style="font-size: 0.65rem">TAB</div>
+                  </td>
+                  <td class="text-center" style="width: 15%">30</td>
+                  <td class="text-right" style="width: 22%">32.50</td>
+                  <td class="text-right" style="width: 22%">975.00</td>
+                </tr>
+              </tbody>
             </table>
           </div>
 
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
-              <tr>
-                <td class="text-left" style="width: 41%">
-                  <div>ZOPENT 40MG TAB</div>
-                  <div v-if="formData.show_drap" class="text-gray-500" style="font-size: 0.65rem">
-                    DRAP: 12345-ABC
-                  </div>
-                </td>
-                <td class="text-center" style="width: 15%">30</td>
-                <td class="text-right" style="width: 22%">38.75</td>
-                <td class="text-right" style="width: 22%">1162.50</td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td class="text-left" style="width: 41%">
+                    <div>ZOPENT 40MG TAB</div>
+                    <div v-if="formData.show_drap" class="text-gray-500" style="font-size: 0.65rem">
+                      DRAP: 12345-ABC
+                    </div>
+                  </td>
+                  <td class="text-center" style="width: 15%">30</td>
+                  <td class="text-right" style="width: 22%">38.75</td>
+                  <td class="text-right" style="width: 22%">1162.50</td>
+                </tr>
+              </tbody>
             </table>
           </div>
 
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
-              <tr>
-                <td class="text-left" style="width: 41%">
-                  <div>LEVOPRAID 25MG TAB</div>
-                </td>
-                <td class="text-center" style="width: 15%">30</td>
-                <td class="text-right" style="width: 22%">26.85</td>
-                <td class="text-right" style="width: 22%">805.50</td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td class="text-left" style="width: 41%">
+                    <div>LEVOPRAID 25MG TAB</div>
+                  </td>
+                  <td class="text-center" style="width: 15%">30</td>
+                  <td class="text-right" style="width: 22%">26.85</td>
+                  <td class="text-right" style="width: 22%">805.50</td>
+                </tr>
+              </tbody>
             </table>
           </div>
 
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
-              <tr>
-                <td class="text-left" style="width: 41%">
-                  <div>CIDINE 1MG TAB</div>
-                </td>
-                <td class="text-center" style="width: 15%">30</td>
-                <td class="text-right" style="width: 22%">35.90</td>
-                <td class="text-right" style="width: 22%">1077.00</td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td class="text-left" style="width: 41%">
+                    <div>CIDINE 1MG TAB</div>
+                  </td>
+                  <td class="text-center" style="width: 15%">30</td>
+                  <td class="text-right" style="width: 22%">35.90</td>
+                  <td class="text-right" style="width: 22%">1077.00</td>
+                </tr>
+              </tbody>
             </table>
           </div>
 
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
-              <tr>
-                <td class="text-left" style="width: 41%">
-                  <div>JARDY 10MG TAB</div>
-                </td>
-                <td class="text-center" style="width: 15%">30</td>
-                <td class="text-right" style="width: 22%">31.35</td>
-                <td class="text-right" style="width: 22%">940.50</td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td class="text-left" style="width: 41%">
+                    <div>JARDY 10MG TAB</div>
+                  </td>
+                  <td class="text-center" style="width: 15%">30</td>
+                  <td class="text-right" style="width: 22%">31.35</td>
+                  <td class="text-right" style="width: 22%">940.50</td>
+                </tr>
+              </tbody>
             </table>
           </div>
 
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
-              <tr>
-                <td class="text-left" style="width: 41%">
-                  <div>BD INSULIN SYRINGE</div>
-                  <div class="text-gray-500" style="font-size: 0.65rem">BRAUN</div>
-                </td>
-                <td class="text-center" style="width: 15%">2</td>
-                <td class="text-right" style="width: 22%">45.00</td>
-                <td class="text-right" style="width: 22%">90.00</td>
-              </tr>
+              <tbody>
+                <tr>
+                  <td class="text-left" style="width: 41%">
+                    <div>BD INSULIN SYRINGE</div>
+                    <div class="text-gray-500" style="font-size: 0.65rem">BRAUN</div>
+                  </td>
+                  <td class="text-center" style="width: 15%">2</td>
+                  <td class="text-right" style="width: 22%">45.00</td>
+                  <td class="text-right" style="width: 22%">90.00</td>
+                </tr>
+              </tbody>
             </table>
           </div>
 
@@ -395,11 +423,71 @@ function clearLogo() {
       <p class="text-xs text-gray-500 mt-3 text-center">
         {{
           pick(
-            'Thermal printer format (80mm width) - Scroll to see full receipt',
-            'تھرمل پرنٹر فارمیٹ (80mm چوڑائی) - مکمل رسید دیکھنے کے لیے سکرول کریں',
+            '80 mm receipt preview — fitted to the available space',
+            '۸۰ ملی میٹر رسید کا مکمل نمونہ دستیاب جگہ کے مطابق دکھایا گیا ہے',
           )
         }}
       </p>
     </div>
   </div>
 </template>
+
+<style scoped>
+:global(.workspace-body .tool-terminal.compact-workspace .receipt-fields) {
+  height: 100%;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
+  grid-template-rows: auto auto auto auto;
+  align-content: stretch;
+}
+.receipt-fields > :not(.receipt-preview) {
+  grid-column: 1;
+}
+.receipt-preview {
+  grid-column: 2;
+  grid-row: 1 / span 4;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-secondary);
+  border-radius: 6px;
+}
+.receipt-preview-viewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--surface-page);
+}
+.receipt-preview-paper {
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 80mm;
+  transform-origin: top center;
+  color: #000;
+  background: #fff;
+  color-scheme: light;
+}
+.receipt-preview-paper tr {
+  height: auto !important;
+}
+.receipt-preview-paper :is(td, th) {
+  padding: 2px 0 !important;
+  font-size: 10px !important;
+  line-height: 1.2;
+  color: #000 !important;
+  background: #fff !important;
+}
+.receipt-preview-paper .border-b {
+  padding: 2px 0 !important;
+}
+.receipt-preview-paper :is(.text-gray-400, .text-gray-500, .text-gray-600) {
+  color: #555 !important;
+}
+.receipt-preview p {
+  margin: 4px 0 0;
+}
+</style>

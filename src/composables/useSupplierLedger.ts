@@ -15,6 +15,7 @@ export function useSupplierLedger() {
     payment_terms: number;
     status: string;
     total_amount: number;
+    receipt_adjustment?: number;
     ordered_value: number;
     received_value: number;
     paid_cents: number;
@@ -68,7 +69,8 @@ export function useSupplierLedger() {
     return Math.round(
       row.total_amount *
         100 *
-        (row.ordered_value > 0 ? Math.min(1, row.received_value / row.ordered_value) : 0),
+        (row.ordered_value > 0 ? Math.min(1, row.received_value / row.ordered_value) : 0) +
+        (row.receipt_adjustment || 0) * 100,
     );
   }
 
@@ -126,10 +128,11 @@ export function useSupplierLedger() {
       );
       rows.value =
         await executeQuery<LedgerRow>(`SELECT po.id, po.po_number, po.supplier_id, s.name AS supplier_name, po.order_date, po.received_date, s.payment_terms, po.status, po.total_amount,
+        COALESCE((SELECT SUM(pr.net_payable - COALESCE((SELECT SUM(ri.quantity * i.line_total / NULLIF(i.quantity_ordered, 0)) FROM purchase_receipt_items ri JOIN purchase_order_items i ON i.id = ri.po_item_id WHERE ri.receipt_id = pr.id), 0) * CASE WHEN (SELECT SUM(i.line_total) FROM purchase_order_items i WHERE i.po_id = po.id) > 0 THEN po.total_amount / (SELECT SUM(i.line_total) FROM purchase_order_items i WHERE i.po_id = po.id) ELSE 0 END) FROM purchase_receipts pr WHERE pr.po_id = po.id), 0.0) AS receipt_adjustment,
         COALESCE((SELECT SUM(i.line_total) FROM purchase_order_items i WHERE i.po_id = po.id), 0) AS ordered_value,
         COALESCE((SELECT SUM(CASE WHEN i.quantity_ordered > 0 THEN i.line_total * i.quantity_received / i.quantity_ordered ELSE 0 END) FROM purchase_order_items i WHERE i.po_id = po.id), 0) AS received_value,
         COALESCE((SELECT SUM(p.amount_cents) FROM supplier_payments p WHERE p.po_id = po.id), 0) AS paid_cents
-        FROM purchase_orders po JOIN suppliers s ON s.id = po.supplier_id WHERE po.status IN ('partial', 'received') UNION ALL SELECT o.id,'Opening · '||o.reference,o.supplier_id,s.name,o.entry_date,NULL,0,'opening',o.amount_cents/100.0,1,1,o.paid_cents FROM supplier_opening_outstanding o JOIN suppliers s ON s.id=o.supplier_id ORDER BY order_date DESC`);
+        FROM purchase_orders po JOIN suppliers s ON s.id = po.supplier_id WHERE po.status IN ('partial', 'received') UNION ALL SELECT o.id,'Opening · '||o.reference,o.supplier_id,s.name,o.entry_date,NULL,0,'opening',o.amount_cents/100.0,0,1,1,o.paid_cents FROM supplier_opening_outstanding o JOIN suppliers s ON s.id=o.supplier_id ORDER BY order_date DESC`);
       payments.value = await executeQuery<Payment>(
         `SELECT p.id,p.voucher_number,p.po_id,s.name AS supplier_name,p.amount_cents,p.method,p.reference,p.paid_at FROM supplier_payments p JOIN suppliers s ON s.id=p.supplier_id UNION ALL SELECT p.id,p.voucher_number,p.opening_id,s.name,p.amount_cents,p.method,p.reference,p.paid_at FROM supplier_opening_payments p JOIN suppliers s ON s.id=p.supplier_id ORDER BY paid_at DESC LIMIT 100`,
       );

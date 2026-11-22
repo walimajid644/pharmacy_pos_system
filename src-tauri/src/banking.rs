@@ -144,7 +144,7 @@ async fn record_bank(pool: &Pool<Sqlite>, actor: &str, r: BankRequest) -> Result
     };
     let number = format!(
         "BT-{}",
-        &request_uuid.simple().to_string()[..12].to_uppercase()
+        request_uuid.simple().to_string()[..12].to_uppercase()
     );
     sqlx::query("INSERT INTO bank_transactions(id,number,kind,account_id,to_account_id,amount_cents,entry_date,reference,notes,shift_id,recorded_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)")
         .bind(&r.request_id).bind(&number).bind(&r.kind).bind(&r.account_id).bind(&r.to_account_id).bind(r.amount_cents).bind(&r.entry_date).bind(r.reference.trim()).bind(r.notes.trim()).bind(shift).bind(actor).bind(chrono::Utc::now().to_rfc3339()).execute(&mut *tx).await.map_err(|e|e.to_string())?;
@@ -226,7 +226,7 @@ async fn record_income(
     };
     let number = format!(
         "IN-{}",
-        &request_uuid.simple().to_string()[..12].to_uppercase()
+        request_uuid.simple().to_string()[..12].to_uppercase()
     );
     sqlx::query("INSERT INTO income_entries(id,number,head_id,head_name,description,amount_cents,method,bank_account_id,entry_date,reference,shift_id,recorded_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
         .bind(&r.request_id).bind(&number).bind(&r.head_id).bind(head).bind(r.description.trim()).bind(r.amount_cents).bind(&r.method).bind(&r.bank_account_id).bind(&r.entry_date).bind(r.reference.trim()).bind(shift).bind(actor).bind(chrono::Utc::now().to_rfc3339()).execute(&mut *tx).await.map_err(|e|e.to_string())?;

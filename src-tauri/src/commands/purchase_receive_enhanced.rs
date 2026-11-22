@@ -1,6 +1,6 @@
-use crate::models::enhanced_purchase_receipt::{
-    ReceivePurchaseRequest, PurchaseReceiptResponse,
-};
+use crate::database_api::{require_matching_actor, SessionState};
+use crate::models::enhanced_purchase_receipt::{PurchaseReceiptResponse, ReceivePurchaseRequest};
+use crate::purchase_orders::{receive_order_in_transaction, ReceiptLine, ReceiveOrderRequest};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Row, Sqlite};
 use tauri::State;
@@ -14,7 +14,7 @@ async fn database_pool(instances: &DbInstances) -> Result<Pool<Sqlite>, String> 
     let databases = instances.0.read().await;
     match databases.get("sqlite:pharmacy.db") {
         Some(tauri_plugin_sql::DbPool::Sqlite(pool)) => Ok(pool.clone()),
-        _ => Err("The pharmacy database is not ready".to_string()),
+        _ => Err("The pharmacy database is not ready".into()),
     }
 }
 
@@ -22,217 +22,193 @@ async fn database_pool(instances: &DbInstances) -> Result<Pool<Sqlite>, String> 
 pub async fn receive_purchase_with_details(
     request: ReceivePurchaseRequest,
     db: State<'_, DbInstances>,
+    session: State<'_, SessionState>,
 ) -> Result<PurchaseReceiptResponse, String> {
+    require_matching_actor(&session, &request.user_id).await?;
     let pool = database_pool(&db).await?;
-    let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
-
-    match process_enhanced_receipt(&mut tx, request).await {
-        Ok(response) => {
-            tx.commit().await.map_err(|e| e.to_string())?;
-            Ok(response)
-        }
-        Err(e) => {
-            let _ = tx.rollback().await;
-            Err(format!("Receipt processing error: {}", e))
-        }
-    }
+    receive_detailed(&pool, request).await
 }
 
-async fn process_enhanced_receipt(
-    tx: &mut sqlx::Transaction<'_, Sqlite>,
-    request: ReceivePurchaseRequest,
+pub(crate) async fn receive_detailed(
+    pool: &Pool<Sqlite>,
+    mut request: ReceivePurchaseRequest,
 ) -> Result<PurchaseReceiptResponse, String> {
-    let now = chrono::Utc::now().format("%Y-%m-%d %H:%M:%S").to_string();
-
-    // 1. Get PO details
-    let po = sqlx::query(
-        "SELECT supplier_id, status FROM purchase_orders WHERE id = ?"
-    )
-    .bind(&request.po_id)
-    .fetch_one(&mut **tx)
-    .await
-    .map_err(|e| format!("PO not found: {}", e))?;
-
-    let _supplier_id: String = po.get("supplier_id");
-    let po_status: String = po.get("status");
-
-    // Validate PO status
-    if po_status != "sent" && po_status != "partial" && po_status != "draft" {
-        return Err("Purchase order cannot be received in current status".to_string());
+    let percent = |value: f64| value.is_finite() && (0.0..=100.0).contains(&value);
+    if request.supplier_bill_number.trim().is_empty()
+        || !percent(request.invoice_discount_percent)
+        || !percent(request.invoice_advance_tax_percent)
+        || !request.invoice_discount_flat.is_finite()
+        || request.invoice_discount_flat < 0.0
+        || request.payment_amount != 0.0
+    {
+        return Err("Enter valid invoice details. Record payments in Supplier Ledger.".into());
     }
-
-    // 2. Calculate invoice totals
-    let subtotal = request.items.iter()
-        .map(|item| money(item.quantity as f64 * item.unit_cost))
-        .sum::<f64>();
-    
-    let discount_amount = money(subtotal * request.invoice_discount_percent / 100.0);
-    let after_discount = money(subtotal - discount_amount);
-    let tax_amount = money(after_discount * request.invoice_advance_tax_percent / 100.0);
-    let net_payable = money(after_discount + tax_amount);
-    let balance = money(net_payable - request.payment_amount);
-
-    // 3. Create purchase receipt record
-    let receipt_id = uuid::Uuid::new_v4().to_string();
-    
-    sqlx::query(
-        "INSERT INTO purchase_receipts (
-            id, po_id, received_by, received_date, supplier_bill_number,
-            invoice_number, payment_method, invoice_discount_percent,
-            invoice_discount_amount, invoice_advance_tax_percent,
-            invoice_advance_tax_amount, payment_amount, balance,
-            net_payable, total_amount, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    )
-    .bind(&receipt_id)
-    .bind(&request.po_id)
-    .bind(&request.user_id)
-    .bind(&now)
-    .bind(&request.supplier_bill_number)
-    .bind(&request.invoice_number)
-    .bind(&request.payment_method)
-    .bind(request.invoice_discount_percent)
-    .bind(discount_amount)
-    .bind(request.invoice_advance_tax_percent)
-    .bind(tax_amount)
-    .bind(request.payment_amount)
-    .bind(balance)
-    .bind(net_payable)
-    .bind(subtotal)
-    .bind(&now)
-    .bind(&now)
-    .execute(&mut **tx)
-    .await
-    .map_err(|e| format!("Failed to create receipt: {}", e))?;
-
-    // 4. Process each line item
+    if request.items.is_empty()
+        || request.items.iter().any(|item| {
+            item.quantity <= 0
+                || item.bonus_quantity < 0
+                || !item.unit_cost.is_finite()
+                || item.unit_cost < 0.0
+                || !item.sale_price.is_finite()
+                || item.sale_price < 0.0
+                || !percent(item.discount_percent)
+                || !percent(item.advance_tax_percent)
+        })
+    {
+        return Err("Invalid purchase receipt prices, bonus or taxes".into());
+    }
+    let now = chrono::Utc::now().to_rfc3339();
+    let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
+    let received_date = request
+        .receive_date
+        .clone()
+        .unwrap_or_else(|| chrono::Local::now().format("%Y-%m-%d").to_string());
+    let valid_date: i64 = sqlx::query_scalar("SELECT CASE WHEN length(?) = 10 AND date(?) = ? AND date(?) <= date('now', 'localtime') THEN 1 ELSE 0 END")
+        .bind(&received_date).bind(&received_date).bind(&received_date).bind(&received_date)
+        .fetch_one(&mut *tx).await.map_err(|e| e.to_string())?;
+    if valid_date != 1 {
+        return Err("Enter a valid receipt date that is not in the future".into());
+    }
+    let mut subtotal = 0.0;
+    let mut lines = Vec::new();
     for item in &request.items {
-        let item_id = uuid::Uuid::new_v4().to_string();
-        
-        // Calculate line totals
-        let line_base = money(item.quantity as f64 * item.unit_cost);
-        let line_discount = money(line_base * item.discount_percent / 100.0);
-        let line_after_discount = money(line_base - line_discount);
-        let line_tax = money(line_after_discount * item.advance_tax_percent / 100.0);
-        let line_total = money(line_after_discount + line_tax);
-        
-        // Calculate margin
-        let margin_percent = if item.unit_cost > 0.0 {
-            money(((item.sale_price - item.unit_cost) / item.unit_cost) * 100.0)
+        let base = money(item.quantity as f64 * item.unit_cost);
+        let discount = money(base * item.discount_percent / 100.0);
+        let tax = money((base - discount) * item.advance_tax_percent / 100.0);
+        let total = money(base - discount + tax);
+        if !total.is_finite() {
+            return Err("Invalid receipt total".into());
+        }
+        subtotal += total;
+        lines.push((discount, tax, total));
+    }
+    subtotal = money(subtotal);
+    let discount = if request.invoice_discount_flat > 0.0 {
+        money(request.invoice_discount_flat)
+    } else {
+        money(subtotal * request.invoice_discount_percent / 100.0)
+    };
+    if discount > subtotal {
+        return Err("Invoice discount exceeds subtotal".into());
+    }
+    let tax = money((subtotal - discount) * request.invoice_advance_tax_percent / 100.0);
+    let net = money(subtotal - discount + tax);
+    if !net.is_finite() {
+        return Err("Invalid invoice total".into());
+    }
+    let direct_invoice = request.po_id.is_empty();
+    // A direct invoice creates its backing order and stock receipt in this same transaction.
+    // No draft or sent order is exposed if any later invoice or batch validation fails.
+    if request.po_id.is_empty() {
+        crate::purchase_orders::authorized_user(&mut tx, &request.user_id).await?;
+        let supplier_id = request
+            .supplier_id
+            .as_deref()
+            .ok_or("Select a distributor")?;
+        let supplier: Option<String> = sqlx::query_scalar(
+            "SELECT id FROM suppliers WHERE id = ? AND is_active = 1 AND deleted_at IS NULL",
+        )
+        .bind(supplier_id)
+        .fetch_optional(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+        if supplier.is_none() {
+            return Err("The selected distributor is unavailable".into());
+        }
+        let submission_id = request
+            .submission_id
+            .as_deref()
+            .ok_or("Refresh before saving this invoice")?;
+        let invoice_id = uuid::Uuid::parse_str(submission_id)
+            .map_err(|_| "Invalid invoice submission identifier")?;
+        let id = invoice_id.to_string();
+        let exists: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM purchase_orders WHERE id = ?")
+            .bind(&id)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        if exists != 0 {
+            return Err(
+                "This invoice was already saved. Open Purchase Register to review it.".into(),
+            );
+        }
+        let reference = format!("PUR-{}", invoice_id.simple());
+        sqlx::query("INSERT INTO purchase_orders (id, po_number, supplier_id, order_date, status, subtotal, tax_amount, discount_amount, shipping_cost, total_amount, notes, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, 'sent', ?, ?, ?, 0, ?, 'Direct distributor invoice', ?, ?, ?)")
+            .bind(&id).bind(&reference).bind(supplier_id).bind(&received_date)
+            .bind(subtotal).bind(tax).bind(discount).bind(net).bind(&request.user_id).bind(&now).bind(&now)
+            .execute(&mut *tx).await.map_err(|e| e.to_string())?;
+        request.po_id = id;
+        for (item, (_, _, total)) in request.items.iter_mut().zip(&lines) {
+            let active: Option<String> = sqlx::query_scalar(
+                "SELECT id FROM products WHERE id = ? AND is_active = 1 AND deleted_at IS NULL",
+            )
+            .bind(&item.product_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+            if active.is_none() {
+                return Err("A selected product is unavailable".into());
+            }
+            item.po_item_id = uuid::Uuid::new_v4().to_string();
+            sqlx::query("INSERT INTO purchase_order_items (id, po_id, product_id, quantity_ordered, quantity_received, unit_cost, tax_rate, discount_percent, line_total, created_at) VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?)")
+                .bind(&item.po_item_id).bind(&request.po_id).bind(&item.product_id).bind(item.quantity)
+                .bind(item.unit_cost).bind(item.advance_tax_percent).bind(item.discount_percent).bind(total).bind(&now)
+                .execute(&mut *tx).await.map_err(|e| e.to_string())?;
+        }
+    }
+    let receipt = ReceiveOrderRequest {
+        po_id: request.po_id.clone(),
+        user_id: request.user_id.clone(),
+        timestamp: now.clone(),
+        items: request
+            .items
+            .iter()
+            .map(|item| ReceiptLine {
+                po_item_id: item.po_item_id.clone(),
+                quantity: item.quantity,
+                batch_number: item.batch_number.clone(),
+                expiry_date: item.expiry_date.clone(),
+            })
+            .collect(),
+    };
+    receive_order_in_transaction(&mut tx, &receipt, Some(&request.items)).await?;
+    let sequence: i64 = sqlx::query_scalar("SELECT COALESCE(MAX(CAST(SUBSTR(invoice_number, 4) AS INTEGER)), 0) + 1 FROM purchase_receipts WHERE invoice_number LIKE 'PI-%'")
+        .fetch_one(&mut *tx).await.map_err(|e| e.to_string())?;
+    let invoice = format!("PI-{:06}", sequence);
+    if direct_invoice {
+        sqlx::query("UPDATE purchase_orders SET po_number = ? WHERE id = ?")
+            .bind(&invoice)
+            .bind(&request.po_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+    }
+    let id = uuid::Uuid::new_v4().to_string();
+    sqlx::query("INSERT INTO purchase_receipts (id, po_id, received_by, received_date, supplier_bill_number, invoice_number, payment_method, invoice_discount_percent, invoice_discount_amount, invoice_advance_tax_percent, invoice_advance_tax_amount, payment_amount, balance, net_payable, total_amount, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 'credit', ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)")
+        .bind(&id).bind(&request.po_id).bind(&request.user_id).bind(&received_date)
+        .bind(request.supplier_bill_number.trim()).bind(&invoice)
+        .bind(request.invoice_discount_percent).bind(discount).bind(request.invoice_advance_tax_percent).bind(tax)
+        .bind(net).bind(net).bind(subtotal).bind(&now).bind(&now)
+        .execute(&mut *tx).await.map_err(|e| e.to_string())?;
+    for (item, (discount, tax, total)) in request.items.iter().zip(lines) {
+        let margin = if item.unit_cost > 0.0 {
+            money((item.sale_price - item.unit_cost) / item.unit_cost * 100.0)
         } else {
             0.0
         };
-
-        // Insert receipt item
-        sqlx::query(
-            "INSERT INTO purchase_receipt_items (
-                id, receipt_id, po_item_id, product_id, quantity, bonus_quantity,
-                unit_cost, discount_percent, discount_amount, advance_tax_percent,
-                advance_tax_amount, sale_price, margin_percent, line_total,
-                batch_number, expiry_date, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
-        )
-        .bind(&item_id)
-        .bind(&receipt_id)
-        .bind(&item.po_item_id)
-        .bind(&item.product_id)
-        .bind(item.quantity)
-        .bind(item.bonus_quantity)
-        .bind(item.unit_cost)
-        .bind(item.discount_percent)
-        .bind(line_discount)
-        .bind(item.advance_tax_percent)
-        .bind(line_tax)
-        .bind(item.sale_price)
-        .bind(margin_percent)
-        .bind(line_total)
-        .bind(&item.batch_number)
-        .bind(&item.expiry_date)
-        .bind(&now)
-        .execute(&mut **tx)
-        .await
-        .map_err(|e| format!("Failed to insert item: {}", e))?;
-
-        // Update inventory with received quantity + bonus
-        let total_received = item.quantity + item.bonus_quantity;
-        
-        sqlx::query(
-            "INSERT INTO inventory (product_id, batch_number, expiry_date, quantity_on_hand,
-                unit_cost, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(product_id, batch_number, expiry_date) DO UPDATE SET
-                quantity_on_hand = quantity_on_hand + excluded.quantity_on_hand,
-                unit_cost = excluded.unit_cost,
-                updated_at = excluded.updated_at"
-        )
-        .bind(&item.product_id)
-        .bind(&item.batch_number)
-        .bind(&item.expiry_date)
-        .bind(total_received)
-        .bind(item.unit_cost)
-        .bind(&now)
-        .bind(&now)
-        .execute(&mut **tx)
-        .await
-        .map_err(|e| format!("Failed to update inventory: {}", e))?;
-
-        // Update product sale price if changed
-        sqlx::query("UPDATE products SET sale_price = ?, updated_at = ? WHERE id = ?")
-            .bind(item.sale_price)
-            .bind(&now)
-            .bind(&item.product_id)
-            .execute(&mut **tx)
-            .await
-            .map_err(|e| format!("Failed to update product: {}", e))?;
-
-        // Update PO item received quantity
-        sqlx::query(
-            "UPDATE purchase_order_items SET 
-                quantity_received = quantity_received + ?,
-                updated_at = ?
-            WHERE id = ?"
-        )
-        .bind(item.quantity)
-        .bind(&now)
-        .bind(&item.po_item_id)
-        .execute(&mut **tx)
-        .await
-        .map_err(|e| format!("Failed to update PO item: {}", e))?;
+        sqlx::query("INSERT INTO purchase_receipt_items (id, receipt_id, po_item_id, product_id, quantity, bonus_quantity, unit_cost, discount_percent, discount_amount, advance_tax_percent, advance_tax_amount, sale_price, margin_percent, line_total, batch_number, expiry_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+            .bind(uuid::Uuid::new_v4().to_string()).bind(&id).bind(&item.po_item_id).bind(&item.product_id)
+            .bind(item.quantity).bind(item.bonus_quantity).bind(item.unit_cost).bind(item.discount_percent)
+            .bind(discount).bind(item.advance_tax_percent).bind(tax).bind(item.sale_price).bind(margin).bind(total)
+            .bind(item.batch_number.trim()).bind(&item.expiry_date).bind(&now)
+            .execute(&mut *tx).await.map_err(|e| e.to_string())?;
     }
-
-    // 5. Update PO status based on completion
-    let items_status = sqlx::query(
-        "SELECT COUNT(*) as total,
-                SUM(CASE WHEN quantity_received >= quantity_ordered THEN 1 ELSE 0 END) as completed
-        FROM purchase_order_items WHERE po_id = ?"
-    )
-    .bind(&request.po_id)
-    .fetch_one(&mut **tx)
-    .await
-    .map_err(|e| format!("Failed to check PO status: {}", e))?;
-
-    let total: i64 = items_status.get("total");
-    let completed: i64 = items_status.get("completed");
-
-    let new_status = if completed == total {
-        "received"
-    } else {
-        "partial"
-    };
-
-    sqlx::query("UPDATE purchase_orders SET status = ?, updated_at = ? WHERE id = ?")
-        .bind(new_status)
-        .bind(&now)
-        .bind(&request.po_id)
-        .execute(&mut **tx)
-        .await
-        .map_err(|e| format!("Failed to update PO status: {}", e))?;
-
+    tx.commit().await.map_err(|e| e.to_string())?;
     Ok(PurchaseReceiptResponse {
-        id: receipt_id,
-        invoice_number: request.invoice_number,
-        net_payable,
-        balance,
+        id,
+        invoice_number: invoice,
+        net_payable: net,
+        balance: net,
     })
 }
 
@@ -242,28 +218,9 @@ pub async fn get_next_purchase_invoice_number(
 ) -> Result<String, String> {
     let pool = database_pool(&db).await?;
 
-    let last_invoice = sqlx::query(
-        "SELECT invoice_number FROM purchase_receipts 
-         WHERE invoice_number IS NOT NULL 
-         ORDER BY created_at DESC LIMIT 1"
-    )
-    .fetch_optional(&pool)
-    .await
-    .map_err(|e| e.to_string())?;
-
-    if let Some(row) = last_invoice {
-        let last_number: String = row.get("invoice_number");
-        
-        // Extract number from format PI-000001
-        if let Some(num_part) = last_number.strip_prefix("PI-") {
-            if let Ok(num) = num_part.parse::<i32>() {
-                return Ok(format!("PI-{:06}", num + 1));
-            }
-        }
-    }
-
-    // Default start
-    Ok("PI-000001".to_string())
+    let next: i64 = sqlx::query_scalar("SELECT COALESCE(MAX(CAST(SUBSTR(invoice_number, 4) AS INTEGER)), 0) + 1 FROM purchase_receipts WHERE invoice_number LIKE 'PI-%'")
+        .fetch_one(&pool).await.map_err(|e| e.to_string())?;
+    Ok(format!("PI-{:06}", next))
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -284,7 +241,7 @@ pub async fn search_products_for_purchase(
     db: State<'_, DbInstances>,
 ) -> Result<Vec<ProductSearchResult>, String> {
     let pool = database_pool(&db).await?;
-    
+
     let search_term = format!("%{}%", query);
 
     let products = sqlx::query(
@@ -292,17 +249,18 @@ pub async fn search_products_for_purchase(
             p.id,
             p.name,
             p.generic_name,
-            p.manufacturer,
-            p.sale_price,
-            COALESCE(SUM(i.quantity_on_hand), 0) as current_stock,
+            m.name AS manufacturer,
+            p.unit_price AS sale_price,
+            COALESCE(SUM(i.quantity_in_stock), 0) as current_stock,
             (SELECT pri.unit_cost 
              FROM purchase_receipt_items pri
              JOIN purchase_receipts pr ON pri.receipt_id = pr.id
              WHERE pri.product_id = p.id
              ORDER BY pr.received_date DESC LIMIT 1) as last_purchase_price
         FROM products p
-        LEFT JOIN inventory i ON p.id = i.product_id
-        WHERE p.name LIKE ? OR p.generic_name LIKE ? OR p.barcode LIKE ?
+        LEFT JOIN product_batches i ON p.id = i.product_id
+        LEFT JOIN manufacturers m ON p.manufacturer_id = m.id
+        WHERE p.is_active = 1 AND p.deleted_at IS NULL AND (p.name LIKE ? OR p.generic_name LIKE ? OR p.barcode LIKE ?)
         GROUP BY p.id
         ORDER BY p.name
         LIMIT 50"

@@ -80,7 +80,7 @@ pub(crate) async fn record(
         let shift: Option<String> = if request.method == "cash" {
             Some(sqlx::query_scalar("SELECT id FROM cashier_shifts WHERE status='open'").fetch_optional(&mut *tx).await.map_err(|e|e.to_string())?.ok_or("Open a cash drawer before paying a supplier in cash")?)
         } else {None};
-        let voucher = format!("SP-{}", &Uuid::new_v4().simple().to_string()[..12].to_uppercase());
+        let voucher = format!("SP-{}", Uuid::new_v4().simple().to_string()[..12].to_uppercase());
         sqlx::query("INSERT INTO supplier_opening_payments(id,voucher_number,opening_id,supplier_id,amount_cents,method,reference,notes,paid_at,recorded_by,shift_id,bank_account_id,bank_entry_date) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
             .bind(&id).bind(&voucher).bind(&request.po_id).bind(opening.get::<String,_>("supplier_id"))
             .bind(request.amount_cents).bind(&request.method).bind(&request.reference).bind(&request.notes)
@@ -121,7 +121,10 @@ pub(crate) async fn record(
     } else {
         0.0
     };
-    let accrued_cents = (po.get::<f64, _>("total_amount") * ratio * 100.0).round() as i64;
+    let receipt_adjustment: f64 = sqlx::query_scalar("SELECT COALESCE((SELECT SUM(pr.net_payable - COALESCE((SELECT SUM(ri.quantity * i.line_total / NULLIF(i.quantity_ordered, 0)) FROM purchase_receipt_items ri JOIN purchase_order_items i ON i.id = ri.po_item_id WHERE ri.receipt_id = pr.id), 0) * CASE WHEN (SELECT SUM(i.line_total) FROM purchase_order_items i WHERE i.po_id = po.id) > 0 THEN po.total_amount / (SELECT SUM(i.line_total) FROM purchase_order_items i WHERE i.po_id = po.id) ELSE 0 END) FROM purchase_receipts pr WHERE pr.po_id = po.id), 0.0) FROM purchase_orders po WHERE po.id = ?")
+        .bind(&request.po_id).fetch_one(&mut *tx).await.map_err(|e| e.to_string())?;
+    let accrued_cents =
+        ((po.get::<f64, _>("total_amount") * ratio + receipt_adjustment) * 100.0).round() as i64;
     let paid_cents: i64 = sqlx::query_scalar(
         "SELECT COALESCE(SUM(amount_cents), 0) FROM supplier_payments WHERE po_id = ?",
     )
@@ -269,5 +272,48 @@ mod tests {
                 .await
                 .unwrap();
         assert_eq!(shift, "drawer");
+    }
+}
+
+#[cfg(test)]
+mod enhanced_receipt_tests {
+    use super::*;
+    #[tokio::test]
+    async fn supplier_due_combines_old_receipts_with_actual_invoice_prices() {
+        let pool = sqlx::sqlite::SqlitePoolOptions::new()
+            .max_connections(1)
+            .connect("sqlite::memory:")
+            .await
+            .unwrap();
+        crate::database_api::initialize(&pool).await.unwrap();
+        let actor = "00000000-0000-0000-0000-000000000001";
+        sqlx::query("INSERT INTO suppliers (id, supplier_code, name, created_at, updated_at) VALUES ('sup', 'S1', 'Supplier', 'now', 'now')").execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO products (id, sku, name, unit_price, cost_price, created_at, updated_at) VALUES ('p', 'P1', 'Product', 10, 5, 'now', 'now')").execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO purchase_orders (id, po_number, supplier_id, order_date, status, total_amount, created_by, created_at, updated_at) VALUES ('po', 'PO1', 'sup', '2026-10-29', 'partial', 100, ?, 'now', 'now')").bind(actor).execute(&pool).await.unwrap();
+        sqlx::query("INSERT INTO purchase_order_items (id, po_id, product_id, quantity_ordered, quantity_received, unit_cost, line_total, created_at) VALUES ('line', 'po', 'p', 10, 5, 10, 100, 'now')").execute(&pool).await.unwrap();
+        let request = serde_json::from_value(serde_json::json!({
+            "poId":"po", "invoiceNumber":"", "supplierBillNumber":"DIST-1", "paymentMethod":"credit", "paymentAmount":0,
+            "userId":actor, "invoiceDiscountPercent":0,"invoiceDiscountFlat":4,"invoiceAdvanceTaxPercent":0,
+            "items":[{"poItemId":"line","productId":"p","quantity":2,"bonusQuantity":1,"unitCost":20,"salePrice":25,
+                "discountPercent":0,"advanceTaxPercent":0,"batchNumber":"DIST-B","expiryDate":"2099-12-31"}]
+        })).unwrap();
+        let receipt = crate::commands::purchase_receive_enhanced::receive_detailed(&pool, request)
+            .await
+            .unwrap();
+        assert_eq!(receipt.net_payable, 36.0);
+        let payment = |amount_cents| PaymentRequest {
+            bank_account_id: None,
+            request_id: None,
+            po_id: "po".into(),
+            amount_cents,
+            method: "mobile".into(),
+            reference: None,
+            notes: None,
+        };
+        // Old received stock accrued 50; new invoice accrues 36, independently of the order's quoted cost.
+        assert!(record(&pool, actor, payment(8601)).await.is_err());
+        let paid = record(&pool, actor, payment(8600)).await.unwrap();
+        assert_eq!(paid.balance_cents, 0);
+        assert!(record(&pool, actor, payment(1)).await.is_err());
     }
 }

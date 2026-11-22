@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue';
+import CompactPages from '@/components/ui/CompactPages.vue';
 import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import { useI18n } from '@/lib/i18n';
 import type { PosProduct } from '@/lib/pos';
 import type { Product } from '@/lib/types';
 
-const props = defineProps<{
+defineProps<{
   results: PosProduct[];
   loading: boolean;
   error: boolean;
@@ -35,12 +36,6 @@ watch(
   },
   { flush: 'post' },
 );
-watch([highlightedIndex, () => props.results], async () => {
-  await nextTick();
-  dialog.value
-    ?.querySelector(`#pos-search-product-${highlightedIndex.value}`)
-    ?.scrollIntoView({ block: 'nearest' });
-});
 function onDialogKeydown(event: KeyboardEvent) {
   if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
     emit('keydownSearch', event);
@@ -77,67 +72,75 @@ function onDialogKeydown(event: KeyboardEvent) {
         </button>
       </header>
       <div id="pos-search-dialog-results" class="pos-search-dialog-results" :aria-busy="loading">
-        <table role="grid" :aria-label="pick('Medicines', 'ادویات')">
-          <colgroup>
-            <col class="pos-search-code-col" />
-            <col class="pos-search-name-col" />
-            <col class="pos-search-pack-col" />
-            <col class="pos-search-price-col" />
-            <col class="pos-search-stock-col" />
-            <col class="pos-search-brand-col" />
-          </colgroup>
-          <thead>
-            <tr>
-              <th scope="col">{{ pick('Code', 'کوڈ') }}</th>
-              <th scope="col">{{ pick('Item Name', 'آئٹم کا نام') }}</th>
-              <th scope="col">{{ pick('Pack Type', 'پیک قسم') }}</th>
-              <th scope="col">{{ pick('Sale Price', 'فروخت قیمت') }}</th>
-              <th scope="col">{{ pick('Stock', 'اسٹاک') }}</th>
-              <th scope="col">{{ pick('Brand', 'برانڈ') }}</th>
-            </tr>
-          </thead>
-          <tbody v-if="!loading && !error">
-            <tr
-              v-for="(product, index) in results"
-              :key="product.id"
-              :id="`pos-search-product-${index}`"
-              :aria-selected="highlightedIndex === index"
-              class="pos-product-row"
-              :class="{ highlighted: highlightedIndex === index }"
-              @click="emit('select', product, false)"
-            >
-              <td :title="product.sku">
-                <bdi>{{ product.sku }}</bdi>
-              </td>
-              <td
-                :title="
-                  generic && product.generic_name
-                    ? `${product.name} · ${product.generic_name}`
-                    : product.name
-                "
+        <CompactPages
+          :items="results"
+          :row-height="23"
+          :header-height="24"
+          :active-index="highlightedIndex"
+          v-slot="{ rows }"
+        >
+          <table role="grid" :aria-label="pick('Medicines', 'ادویات')">
+            <colgroup>
+              <col class="pos-search-code-col" />
+              <col class="pos-search-name-col" />
+              <col class="pos-search-pack-col" />
+              <col class="pos-search-price-col" />
+              <col class="pos-search-stock-col" />
+              <col class="pos-search-brand-col" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col">{{ pick('Code', 'کوڈ') }}</th>
+                <th scope="col">{{ pick('Item Name', 'آئٹم کا نام') }}</th>
+                <th scope="col">{{ pick('Pack Type', 'پیک قسم') }}</th>
+                <th scope="col">{{ pick('Sale Price', 'فروخت قیمت') }}</th>
+                <th scope="col">{{ pick('Stock', 'اسٹاک') }}</th>
+                <th scope="col">{{ pick('Brand', 'برانڈ') }}</th>
+              </tr>
+            </thead>
+            <tbody v-if="!loading && !error">
+              <tr
+                v-for="{ item: product, index } in rows"
+                :key="product.id"
+                :id="`pos-search-product-${index}`"
+                :aria-selected="highlightedIndex === index"
+                class="pos-product-row"
+                :class="{ highlighted: highlightedIndex === index }"
+                @click="emit('select', product, false)"
               >
-                {{ product.name }}
-              </td>
-              <td>
-                <bdi>{{ formatNumber(product.pack_size) }}s</bdi>
-              </td>
-              <td>
-                <bdi>{{ formatCurrency(unitPrice(product) * product.pack_size) }}</bdi>
-              </td>
-              <td :class="{ 'pos-stock-negative': (product.recordedStock ?? 0) < 0 }">
-                <bdi>{{
-                  formatNumber(
-                    product.recordedStock ??
-                      product.batches.reduce((sum, batch) => sum + batch.quantity_in_stock, 0),
-                  )
-                }}</bdi>
-              </td>
-              <td :title="product.manufacturer_name || ''">
-                {{ product.manufacturer_name || '—' }}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                <td :title="product.sku">
+                  <bdi>{{ product.sku }}</bdi>
+                </td>
+                <td
+                  :title="
+                    generic && product.generic_name
+                      ? `${product.name} · ${product.generic_name}`
+                      : product.name
+                  "
+                >
+                  {{ product.name }}
+                </td>
+                <td>
+                  <bdi>{{ formatNumber(product.pack_size) }}s</bdi>
+                </td>
+                <td>
+                  <bdi>{{ formatCurrency(unitPrice(product) * product.pack_size) }}</bdi>
+                </td>
+                <td :class="{ 'pos-stock-negative': (product.recordedStock ?? 0) < 0 }">
+                  <bdi>{{
+                    formatNumber(
+                      product.recordedStock ??
+                        product.batches.reduce((sum, batch) => sum + batch.quantity_in_stock, 0),
+                    )
+                  }}</bdi>
+                </td>
+                <td :title="product.manufacturer_name || ''">
+                  {{ product.manufacturer_name || '—' }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </CompactPages>
         <p v-if="loading" role="status">
           {{ pick('Searching products…', 'مصنوعات تلاش ہو رہی ہیں…') }}
         </p>

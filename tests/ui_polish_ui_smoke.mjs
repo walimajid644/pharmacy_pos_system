@@ -168,8 +168,10 @@ try {
     '/user-rights',
     '/login-history',
     '/restore',
+    '/settings',
+    '/users',
   ];
-  for (const language of process.env.UI_POLISH_KEYS_ONLY ? [] : ['en', 'ur', 'mixed'])
+  for (const language of ['en', 'ur', 'mixed'])
     for (const theme of ['light', 'dark']) {
       await evaluate(
         `(()=>{uiPrefs.setLanguage(${JSON.stringify(language)});uiTheme.setTheme(${JSON.stringify(theme)});uiPrefs.setNumberFormat(${JSON.stringify(language === 'ur' ? 'ur' : 'en')});uiPrefs.setDateFormat('dmy');})()`,
@@ -180,6 +182,18 @@ try {
         if (route === '/report-center') {
           await evaluate("document.querySelector('.report-filters button[type=submit]').click()");
           await until("document.querySelector('.report-results tbody tr')");
+        }
+        if (route === '/settings') {
+          await evaluate(
+            "[...document.querySelectorAll('.workspace-body button')].find(b => b.textContent.trim().startsWith(uiPrefs.pick('Receipt','رسید'))).click()",
+          );
+          await delay(250);
+          const receiptIssues = await evaluate(probe);
+          if (receiptIssues.length) {
+            findings.push({ language, theme, route: '/settings/receipt', issues: receiptIssues });
+            await shot(language + '-' + theme + '-receipt-settings');
+          }
+          if (language === 'ur' && theme === 'dark') await shot('urdu-dark-receipt-settings');
         }
         const issues = await evaluate(probe);
         if (issues.length) {
@@ -230,6 +244,15 @@ try {
     'Medicine 2',
   );
   await field('#field-purchaseorderinformation-1', 's1', 'change');
+  // Typing a replacement must invalidate the old selected product before saving.
+  await evaluate("document.querySelector('.line-item input[role=combobox]').focus()");
+  await field('.line-item input[role=combobox]', 'No matching medicine');
+  await key('s', 83, 2);
+  await delay(100);
+  assert.equal(await evaluate('savedOrders.length'), 0);
+  await field('.line-item input[role=combobox]', 'Medicine');
+  await key('ArrowDown', 40);
+  await key('Enter', 13);
   await key('s', 83, 2);
   await until('savedOrders.length===1');
   assert.equal(await evaluate('savedOrders[0].items[0].quantityOrdered'), 5);
@@ -252,7 +275,7 @@ try {
   await delay(100);
   assert.equal(await evaluate('settingsSaves.length'), 1, 'Shortcut bypassed disabled save');
   results.push(
-    '84 locale/theme screen layouts at 1024x600; Urdu RTL and dark surfaces; translated labels; product typing/arrow/Enter focus; Ctrl+S settings/draft and Ctrl+Enter/Ctrl+P report shortcuts; denied save remains blocked',
+    '96 locale/theme screen layouts at 1024x600; Urdu RTL and dark surfaces; translated labels; product typing/arrow/Enter focus; Ctrl+S settings/draft and Ctrl+Enter/Ctrl+P report shortcuts; denied save remains blocked',
   );
   console.log(results.join('\n'));
 } catch (e) {

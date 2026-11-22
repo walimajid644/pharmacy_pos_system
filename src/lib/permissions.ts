@@ -28,6 +28,7 @@ export function routePermissions(path: string): string[] {
   if (path === '/incomes') return ['income.view'];
   if (path === '/payments' || path === '/expenses') return ['finance.view'];
   if (path === '/supplier-ledger' || path === '/purchase-suggestions') return ['purchases.read'];
+  if (path === '/purchases') return ['purchases.receive'];
   if (path.startsWith('/purchase-orders'))
     return [
       path.endsWith('/receive')

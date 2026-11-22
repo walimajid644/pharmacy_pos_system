@@ -164,7 +164,7 @@ try {
     "[...document.querySelectorAll('.dashboard-tasks button')].find(b=>b.textContent.includes('Purchases')).click()",
   );
   await until(
-    "document.querySelector('.purchase-terminal .status-tab-active')?.textContent.includes('All')",
+    "document.querySelector('.purchase-receive-enhanced h2')?.textContent.includes('Purchase Invoice')",
   );
   await open('/pos');
   inside(await evaluate(rect('.pos-complete')), 'checkout');

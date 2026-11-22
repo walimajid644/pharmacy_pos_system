@@ -731,3 +731,12 @@ The app is ready for a live pharmacy trial only when section 1 and the core work
 4. Bank deposits/withdrawals/transfers, statements/reconciliation, legacy bank-voucher assignment, income heads and non-sales income: implemented. Bank-method customer/supplier payments and expenses can be linked to accounts; drawer reconciliation includes bank cash movements and cash income.
 5. Configurable user rights within existing role limits, login/sign-out/expiry history and reviewed restore with a verified safety copy and restart-time replacement: implemented. Covered by focused backend/file tests, mocked browser checks and isolated native IPC acceptance.
 6. Expanded printable/exportable reports and purchase-form settings: implemented. Report Center provides 12 list/account/purchase/trend reports with full-result print/CSV; purchase defaults and zero-value field visibility persist in schema 021. Exact contents of closed reference submenus remain unspecified.
+
+
+## UI polish follow-up — November 22, 2026
+
+- [x] Extend Urdu labels and display-format preferences through purchasing, reports, daily closing, settings, account controls and receipt headings.
+- [x] Check 96 language/theme route combinations at 1024×600; repair mixed-label report clipping, dark native date controls and RTL table alignment.
+- [x] Fix receipt-settings preview, home shortcut icons and POS result paging; verify 71 screen/dialog states without overflow.
+- [x] Add purchase search keyboard selection and permission-aware draft/settings/report shortcuts.
+- [ ] Complete operator language/wording review and installed-release checks on the intended pharmacy PC; some native error messages remain in English.

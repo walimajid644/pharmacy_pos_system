@@ -511,12 +511,12 @@ try {
   );
   await shot('purchase-lines-paged-1024x600');
   await open('/purchase-orders/po-existing/receive');
-  await until("!!document.querySelector('.receive-items .table-row')");
+  await until("!!document.querySelector('.items-table tbody tr')");
   await delay(200);
   await fits('.workspace-body');
-  await fits('.receive-items');
-  inside(await evaluate(rect('.actions')), 'receipt actions');
-  assert(await evaluate("document.querySelectorAll('.receive-items .table-row').length < 40"));
+  await fits('.items-table-card');
+  inside(await evaluate(rect('.action-buttons')), 'receipt actions');
+  assert(await evaluate("document.querySelectorAll('.items-table tbody tr').length < 40"));
   await shot('purchase-receive-paged-1024x600');
   await evaluate(
     "document.documentElement.dataset.theme='dark';document.documentElement.classList.add('dark')",
@@ -531,7 +531,7 @@ try {
     ['/products', '#products-search'],
     ['/purchase-orders', '.filters-grid input'],
     ['/purchase-orders/new', '.form-select'],
-    ['/purchase-orders/po-existing/receive', '.col-batch input'],
+    ['/purchase-orders/po-existing/receive', 'input[aria-label^="Batch number"]'],
     ['/customers', 'input'],
     ['/suppliers', 'input'],
   ]) {

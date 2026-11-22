@@ -240,8 +240,8 @@ function navigateTo(path: string) {
   border-bottom: 2px solid var(--brand-600);
 }
 .home-view.home-view :deep(.task-icon) {
-  width: 28px;
-  height: 26px;
+  width: 36px;
+  height: 28px;
   font-size: 24px;
   background: transparent;
 }

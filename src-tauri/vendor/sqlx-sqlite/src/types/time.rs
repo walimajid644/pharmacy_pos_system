@@ -188,26 +188,77 @@ fn decode_datetime_from_text(value: &str) -> Option<PrimitiveDateTime> {
     None
 }
 
+#[cfg(test)]
+mod tests {
+    use super::{decode_datetime_from_text, decode_offset_datetime_from_text};
+    use time::macros::datetime;
+
+    #[test]
+    fn sqlite_primitive_timestamp_formats() {
+        for value in [
+            "2026-11-22 23:45",
+            "2026-11-22T23:45",
+            "2026-11-22 23:45:00",
+            "2026-11-22T23:45:00Z",
+        ] {
+            assert_eq!(
+                decode_datetime_from_text(value),
+                Some(datetime!(2026-11-22 23:45)),
+                "{value}",
+            );
+        }
+        for value in ["2026-11-22 23:45:12.123456", "2026-11-22T23:45:12.123456Z"] {
+            assert_eq!(
+                decode_datetime_from_text(value),
+                Some(datetime!(2026-11-22 23:45:12.123456)),
+                "{value}",
+            );
+        }
+        for value in ["2026-02-30 23:45", "2026-11-22 24:45", "invalid"] {
+            assert!(decode_datetime_from_text(value).is_none(), "{value}");
+        }
+    }
+
+    #[test]
+    fn sqlite_offset_timestamp_formats() {
+        for value in [
+            "2026-11-22T23:45:12.123456+05:30",
+            "2026-11-22 23:45:12.123456+05:30",
+            "2026-11-22 23:45:12.123456+0530",
+        ] {
+            assert_eq!(
+                decode_offset_datetime_from_text(value),
+                Some(datetime!(2026-11-22 23:45:12.123456 +05:30)),
+                "{value}",
+            );
+        }
+        for value in ["2026-11-22 23:45", "2026-11-22T23:45:00Z"] {
+            assert_eq!(
+                decode_offset_datetime_from_text(value),
+                Some(datetime!(2026-11-22 23:45 UTC)),
+                "{value}",
+            );
+        }
+        assert_eq!(
+            decode_offset_datetime_from_text("2026-11-22 23:45:00-04:00"),
+            Some(datetime!(2026-11-22 23:45 -04:00)),
+        );
+    }
+}
+
 mod formats {
-    use time::format_description::BorrowedFormatItem::{Component, Literal, Optional};
+    use time::format_description::BorrowedFormatItem::{Component, Optional, StringLiteral};
     use time::format_description::{modifier, BorrowedFormatItem, Component::*};
 
-    const YEAR: BorrowedFormatItem<'_> = Component(Year({
-        let mut value = modifier::Year::default();
-        value.padding = modifier::Padding::Zero;
-        value.repr = modifier::YearRepr::Full;
-        value.iso_week_based = false;
-        value.sign_is_mandatory = false;
-        value
-    }));
+    const YEAR: BorrowedFormatItem<'_> = Component(CalendarYearFullExtendedRange(
+        modifier::CalendarYearFullExtendedRange::default()
+            .with_padding(modifier::Padding::Zero)
+            .with_sign_is_mandatory(false),
+    ));
 
-    const MONTH: BorrowedFormatItem<'_> = Component(Month({
-        let mut value = modifier::Month::default();
-        value.padding = modifier::Padding::Zero;
-        value.repr = modifier::MonthRepr::Numerical;
-        value.case_sensitive = true;
-        value
-    }));
+    const MONTH: BorrowedFormatItem<'_> = Component(MonthNumerical(
+        modifier::MonthNumerical::default().with_padding(modifier::Padding::Zero),
+    ));
 
     const DAY: BorrowedFormatItem<'_> = Component(Day({
         let mut value = modifier::Day::default();
@@ -215,12 +266,9 @@ mod formats {
         value
     }));
 
-    const HOUR: BorrowedFormatItem<'_> = Component(Hour({
-        let mut value = modifier::Hour::default();
-        value.padding = modifier::Padding::Zero;
-        value.is_12_hour_clock = false;
-        value
-    }));
+    const HOUR: BorrowedFormatItem<'_> = Component(Hour24(
+        modifier::Hour24::default().with_padding(modifier::Padding::Zero),
+    ));
 
     const MINUTE: BorrowedFormatItem<'_> = Component(Minute({
         let mut value = modifier::Minute::default();
@@ -256,21 +304,21 @@ mod formats {
     pub(super) const OFFSET_DATE_TIME: &[BorrowedFormatItem<'_>] = {
         &[
             YEAR,
-            Literal(b"-"),
+            StringLiteral("-"),
             MONTH,
-            Literal(b"-"),
+            StringLiteral("-"),
             DAY,
-            Optional(&Literal(b" ")),
-            Optional(&Literal(b"T")),
+            Optional(&StringLiteral(" ")),
+            Optional(&StringLiteral("T")),
             HOUR,
-            Literal(b":"),
+            StringLiteral(":"),
             MINUTE,
-            Optional(&Literal(b":")),
+            Optional(&StringLiteral(":")),
             Optional(&SECOND),
-            Optional(&Literal(b".")),
+            Optional(&StringLiteral(".")),
             Optional(&SUBSECOND),
             Optional(&OFFSET_HOUR),
-            Optional(&Literal(b":")),
+            Optional(&StringLiteral(":")),
             Optional(&OFFSET_MINUTE),
         ]
     };
@@ -278,38 +326,38 @@ mod formats {
     pub(super) const PRIMITIVE_DATE_TIME_SPACE_SEPARATED: &[BorrowedFormatItem<'_>] = {
         &[
             YEAR,
-            Literal(b"-"),
+            StringLiteral("-"),
             MONTH,
-            Literal(b"-"),
+            StringLiteral("-"),
             DAY,
-            Literal(b" "),
+            StringLiteral(" "),
             HOUR,
-            Literal(b":"),
+            StringLiteral(":"),
             MINUTE,
-            Optional(&Literal(b":")),
+            Optional(&StringLiteral(":")),
             Optional(&SECOND),
-            Optional(&Literal(b".")),
+            Optional(&StringLiteral(".")),
             Optional(&SUBSECOND),
-            Optional(&Literal(b"Z")),
+            Optional(&StringLiteral("Z")),
         ]
     };
 
     pub(super) const PRIMITIVE_DATE_TIME_T_SEPARATED: &[BorrowedFormatItem<'_>] = {
         &[
             YEAR,
-            Literal(b"-"),
+            StringLiteral("-"),
             MONTH,
-            Literal(b"-"),
+            StringLiteral("-"),
             DAY,
-            Literal(b"T"),
+            StringLiteral("T"),
             HOUR,
-            Literal(b":"),
+            StringLiteral(":"),
             MINUTE,
-            Optional(&Literal(b":")),
+            Optional(&StringLiteral(":")),
             Optional(&SECOND),
-            Optional(&Literal(b".")),
+            Optional(&StringLiteral(".")),
             Optional(&SUBSECOND),
-            Optional(&Literal(b"Z")),
+            Optional(&StringLiteral("Z")),
         ]
     };
 }

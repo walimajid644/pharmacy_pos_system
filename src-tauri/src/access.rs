@@ -176,6 +176,8 @@ pub(crate) async fn authorize_query(
             &[
                 "purchase_orders",
                 "purchase_order_items",
+                "purchase_receipts",
+                "purchase_receipt_items",
                 "supplier_payments",
                 "supplier_opening_payments",
                 "supplier_opening_outstanding",
@@ -188,10 +190,10 @@ pub(crate) async fn authorize_query(
             "documents.write",
         ),
     ] {
-        if tables.iter().any(|name| q.contains(name)) {
-            if !allowed.iter().any(|key| key == permission) {
-                return Err(format!("Permission denied: {permission}. Ask an administrator to review your user rights"));
-            }
+        if tables.iter().any(|name| q.contains(name))
+            && !allowed.iter().any(|key| key == permission)
+        {
+            return Err(format!("Permission denied: {permission}. Ask an administrator to review your user rights"));
         }
     }
     Ok(())

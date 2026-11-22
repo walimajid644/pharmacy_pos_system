@@ -275,6 +275,12 @@ const router = createRouter({
           meta: { requiresAuth: true, roles: ['admin', 'manager'] },
         },
         {
+          path: '/purchases',
+          name: 'purchase-invoice-new',
+          component: () => import('@/views/PurchaseInvoiceView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager'] },
+        },
+        {
           path: '/purchase-orders',
           name: 'purchase-orders',
           component: () => import('@/views/PurchaseOrdersView.vue'),
@@ -295,7 +301,7 @@ const router = createRouter({
         {
           path: '/purchase-orders/:id/receive',
           name: 'purchase-order-receive',
-          component: () => import('@/views/PurchaseBatchReceiveView.vue'),
+          component: () => import('@/views/PurchaseOrderReceiveView.vue'),
           meta: { requiresAuth: true, roles: ['admin', 'manager'] },
         },
         {
