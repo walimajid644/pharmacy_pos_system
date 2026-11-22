@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import type { PurchaseOrderFormData } from '@/lib/purchaseOrderForm';
 import { useI18n } from '@/lib/i18n';
 import Card from '@/components/ui/Card.vue';
@@ -12,15 +15,15 @@ const { formatCurrency } = useI18n();
 <template>
   <Card class="totals-card">
     <div class="totals-row">
-      <span class="totals-label">Subtotal:</span>
+      <span class="totals-label">{{ uiLabel('Subtotal:') }}</span>
       <span class="totals-value">{{ formatCurrency(subtotal) }}</span>
     </div>
     <div class="totals-row">
-      <span class="totals-label">Tax:</span>
+      <span class="totals-label">{{ uiLabel('Tax:') }}</span>
       <span class="totals-value">{{ formatCurrency(taxAmount) }}</span>
     </div>
     <div class="totals-row">
-      <label class="totals-label" for="order-discount">Order discount:</label>
+      <label class="totals-label" for="order-discount">{{ uiLabel('Order discount:') }}</label>
       <Input
         id="order-discount"
         v-model.number="po.discount_amount"
@@ -31,7 +34,7 @@ const { formatCurrency } = useI18n();
       />
     </div>
     <div class="totals-row">
-      <label class="totals-label" for="shipping-cost">Shipping cost:</label>
+      <label class="totals-label" for="shipping-cost">{{ uiLabel('Shipping cost:') }}</label>
       <Input
         id="shipping-cost"
         v-model.number="po.shipping_cost"
@@ -42,7 +45,7 @@ const { formatCurrency } = useI18n();
       />
     </div>
     <div class="totals-row total-row">
-      <span class="totals-label">Total Amount:</span>
+      <span class="totals-label">{{ uiLabel('Total Amount:') }}</span>
       <span class="totals-value">{{ formatCurrency(totalAmount) }}</span>
     </div>
   </Card>

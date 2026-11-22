@@ -73,7 +73,7 @@ function openLabel(product: Product) {
           <Button variant="outline" size="md" @click="router.push('/catalog-bulk')">
             {{ pick('Bulk setup', 'اجتماعی ترتیب') }}
           </Button>
-          <Button variant="primary" size="md" @click="openAddModal">
+          <Button permission="catalog.write" variant="primary" size="md" @click="openAddModal">
             <span class="text-lg leading-none">+</span>
             {{ pick('Add Product', 'مصنوعات شامل کریں') }}
           </Button>

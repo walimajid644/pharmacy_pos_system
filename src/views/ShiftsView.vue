@@ -158,7 +158,11 @@ onMounted(load);
           />
         </label>
         <button
-          :disabled="busy || (current.cashierId !== auth.currentUser?.id && !canReview)"
+          :disabled="
+            busy ||
+            !auth.can('shifts.close') ||
+            (current.cashierId !== auth.currentUser?.id && !canReview)
+          "
           class="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
         >
           {{ pick('Close shift and reconcile', 'شفٹ بند کریں اور حساب ملائیں') }}
@@ -178,7 +182,7 @@ onMounted(load);
             class="mt-1 w-full rounded border bg-background p-2"
         /></label>
         <button
-          :disabled="busy"
+          :disabled="busy || !auth.can('shifts.open')"
           class="rounded bg-primary px-4 py-2 text-primary-foreground disabled:opacity-50"
         >
           {{ pick('Open shift', 'شفٹ کھولیں') }}

@@ -2,6 +2,60 @@ use super::*;
 use sqlx::sqlite::SqlitePoolOptions;
 
 #[tokio::test]
+async fn receipt_logo_survives_database_upgrade_restart_and_removal() {
+    let p = SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    // Start with the original schema, before receipt logos were supported.
+    sqlx::raw_sql(include_str!("../../migrations/001_app_schema.sql"))
+        .execute(&p)
+        .await
+        .unwrap();
+    initialize(&p).await.unwrap();
+    let id: String = sqlx::query_scalar("SELECT id FROM app_settings LIMIT 1")
+        .fetch_one(&p)
+        .await
+        .unwrap();
+    let actor = "00000000-0000-0000-0000-000000000001";
+    let logo = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAB";
+    execute_safe(
+        &p,
+        actor,
+        "UPDATE app_settings SET receipt_logo_path=? WHERE id=?".into(),
+        vec![serde_json::json!(logo), serde_json::json!(id)],
+    )
+    .await
+    .unwrap();
+    // Reinitialization must retain the uploaded logo, without duplicate columns.
+    initialize(&p).await.unwrap();
+    let saved: Option<String> =
+        sqlx::query_scalar("SELECT receipt_logo_path FROM app_settings WHERE id=?")
+            .bind(&id)
+            .fetch_one(&p)
+            .await
+            .unwrap();
+    assert_eq!(saved.as_deref(), Some(logo));
+    execute_safe(
+        &p,
+        actor,
+        "UPDATE app_settings SET receipt_logo_path=? WHERE id=?".into(),
+        vec![serde_json::Value::Null, serde_json::json!(id)],
+    )
+    .await
+    .unwrap();
+    initialize(&p).await.unwrap();
+    let cleared: Option<String> =
+        sqlx::query_scalar("SELECT receipt_logo_path FROM app_settings WHERE id=?")
+            .bind(&id)
+            .fetch_one(&p)
+            .await
+            .unwrap();
+    assert_eq!(cleared, None);
+}
+
+#[tokio::test]
 async fn product_registration_metadata_survives_upgrade_edit_and_restart() {
     let p = SqlitePoolOptions::new()
         .max_connections(1)
@@ -356,7 +410,7 @@ async fn default_admin_is_gated_until_password_changes() {
         .unwrap()
         .unwrap();
     assert!(user.must_change_password);
-    let session = SessionState(RwLock::new(Some(active)));
+    let session = SessionState(RwLock::new(Some(active)), RwLock::new(None));
     assert!(current_actor(&session).await.is_err());
     assert!(
         change_user_password(&pool, &user.id, "wrong", "New secret password 2026")
@@ -414,22 +468,28 @@ async fn plaintext_account_is_upgraded_after_successful_login() {
 
 #[tokio::test]
 async fn idle_session_is_still_active_just_before_twelve_hours() {
-    let session = SessionState(RwLock::new(Some(LoginSession {
-        user_id: "cashier".to_string(),
-        must_change_password: false,
-        last_activity: Instant::now() - Duration::from_secs(12 * 60 * 60 - 60),
-    })));
+    let session = SessionState(
+        RwLock::new(Some(LoginSession {
+            user_id: "cashier".to_string(),
+            must_change_password: false,
+            last_activity: Instant::now() - Duration::from_secs(12 * 60 * 60 - 60),
+        })),
+        RwLock::new(None),
+    );
     assert_eq!(current_actor(&session).await.unwrap(), "cashier");
     assert!(session.0.read().await.is_some());
 }
 
 #[tokio::test]
 async fn idle_session_expires_and_cannot_access_commands() {
-    let session = SessionState(RwLock::new(Some(LoginSession {
-        user_id: "cashier".to_string(),
-        must_change_password: false,
-        last_activity: Instant::now() - SESSION_IDLE_TIMEOUT,
-    })));
+    let session = SessionState(
+        RwLock::new(Some(LoginSession {
+            user_id: "cashier".to_string(),
+            must_change_password: false,
+            last_activity: Instant::now() - SESSION_IDLE_TIMEOUT,
+        })),
+        RwLock::new(None),
+    );
     assert!(current_actor(&session).await.is_err());
     assert!(session.0.read().await.is_none());
     assert!(current_actor(&session).await.is_err());
@@ -493,4 +553,65 @@ async fn direct_customer_balance_or_limit_sql_is_blocked() {
     )
     .await
     .is_err());
+}
+
+#[tokio::test]
+async fn authentication_events_and_idle_expiry_are_recorded_without_credentials() {
+    let p = SqlitePoolOptions::new()
+        .max_connections(1)
+        .connect("sqlite::memory:")
+        .await
+        .unwrap();
+    initialize(&p).await.unwrap();
+    assert!(
+        authenticate_user(&p, "no-such-user", "SECRET-SHOULD-NOT-LOG")
+            .await
+            .unwrap()
+            .is_none()
+    );
+    assert!(authenticate_user(&p, "admin", "WRONG-PASSWORD")
+        .await
+        .unwrap()
+        .is_none());
+    let (user, mut active) = authenticate_user(&p, "admin", "admin123")
+        .await
+        .unwrap()
+        .unwrap();
+    let public = serde_json::to_value(user).unwrap();
+    assert!(public["permissions"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|p| p == "backup.restore"));
+    active.must_change_password = false;
+    active.last_activity = Instant::now() - Duration::from_secs(12 * 60 * 60);
+    let session = SessionState(RwLock::new(Some(active)), RwLock::new(Some(p.clone())));
+    assert!(current_actor(&session).await.is_err());
+    assert!(current_actor(&session).await.is_err());
+    let rows = json_rows(
+        sqlx::query("SELECT * FROM login_events ORDER BY occurred_at")
+            .fetch_all(&p)
+            .await
+            .unwrap(),
+    )
+    .unwrap();
+    let events: Vec<_> = rows.iter().map(|r| r["event"].as_str().unwrap()).collect();
+    assert_eq!(
+        events,
+        vec![
+            "failed_sign_in",
+            "failed_sign_in",
+            "sign_in",
+            "session_expired"
+        ]
+    );
+    let text = serde_json::to_string(&rows).unwrap();
+    for secret in [
+        "SECRET-SHOULD-NOT-LOG",
+        "WRONG-PASSWORD",
+        "admin123",
+        "password_hash",
+    ] {
+        assert!(!text.contains(secret));
+    }
 }

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import CompactPages from '@/components/ui/CompactPages.vue';
 import type { Ref } from 'vue';
 import type { useUsers } from '@/composables/useUsers';
@@ -23,7 +26,7 @@ defineProps<{
 <template>
   <div class="paged-table-host tool-table-scroll flex-1 overflow-auto p-6">
     <div v-if="loading && users.length === 0" class="text-center py-12 text-gray-500">
-      Loading users...
+      {{ uiLabel('Loading users...') }}
     </div>
 
     <div v-else-if="filteredUsers.length === 0" class="text-center py-12 text-gray-500">
@@ -61,7 +64,7 @@ defineProps<{
                 v-if="user.id === authStore.currentUser?.id"
                 class="ml-2 text-xs text-secondary-600 font-semibold"
               >
-                (You)
+                {{ uiLabel('(You)') }}
               </span>
             </td>
             <td class="p-3">{{ user.full_name }}</td>
@@ -97,7 +100,7 @@ defineProps<{
                 @click="deleteUser(user)"
                 :disabled="user.id === authStore.currentUser?.id"
               >
-                Delete
+                {{ uiLabel('Delete') }}
               </Button>
             </td>
           </tr>

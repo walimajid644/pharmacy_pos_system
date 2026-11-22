@@ -23,6 +23,66 @@ const router = createRouter({
       meta: { requiresAuth: true },
       children: [
         {
+          path: '/user-rights',
+          name: 'user-rights',
+          component: () => import('@/views/UserRightsView.vue'),
+          meta: { requiresAuth: true, roles: ['admin'] },
+        },
+        {
+          path: '/login-history',
+          name: 'login-history',
+          component: () => import('@/views/LoginHistoryView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager'] },
+        },
+        {
+          path: '/restore',
+          name: 'restore',
+          component: () => import('@/views/RestoreView.vue'),
+          meta: { requiresAuth: true, roles: ['admin'] },
+        },
+        {
+          path: '/income-heads',
+          name: 'income-heads',
+          component: () => import('@/views/CatalogRegisterView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager'] },
+        },
+        {
+          path: '/bank-transactions',
+          name: 'bank-transactions',
+          component: () => import('@/views/BankTransactionsView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager', 'accountant'] },
+        },
+        {
+          path: '/incomes',
+          name: 'incomes',
+          component: () => import('@/views/IncomeView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager', 'accountant'] },
+        },
+        {
+          path: '/expense-heads',
+          name: 'expense-heads',
+          component: () => import('@/views/CatalogRegisterView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager'] },
+        },
+        {
+          path: '/bank-accounts',
+          name: 'bank-accounts',
+          component: () => import('@/views/CatalogRegisterView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager'] },
+        },
+        {
+          path: '/opening-balances',
+          name: 'opening-balances',
+          component: () => import('@/views/OpeningBalancesView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager'] },
+        },
+        {
+          path: '/batch-stickers',
+          name: 'batch-stickers',
+          component: () => import('@/views/BatchStickersView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager'] },
+        },
+        {
           path: '/categories',
           name: 'categories',
           component: () => import('@/views/CatalogRegisterView.vue'),
@@ -167,6 +227,12 @@ const router = createRouter({
           meta: { requiresAuth: true, roles: ['admin', 'manager', 'cashier'] },
         },
         {
+          path: '/report-center',
+          name: 'report-center',
+          component: () => import('@/views/ReportCenterView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager', 'accountant'] },
+        },
+        {
           path: '/reports',
           name: 'reports',
           component: () => import('@/views/ReportsView.vue'),
@@ -177,6 +243,12 @@ const router = createRouter({
           name: 'users',
           component: () => import('@/views/UsersView.vue'),
           meta: { requiresAuth: true, roles: ['admin'] },
+        },
+        {
+          path: '/purchase-settings',
+          name: 'purchase-settings',
+          component: () => import('@/views/PurchaseSettingsView.vue'),
+          meta: { requiresAuth: true, roles: ['admin', 'manager'] },
         },
         {
           path: '/settings',
@@ -223,7 +295,7 @@ const router = createRouter({
         {
           path: '/purchase-orders/:id/receive',
           name: 'purchase-order-receive',
-          component: () => import('@/views/PurchaseOrderReceiveView.vue'),
+          component: () => import('@/views/PurchaseBatchReceiveView.vue'),
           meta: { requiresAuth: true, roles: ['admin', 'manager'] },
         },
         {
@@ -257,6 +329,11 @@ const router = createRouter({
 
 router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore();
+  if (authStore.maintenance && authStore.isAuthenticated && to.path !== '/restore') {
+    next('/restore');
+    return;
+  }
+  await authStore.refreshPermissions();
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
     next('/login');
@@ -265,8 +342,8 @@ router.beforeEach(async (to, _from, next) => {
   } else if (to.path === '/login' && authStore.isAuthenticated) {
     next('/');
   } else if (
-    to.meta.roles &&
-    !authStore.hasRole(to.meta.roles as import('@/lib/types').UserRole[])
+    (to.meta.roles && !authStore.hasRole(to.meta.roles as import('@/lib/types').UserRole[])) ||
+    !authStore.canRoute(to.path)
   ) {
     next('/');
   } else {

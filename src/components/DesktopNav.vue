@@ -20,6 +20,41 @@ const groups: NavGroup[] = [
     en: 'Register',
     ur: 'رجسٹر',
     items: [
+      {
+        path: '/income-heads',
+        en: 'Income Heads',
+        ur: 'آمدنی کی مدات',
+        icon: '▤',
+        roles: ['admin', 'manager'],
+      },
+      {
+        path: '/expense-heads',
+        en: 'Expense Heads',
+        ur: 'اخراجات کے مدات',
+        icon: '▤',
+        roles: ['admin', 'manager'],
+      },
+      {
+        path: '/bank-accounts',
+        en: 'Bank Accounts',
+        ur: 'بینک کھاتے',
+        icon: '▤',
+        roles: ['admin', 'manager'],
+      },
+      {
+        path: '/opening-balances',
+        en: 'Opening Balances',
+        ur: 'ابتدائی بیلنس',
+        icon: '▤',
+        roles: ['admin', 'manager'],
+      },
+      {
+        path: '/batch-stickers',
+        en: 'Print Batch Stickers',
+        ur: 'بیچ کے اسٹیکرز',
+        icon: '▤',
+        roles: ['admin', 'manager'],
+      },
       { path: '/categories', en: 'Categories', ur: 'زمرے', icon: '▤', roles: ['admin', 'manager'] },
       {
         path: '/manufacturers',
@@ -126,6 +161,20 @@ const groups: NavGroup[] = [
     ur: 'کھاتے',
     items: [
       {
+        path: '/bank-transactions',
+        en: 'Bank Transactions',
+        ur: 'بینک لین دین',
+        icon: '↔',
+        roles: ['admin', 'manager', 'accountant'],
+      },
+      {
+        path: '/incomes',
+        en: 'Incomes',
+        ur: 'آمدنی',
+        icon: '▥',
+        roles: ['admin', 'manager', 'accountant'],
+      },
+      {
         path: '/customer-ledger',
         en: 'Customer Udhar Ledger',
         ur: 'گاہک کا ادھار کھاتہ',
@@ -174,6 +223,21 @@ const groups: NavGroup[] = [
     ur: 'انتظام',
     items: [
       {
+        path: '/user-rights',
+        en: 'User Rights',
+        ur: 'صارف کے اختیارات',
+        icon: '⚿',
+        roles: ['admin'],
+      },
+      {
+        path: '/login-history',
+        en: 'Login History',
+        ur: 'لاگ ان کی تاریخ',
+        icon: '◷',
+        roles: ['admin', 'manager'],
+      },
+      { path: '/restore', en: 'Restore Data', ur: 'ڈیٹا بحال کریں', icon: '↶', roles: ['admin'] },
+      {
         path: '/fbr-sandbox',
         en: 'FBR DI Sandbox Check',
         ur: 'FBR DI سینڈ باکس جانچ',
@@ -210,6 +274,13 @@ const groups: NavGroup[] = [
         roles: ['admin', 'manager', 'accountant'],
       },
       {
+        path: '/report-center',
+        en: 'Report Center',
+        ur: 'رپورٹ مرکز',
+        icon: '▤',
+        roles: ['admin', 'manager', 'accountant'],
+      },
+      {
         path: '/reports',
         en: 'Reports',
         ur: 'رپورٹس',
@@ -222,6 +293,13 @@ const groups: NavGroup[] = [
     en: 'General Settings',
     ur: 'عمومی ترتیبات',
     items: [
+      {
+        path: '/purchase-settings',
+        en: 'Purchase Form Settings',
+        ur: 'خریداری فارم ترتیبات',
+        icon: '⚙',
+        roles: ['admin', 'manager'],
+      },
       { path: '/settings', en: 'Settings', ur: 'ترتیبات', icon: '⚙', roles: ['admin', 'manager'] },
       { path: '/change-password', en: 'Change password', ur: 'پاس ورڈ تبدیل کریں', icon: '🔑' },
     ],
@@ -238,7 +316,7 @@ const visibleGroups = computed(() =>
 );
 
 function allowed(item: NavItem) {
-  return !item.roles || auth.hasRole(item.roles);
+  return (!item.roles || auth.hasRole(item.roles)) && auth.canRoute(item.path);
 }
 function active(path: string) {
   return path === '/'

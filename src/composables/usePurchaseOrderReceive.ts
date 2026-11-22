@@ -1,3 +1,6 @@
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+import { useSettingsStore } from '@/stores/settings';
+import { purchasePreferences } from '@/lib/purchasePreferences';
 import { reportDiagnostic } from '@/lib/diagnostics';
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
@@ -9,6 +12,8 @@ import { useToast } from '@/composables/useToast';
 import type { PurchaseOrder, PurchaseOrderItem } from '@/lib/types';
 
 export function usePurchaseOrderReceive() {
+  const uiLabel = useWorkspaceLabels();
+  const settingsStore = useSettingsStore();
   const router = useRouter();
 
   const route = useRoute();
@@ -43,6 +48,7 @@ export function usePurchaseOrderReceive() {
   async function loadPO() {
     loading.value = true;
     try {
+      await settingsStore.loadSettings();
       const [poData] = await executeQuery<PurchaseOrder & { supplier_name: string }>(
         `SELECT po.*, s.name as supplier_name
          FROM purchase_orders po
@@ -52,7 +58,7 @@ export function usePurchaseOrderReceive() {
       );
 
       if (!poData) {
-        showToast('Purchase order not found', 'error');
+        showToast(uiLabel('Purchase order not found'), 'error');
         router.push('/purchase-orders');
         return;
       }
@@ -69,12 +75,14 @@ export function usePurchaseOrderReceive() {
 
       receiveItems.value = items.map((item) => ({
         ...item,
-        receive_now: item.quantity_ordered - item.quantity_received,
+        receive_now: purchasePreferences(settingsStore.settings).purchase_fill_remaining
+          ? item.quantity_ordered - item.quantity_received
+          : 0,
         batch_number: '',
         expiry_date: '',
       }));
     } catch {
-      showToast('Error loading purchase order', 'error');
+      showToast(uiLabel('Error loading purchase order'), 'error');
       reportDiagnostic('operation_failed', 'workspace');
     } finally {
       loading.value = false;
@@ -86,8 +94,9 @@ export function usePurchaseOrderReceive() {
   });
 
   async function receiveGoods() {
+    if (saving.value) return;
     if (!po.value || !['sent', 'partial'].includes(po.value.status)) {
-      showToast('Only sent or partially received orders can receive stock', 'error');
+      showToast(uiLabel('Only sent or partially received orders can receive stock'), 'error');
       return;
     }
     if (!authStore.currentUser || !validate()) return;
@@ -109,10 +118,10 @@ export function usePurchaseOrderReceive() {
             })),
         },
       });
-      showToast('Goods received successfully', 'success');
+      showToast(uiLabel('Goods received successfully'), 'success');
       router.push('/purchase-orders');
     } catch {
-      showToast('Error receiving goods', 'error');
+      showToast(uiLabel('Error receiving goods'), 'error');
       reportDiagnostic('operation_failed', 'workspace');
     } finally {
       saving.value = false;
@@ -121,29 +130,29 @@ export function usePurchaseOrderReceive() {
 
   function validate(): boolean {
     if (!receiveItems.value.some((item) => Number(item.receive_now) > 0)) {
-      showToast('Enter a quantity to receive', 'error');
+      showToast(uiLabel('Enter a quantity to receive'), 'error');
       return false;
     }
     for (const item of receiveItems.value) {
       if (!Number.isInteger(Number(item.receive_now)) || Number(item.receive_now) < 0) {
-        showToast('Receive quantities must be whole, non-negative numbers', 'error');
+        showToast(uiLabel('Receive quantities must be whole, non-negative numbers'), 'error');
         return false;
       }
       if (item.receive_now > 0) {
         if (!item.batch_number) {
-          showToast('Please enter batch number for all items to receive', 'error');
+          showToast(uiLabel('Please enter batch number for all items to receive'), 'error');
           return false;
         }
         if (!item.expiry_date) {
-          showToast('Please enter expiry date for all items to receive', 'error');
+          showToast(uiLabel('Please enter expiry date for all items to receive'), 'error');
           return false;
         }
         if (item.expiry_date <= new Date().toISOString().slice(0, 10)) {
-          showToast('Expiry date must be in the future', 'error');
+          showToast(uiLabel('Expiry date must be in the future'), 'error');
           return false;
         }
         if (item.receive_now > item.quantity_ordered - item.quantity_received) {
-          showToast('Receive quantity cannot exceed ordered quantity', 'error');
+          showToast(uiLabel('Receive quantity cannot exceed ordered quantity'), 'error');
           return false;
         }
       }

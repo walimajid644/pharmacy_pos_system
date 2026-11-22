@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import type { Supplier } from '@/lib/types';
 import type { PurchaseOrderFormData } from '@/lib/purchaseOrderForm';
 import Card from '@/components/ui/Card.vue';
@@ -10,17 +13,17 @@ const po = defineModel<PurchaseOrderFormData>({ required: true });
 
 <template>
   <Card class="form-section">
-    <h3 class="section-title">Order Information</h3>
+    <h3 class="section-title">{{ uiLabel('Order Information') }}</h3>
     <div class="form-grid">
       <div class="form-field">
-        <label for="field-purchaseorderinformation-1">Supplier *</label>
+        <label for="field-purchaseorderinformation-1">{{ uiLabel('Supplier *') }}</label>
         <select
           id="field-purchaseorderinformation-1"
           v-model="po.supplier_id"
           class="form-select"
           required
         >
-          <option value="">Select supplier...</option>
+          <option value="">{{ uiLabel('Select supplier...') }}</option>
           <option v-for="supplier in suppliers" :key="supplier.id" :value="supplier.id">
             {{ supplier.name }} ({{ supplier.supplier_code }})
           </option>
@@ -28,12 +31,14 @@ const po = defineModel<PurchaseOrderFormData>({ required: true });
       </div>
 
       <div class="form-field">
-        <label for="field-purchaseorderinformation-2">Order Date *</label>
+        <label for="field-purchaseorderinformation-2">{{ uiLabel('Order Date *') }}</label>
         <Input id="field-purchaseorderinformation-2" v-model="po.order_date" type="date" required />
       </div>
 
       <div class="form-field">
-        <label for="field-purchaseorderinformation-3">Expected Delivery Date</label>
+        <label for="field-purchaseorderinformation-3">{{
+          uiLabel('Expected Delivery Date')
+        }}</label>
         <Input
           id="field-purchaseorderinformation-3"
           v-model="po.expected_delivery_date"
@@ -42,12 +47,12 @@ const po = defineModel<PurchaseOrderFormData>({ required: true });
       </div>
 
       <div class="form-field full-width">
-        <label for="field-purchaseorderinformation-4">Notes</label>
+        <label for="field-purchaseorderinformation-4">{{ uiLabel('Notes') }}</label>
         <textarea
           id="field-purchaseorderinformation-4"
           v-model="po.notes"
           class="form-textarea"
-          placeholder="Additional notes or instructions..."
+          :placeholder="uiLabel('Additional notes or instructions...')"
           rows="3"
         ></textarea>
       </div>

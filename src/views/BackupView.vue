@@ -74,8 +74,8 @@ async function save() {
     <p>
       {{
         pick(
-          'For recovery, close Pharmacy POS before replacing the database. Keep another copy of backups away from this computer.',
-          'بحالی کے لیے ڈیٹابیس بدلنے سے پہلے Pharmacy POS بند کریں۔ بیک اپ کی ایک کاپی دوسرے کمپیوٹر یا USB پر رکھیں۔',
+          'Administrators can inspect and restore a backup through Admin → Restore Data. Keep another copy of backups away from this computer.',
+          'منتظم Admin → Restore Data سے بیک اپ کی جانچ اور بحالی کر سکتا ہے۔ ایک کاپی دوسرے کمپیوٹر یا USB پر رکھیں۔',
         )
       }}
     </p>

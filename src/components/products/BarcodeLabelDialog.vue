@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import { reportDiagnostic } from '@/lib/diagnostics';
 
 import { ref, computed, nextTick, onBeforeUnmount } from 'vue';
@@ -75,14 +78,17 @@ async function printLabels() {
       aria-label="Print barcode labels"
       class="compact-dialog-card barcode-dialog-card"
     >
-      <h2 class="text-xl font-semibold">Print barcode labels</h2>
+      <h2 class="text-xl font-semibold">{{ uiLabel('Print barcode labels') }}</h2>
       <p class="mt-2 text-sm">{{ product.name }} · {{ product.barcode }}</p>
       <p class="mt-1 text-xs text-muted-foreground">
-        75 × 35 mm Code 39 labels. Select a desktop label printer and matching paper in the print
-        dialog.
+        {{
+          uiLabel(
+            '75 × 35 mm Code 39 labels. Select a desktop label printer and matching paper in the print dialog.',
+          )
+        }}
       </p>
       <label class="mt-4 block text-sm"
-        >Number of labels
+        >{{ uiLabel('Number of labels') }}
         <input
           v-model.number="labelCount"
           type="number"
@@ -115,7 +121,7 @@ async function printLabels() {
       </div>
       <div class="mt-5 flex justify-end gap-2">
         <Button variant="outline" @click="emit('close')">Cancel</Button
-        ><Button @click="printLabels">Print labels</Button>
+        ><Button @click="printLabels">{{ uiLabel('Print labels') }}</Button>
       </div>
     </section>
   </div>

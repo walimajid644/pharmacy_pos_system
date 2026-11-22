@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import CompactPages from '@/components/ui/CompactPages.vue';
 import { bindTemplateRef } from '@/lib/templateRefs';
 
@@ -71,18 +74,21 @@ const bindeditorDialog = bindTemplateRef(editorDialog);
       ><button :disabled="loading" @click="load">{{ label('Refresh') }}</button>
     </div>
     <p class="commercial-hint">
-      Quantities and prices are per base unit.
+      {{ uiLabel('Quantities and prices are per base unit.') }}
       {{
         kind === 'estimate'
           ? 'Quoted totals exclude checkout tax and discounts.'
           : 'Pre-orders do not reserve stock or collect deposits.'
       }}
-      Conversion uses current prices, tax and available unexpired stock; review the sale before
-      checkout.
+      {{
+        uiLabel(
+          'Conversion uses current prices, tax and available unexpired stock; review the sale before checkout.',
+        )
+      }}
     </p>
     <p v-if="error" class="commercial-error" role="alert">{{ error }}</p>
     <div class="paged-table-host commercial-table-scroll">
-      <p v-if="loading" role="status">Loading documents…</p>
+      <p v-if="loading" role="status">{{ uiLabel('Loading documents…') }}</p>
       <CompactPages
         v-else
         :items="visible"
@@ -253,8 +259,9 @@ const bindeditorDialog = bindTemplateRef(editorDialog);
                   <td>
                     {{ products.find((p) => p.id === l.productId)?.name || 'Unavailable product'
                     }}<small
-                      >Pack:
-                      {{ products.find((p) => p.id === l.productId)?.pack_size }} units</small
+                      >{{ uiLabel('Pack:') }}
+                      {{ products.find((p) => p.id === l.productId)?.pack_size }}
+                      {{ uiLabel('units') }}</small
                     >
                   </td>
                   <td>
@@ -292,7 +299,7 @@ const bindeditorDialog = bindTemplateRef(editorDialog);
           >{{ label('Notes') }}<textarea v-model="form.notes" maxlength="1000" rows="2" />
         </label>
         <footer class="tool-summary">
-          <strong>Subtotal {{ formatCurrency(total) }}</strong
+          <strong>{{ uiLabel('Subtotal') }} {{ formatCurrency(total) }}</strong
           ><button class="bg-primary" :disabled="busy || !form.items.length">
             {{ busy ? label('Saving…') : label('Save document') }}
           </button>
@@ -314,7 +321,7 @@ const bindeditorDialog = bindTemplateRef(editorDialog);
           <tr>
             <th>{{ label('Product') }}</th>
             <th>{{ label('Units') }}</th>
-            <th>Rate</th>
+            <th>{{ uiLabel('Rate') }}</th>
             <th>{{ label('Amount') }}</th>
           </tr>
         </thead>
@@ -327,15 +334,21 @@ const bindeditorDialog = bindTemplateRef(editorDialog);
           </tr>
         </tbody>
       </table>
-      <h2>Quoted subtotal {{ formatCurrency(printing.subtotal_cents / 100) }}</h2>
+      <h2>{{ uiLabel('Quoted subtotal') }} {{ formatCurrency(printing.subtotal_cents / 100) }}</h2>
       <p>
-        Tax and discounts are calculated at checkout. This document is not a paid sales receipt.
+        {{
+          uiLabel(
+            'Tax and discounts are calculated at checkout. This document is not a paid sales receipt.',
+          )
+        }}
       </p>
       <p v-if="printing.kind === 'preorder'">
         {{ pick('No stock reservation or deposit.', 'اسٹاک محفوظ یا پیشگی رقم وصول نہیں کی گئی۔') }}
       </p>
       <p>{{ printing.notes }}</p>
-      <p v-if="printing.invoice_number">Converted to {{ printing.invoice_number }}</p>
+      <p v-if="printing.invoice_number">
+        {{ uiLabel('Converted to') }} {{ printing.invoice_number }}
+      </p>
     </section></Teleport
   >
 </template>

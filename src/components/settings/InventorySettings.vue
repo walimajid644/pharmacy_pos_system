@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import type { Ref } from 'vue';
 import type { useSettingsForm } from '@/composables/useSettingsForm';
 import Input from '@/components/ui/Input.vue';
@@ -26,7 +29,11 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
         placeholder="e.g. 10"
       />
       <p class="text-xs text-gray-500 mt-1">
-        Alert when product stock falls below this level (default reorder level for new products)
+        {{
+          uiLabel(
+            'Alert when product stock falls below this level (default reorder level for new products)',
+          )
+        }}
       </p>
     </div>
 
@@ -42,7 +49,9 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
         max="3650"
         placeholder="e.g. 60"
       />
-      <p class="text-xs text-muted mt-1">Alert when products expire within this many days</p>
+      <p class="text-xs text-muted mt-1">
+        {{ uiLabel('Alert when products expire within this many days') }}
+      </p>
     </div>
 
     <div
@@ -51,9 +60,11 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
       <div class="flex items-start gap-3">
         <span class="text-2xl">⚠️</span>
         <div>
-          <div class="font-semibold text-warning-text">Alert Settings</div>
+          <div class="font-semibold text-warning-text">{{ uiLabel('Alert Settings') }}</div>
           <div class="text-sm text-warning-text mt-1">
-            These settings control when alerts appear on the dashboard and in reports.
+            {{
+              uiLabel('These settings control when alerts appear on the dashboard and in reports.')
+            }}
           </div>
         </div>
       </div>

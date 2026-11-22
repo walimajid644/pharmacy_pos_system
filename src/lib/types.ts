@@ -11,6 +11,7 @@ export interface User {
   updated_at: string;
   deleted_at: string | null;
   must_change_password?: boolean;
+  permissions?: string[];
 }
 
 export interface Product {
@@ -146,7 +147,7 @@ export interface StockMovement {
   created_at: string;
 }
 
-export interface AppSettings {
+export interface AppSettings extends Partial<import('./purchasePreferences').PurchasePreferences> {
   id: string;
   company_name: string;
   company_address: string | null;
@@ -159,6 +160,7 @@ export interface AppSettings {
   near_expiry_days: number;
   receipt_header: string | null;
   receipt_footer: string | null;
+  receipt_logo_path?: string | null;
   show_drap: number;
   created_at: string;
   updated_at: string;

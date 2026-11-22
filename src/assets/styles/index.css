@@ -7,6 +7,7 @@
 @tailwind utilities;
 
 :root {
+  color-scheme: light;
   /* Quiet status surfaces; existing palette values remain unchanged. */
   --banner-success-bg: #f2f8ec;
   --banner-success-border: #d8e8c4;
@@ -225,6 +226,7 @@
 }
 
 [data-theme='dark'] {
+  color-scheme: dark;
   /* Quiet status surfaces — dark theme. */
   --banner-success-bg: #1a2410;
   --banner-success-border: #30421c;

@@ -46,10 +46,13 @@ export function useSupplierLedger() {
   const saving = ref(false);
 
   const selectedPo = ref('');
+  let paymentRequestId = crypto.randomUUID();
 
   const amount = ref<number | null>(null);
 
   const method = ref('cash');
+  const bankAccountId = ref('');
+  const bankAccounts = ref<{ id: string; name: string }[]>([]);
 
   const reference = ref('');
 
@@ -70,10 +73,13 @@ export function useSupplierLedger() {
   }
 
   function balanceCents(row: LedgerRow) {
-    return Math.max(0, accruedCents(row) - row.paid_cents);
+    return row.status === 'opening'
+      ? accruedCents(row) - row.paid_cents
+      : Math.max(0, accruedCents(row) - row.paid_cents);
   }
 
   function daysOverdue(row: LedgerRow) {
+    if (row.status === 'opening') return 0;
     const base = new Date(`${(row.received_date || row.order_date).slice(0, 10)}T00:00:00`);
     const due = new Date(base);
     due.setDate(due.getDate() + Number(row.payment_terms || 0));
@@ -94,9 +100,16 @@ export function useSupplierLedger() {
     visibleRows.value.reduce((sum, row) => sum + balanceCents(row), 0),
   );
 
+  const openingOutstanding = computed(() =>
+    visibleRows.value
+      .filter((row) => row.status === 'opening')
+      .reduce((sum, row) => sum + balanceCents(row), 0),
+  );
+
   const aging = computed(() => {
     const buckets = [0, 0, 0, 0, 0];
     for (const row of visibleRows.value) {
+      if (row.status === 'opening') continue;
       const days = daysOverdue(row);
       buckets[days === 0 ? 0 : days <= 30 ? 1 : days <= 60 ? 2 : days <= 90 ? 3 : 4] +=
         balanceCents(row);
@@ -108,14 +121,17 @@ export function useSupplierLedger() {
     loading.value = true;
     error.value = '';
     try {
+      bankAccounts.value = await executeQuery<{ id: string; name: string }>(
+        'SELECT id,name FROM bank_accounts WHERE is_active=1 AND deleted_at IS NULL ORDER BY name',
+      );
       rows.value =
         await executeQuery<LedgerRow>(`SELECT po.id, po.po_number, po.supplier_id, s.name AS supplier_name, po.order_date, po.received_date, s.payment_terms, po.status, po.total_amount,
         COALESCE((SELECT SUM(i.line_total) FROM purchase_order_items i WHERE i.po_id = po.id), 0) AS ordered_value,
         COALESCE((SELECT SUM(CASE WHEN i.quantity_ordered > 0 THEN i.line_total * i.quantity_received / i.quantity_ordered ELSE 0 END) FROM purchase_order_items i WHERE i.po_id = po.id), 0) AS received_value,
         COALESCE((SELECT SUM(p.amount_cents) FROM supplier_payments p WHERE p.po_id = po.id), 0) AS paid_cents
-        FROM purchase_orders po JOIN suppliers s ON s.id = po.supplier_id WHERE po.status IN ('partial', 'received') ORDER BY po.order_date DESC`);
+        FROM purchase_orders po JOIN suppliers s ON s.id = po.supplier_id WHERE po.status IN ('partial', 'received') UNION ALL SELECT o.id,'Opening · '||o.reference,o.supplier_id,s.name,o.entry_date,NULL,0,'opening',o.amount_cents/100.0,1,1,o.paid_cents FROM supplier_opening_outstanding o JOIN suppliers s ON s.id=o.supplier_id ORDER BY order_date DESC`);
       payments.value = await executeQuery<Payment>(
-        `SELECT p.*, s.name AS supplier_name FROM supplier_payments p JOIN suppliers s ON s.id = p.supplier_id ORDER BY p.paid_at DESC LIMIT 100`,
+        `SELECT p.id,p.voucher_number,p.po_id,s.name AS supplier_name,p.amount_cents,p.method,p.reference,p.paid_at FROM supplier_payments p JOIN suppliers s ON s.id=p.supplier_id UNION ALL SELECT p.id,p.voucher_number,p.opening_id,s.name,p.amount_cents,p.method,p.reference,p.paid_at FROM supplier_opening_payments p JOIN suppliers s ON s.id=p.supplier_id ORDER BY paid_at DESC LIMIT 100`,
       );
     } catch (e) {
       error.value = String(e);
@@ -148,14 +164,17 @@ export function useSupplierLedger() {
     try {
       const result = await invoke<Receipt>('record_supplier_payment', {
         request: {
+          requestId: paymentRequestId,
           poId: row.id,
           amountCents: cents,
           method: method.value,
+          bankAccountId: method.value === 'bank' ? bankAccountId.value || null : null,
           reference: reference.value,
           notes: notes.value,
         },
       });
       toast.success(`${pick('Payment recorded', 'ادائیگی درج ہوئی')}: ${result.voucherNumber}`);
+      paymentRequestId = crypto.randomUUID();
       amount.value = null;
       reference.value = '';
       notes.value = '';
@@ -196,6 +215,8 @@ export function useSupplierLedger() {
     selectedPo,
     amount,
     method,
+    bankAccounts,
+    bankAccountId,
     reference,
     notes,
     error,
@@ -207,6 +228,7 @@ export function useSupplierLedger() {
     visibleRows,
     suppliers,
     outstanding,
+    openingOutstanding,
     aging,
     load,
     save,

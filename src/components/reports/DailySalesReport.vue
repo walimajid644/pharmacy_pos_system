@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
+import { useI18n } from '@/lib/i18n';
+const { formatDate, formatNumber } = useI18n();
 import CompactPages from '@/components/ui/CompactPages.vue';
 import type { Ref } from 'vue';
 import type { useReports } from '@/composables/useReports';
@@ -21,10 +26,10 @@ defineProps<{
     <div class="p-6 border-b flex justify-between items-center">
       <div>
         <h2 class="text-xl font-bold">{{ label('Daily Sales Summary') }}</h2>
-        <p class="text-sm text-gray-600">{{ dateFrom }} to {{ dateTo }}</p>
+        <p class="text-sm text-gray-600">{{ dateFrom }} {{ uiLabel('to') }} {{ dateTo }}</p>
       </div>
       <Button variant="outline" size="sm" @click="exportToCSV('daily-sales', dailySalesData)">
-        📥 Export CSV
+        {{ uiLabel('📥 Export CSV') }}
       </Button>
     </div>
 
@@ -38,12 +43,12 @@ defineProps<{
         <table class="w-full border-collapse">
           <thead>
             <tr class="border-b bg-gray-50">
-              <th class="text-left p-3">{{ label('Date') }}</th>
-              <th class="text-right p-3">Invoices</th>
-              <th class="text-right p-3">Total Sales</th>
-              <th class="text-right p-3">Cash</th>
-              <th class="text-right p-3">Card</th>
-              <th class="text-right p-3">{{ label('Mobile') }}</th>
+              <th class="text-start p-3">{{ label('Date') }}</th>
+              <th class="text-end p-3">{{ uiLabel('Invoices') }}</th>
+              <th class="text-end p-3">{{ uiLabel('Total Sales') }}</th>
+              <th class="text-end p-3">{{ uiLabel('Cash') }}</th>
+              <th class="text-end p-3">{{ uiLabel('Card') }}</th>
+              <th class="text-end p-3">{{ label('Mobile') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -52,30 +57,30 @@ defineProps<{
               :key="row.sale_date"
               class="border-b hover:bg-gray-50"
             >
-              <td class="p-3">{{ new Date(row.sale_date).toLocaleDateString() }}</td>
-              <td class="p-3 text-right">{{ row.invoice_count }}</td>
-              <td class="p-3 text-right font-semibold">{{ formatCurrency(row.total_sales) }}</td>
-              <td class="p-3 text-right">{{ formatCurrency(row.cash_sales) }}</td>
-              <td class="p-3 text-right">{{ formatCurrency(row.card_sales) }}</td>
-              <td class="p-3 text-right">{{ formatCurrency(row.mobile_sales) }}</td>
+              <td class="p-3">{{ formatDate(row.sale_date) }}</td>
+              <td class="p-3 text-end">{{ formatNumber(row.invoice_count) }}</td>
+              <td class="p-3 text-end font-semibold">{{ formatCurrency(row.total_sales) }}</td>
+              <td class="p-3 text-end">{{ formatCurrency(row.cash_sales) }}</td>
+              <td class="p-3 text-end">{{ formatCurrency(row.card_sales) }}</td>
+              <td class="p-3 text-end">{{ formatCurrency(row.mobile_sales) }}</td>
             </tr>
           </tbody>
           <tfoot v-if="dailySalesData.length > 0" class="border-t bg-gray-50">
             <tr class="font-bold">
-              <td class="p-3">TOTAL</td>
-              <td class="p-3 text-right">
+              <td class="p-3">{{ uiLabel('TOTAL') }}</td>
+              <td class="p-3 text-end">
                 {{ dailySalesData.reduce((sum, r) => sum + r.invoice_count, 0) }}
               </td>
-              <td class="p-3 text-right">
+              <td class="p-3 text-end">
                 {{ formatCurrency(dailySalesData.reduce((sum, r) => sum + r.total_sales, 0)) }}
               </td>
-              <td class="p-3 text-right">
+              <td class="p-3 text-end">
                 {{ formatCurrency(dailySalesData.reduce((sum, r) => sum + r.cash_sales, 0)) }}
               </td>
-              <td class="p-3 text-right">
+              <td class="p-3 text-end">
                 {{ formatCurrency(dailySalesData.reduce((sum, r) => sum + r.card_sales, 0)) }}
               </td>
-              <td class="p-3 text-right">
+              <td class="p-3 text-end">
                 {{ formatCurrency(dailySalesData.reduce((sum, r) => sum + r.mobile_sales, 0)) }}
               </td>
             </tr>

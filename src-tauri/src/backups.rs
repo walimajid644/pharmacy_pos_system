@@ -10,7 +10,7 @@ use uuid::Uuid;
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BackupResult {
-    path: String,
+    pub(crate) path: String,
     created: bool,
 }
 

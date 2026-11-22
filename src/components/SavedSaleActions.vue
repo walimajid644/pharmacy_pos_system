@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import { computed, ref, watch, nextTick } from 'vue';
 import { invoke } from '@tauri-apps/api/core';
 import { useI18n } from '@/lib/i18n';
@@ -10,7 +13,7 @@ import {
 } from '@/lib/savedSale';
 const props = defineProps<{ invoiceId?: string | null }>(),
   emit = defineEmits<{ loaded: [sale: SavedInvoice] }>();
-const { pick, formatCurrency } = useI18n(),
+const { pick, formatCurrency, formatNumber, formatDateTime, isRTL } = useI18n(),
   sale = ref<SavedSale | null>(null),
   busy = ref(false),
   error = ref(''),
@@ -19,23 +22,18 @@ const { pick, formatCurrency } = useI18n(),
 
 // Format date/time for receipt header (e.g., "21-Nov-2026  01:22 PM")
 function formatReceiptDateTime(dateStr: string) {
-  const date = new Date(dateStr);
-  const day = String(date.getDate()).padStart(2, '0');
-  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const month = monthNames[date.getMonth()];
-  const year = date.getFullYear();
-  const hours = date.getHours();
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const ampm = hours >= 12 ? 'PM' : 'AM';
-  const hours12 = hours % 12 || 12;
-  return `${day}-${month}-${year}  ${String(hours12).padStart(2, '0')}:${minutes} ${ampm}`;
+  return formatDateTime(dateStr);
 }
 
 // Format amount without currency symbol, with 2 decimals
 function formatAmount(amount: number) {
-  return amount.toFixed(2);
+  return formatNumber(amount.toFixed(2));
 }
 const text = computed(() => (sale.value ? savedSaleText(sale.value, formatCurrency) : ''));
+const receiptLogo = computed(() => {
+  const value = sale.value?.shop?.receipt_logo_path;
+  return typeof value === 'string' ? value : '';
+});
 let version = 0;
 async function load() {
   const current = ++version;
@@ -166,41 +164,44 @@ defineExpose({ print, copy, whatsapp, load });
     </button>
   </section>
   <Teleport to="body"
-    ><section v-if="printing && sale" class="saved-sale-print">
+    ><section v-if="printing && sale" class="saved-sale-print" :dir="isRTL ? 'rtl' : 'ltr'">
       <!-- Logo - AT THE VERY TOP -->
-      <div v-if="sale.shop?.receipt_logo_path" class="receipt-logo">
+      <div v-if="receiptLogo" class="receipt-logo">
         <!-- Show actual image if it's a data URL -->
-        <img 
-          v-if="sale.shop.receipt_logo_path.startsWith('data:image')"
-          :src="sale.shop.receipt_logo_path"
+        <img
+          v-if="receiptLogo.startsWith('data:image')"
+          :src="receiptLogo"
           alt="Logo"
           class="receipt-logo-image"
         />
         <!-- Show placeholder otherwise -->
         <template v-else>
-          <div class="receipt-logo-placeholder">[LOGO]</div>
-          <div class="receipt-logo-note">{{ sale.shop.receipt_logo_path }}</div>
+          <div class="receipt-logo-placeholder">{{ uiLabel('[LOGO]') }}</div>
+          <div class="receipt-logo-note">{{ receiptLogo }}</div>
         </template>
       </div>
-      
+
       <!-- Company Name -->
       <div class="receipt-company-name">
         {{ sale.shop?.company_name || 'Pharmacy POS' }}
       </div>
-      
+
       <!-- Company Address and Phone -->
-      <div v-if="sale.shop?.company_address || sale.shop?.company_phone" class="receipt-company-info">
+      <div
+        v-if="sale.shop?.company_address || sale.shop?.company_phone"
+        class="receipt-company-info"
+      >
         <div v-if="sale.shop?.company_address">{{ sale.shop.company_address }}</div>
         <div v-if="sale.shop?.company_phone">{{ sale.shop.company_phone }}</div>
       </div>
-      
+
       <!-- Receipt Header (Custom) -->
       <div v-if="sale.shop?.receipt_header" class="receipt-custom-header">
         {{ sale.shop.receipt_header }}
       </div>
-      
+
       <div class="receipt-divider"></div>
-      
+
       <!-- Date/Time and User at top right -->
       <div class="receipt-header-line">
         <span class="receipt-datetime">{{ formatReceiptDateTime(sale.invoice.invoice_date) }}</span>
@@ -209,7 +210,7 @@ defineExpose({ print, copy, whatsapp, load });
 
       <!-- Payment Mode -->
       <div class="receipt-payment-mode">
-        <span>Payment Mode:</span>
+        <span>{{ uiLabel('Payment Mode:') }}</span>
         <strong>{{
           sale.invoice.payment_method === 'credit'
             ? 'Credit'
@@ -220,17 +221,17 @@ defineExpose({ print, copy, whatsapp, load });
       </div>
 
       <!-- Invoice Section Header -->
-      <div class="receipt-section-title">BILL/CASH MEMO</div>
+      <div class="receipt-section-title">{{ uiLabel('BILL/CASH MEMO') }}</div>
 
       <!-- Invoice Number -->
       <div class="receipt-invoice">
-        <span>Inv #:</span>
+        <span>{{ uiLabel('Inv #:') }}</span>
         <strong>{{ sale.invoice.invoice_number }}</strong>
       </div>
 
       <!-- Client Name -->
       <div class="receipt-client">
-        <span>Client Name:</span>
+        <span>{{ uiLabel('Client Name:') }}</span>
         <div>{{ sale.invoice.customer_name || 'Walk-in Customer' }}</div>
       </div>
 
@@ -238,10 +239,10 @@ defineExpose({ print, copy, whatsapp, load });
       <table class="receipt-items-table">
         <thead>
           <tr>
-            <th class="col-item">ITEM NAME</th>
-            <th class="col-qty">QTY</th>
-            <th class="col-rate">RATE</th>
-            <th class="col-amt">AMT</th>
+            <th class="col-item">{{ uiLabel('ITEM NAME') }}</th>
+            <th class="col-qty">{{ uiLabel('QTY') }}</th>
+            <th class="col-rate">{{ uiLabel('RATE') }}</th>
+            <th class="col-amt">{{ uiLabel('AMT') }}</th>
           </tr>
         </thead>
         <tbody>
@@ -257,7 +258,9 @@ defineExpose({ print, copy, whatsapp, load });
               </div>
             </td>
             <td class="col-qty">{{ l.sale_quantity ?? l.quantity }}</td>
-            <td class="col-rate">{{ formatAmount(l.line_total / (l.sale_quantity ?? l.quantity)) }}</td>
+            <td class="col-rate">
+              {{ formatAmount(l.line_total / (l.sale_quantity ?? l.quantity)) }}
+            </td>
             <td class="col-amt">{{ formatAmount(l.line_total) }}</td>
           </tr>
         </tbody>
@@ -265,19 +268,24 @@ defineExpose({ print, copy, whatsapp, load });
 
       <!-- Items count and Gross -->
       <div class="receipt-summary-line">
-        <span>Items <strong>{{ sale.items.length }}</strong></span>
-        <span>Gross: <strong>{{ formatAmount(sale.invoice.total_amount) }}</strong></span>
+        <span
+          >{{ uiLabel('Items') }} <strong>{{ sale.items.length }}</strong></span
+        >
+        <span
+          >{{ uiLabel('Gross:') }}
+          <strong>{{ formatAmount(sale.invoice.total_amount) }}</strong></span
+        >
       </div>
 
       <!-- Thank you message -->
       <div class="receipt-thankyou">
-        <div>THANK YOU</div>
-        <div>for Visiting us.</div>
+        <div>{{ uiLabel('THANK YOU') }}</div>
+        <div>{{ uiLabel('for Visiting us.') }}</div>
       </div>
 
       <!-- Total -->
       <div class="receipt-total-line">
-        <span>Total:</span>
+        <span>{{ uiLabel('Total:') }}</span>
         <strong>{{ Math.round(sale.invoice.net_amount) }}</strong>
       </div>
 
@@ -290,7 +298,13 @@ defineExpose({ print, copy, whatsapp, load });
 
       <!-- Footer disclaimer -->
       <div class="receipt-footer">
-        <p>Please ensure that medicines and other item tally with your prescription/demand and is not expired and no claim / return / exchange would be entertained after leaving counter.</p>
+        <p>
+          {{
+            uiLabel(
+              'Please ensure that medicines and other item tally with your prescription/demand and is not expired and no claim / return / exchange would be entertained after leaving counter.',
+            )
+          }}
+        </p>
         <p class="receipt-developer">Developed By IBS: (0304-5117454)</p>
       </div>
     </section></Teleport
@@ -427,13 +441,13 @@ defineExpose({ print, copy, whatsapp, load });
     font-size: 8pt;
     margin-bottom: 2mm;
   }
-  
+
   .receipt-datetime {
     font-weight: normal;
   }
-  
+
   .receipt-user {
-    text-align: right;
+    text-align: end;
     font-weight: bold;
   }
 
@@ -442,7 +456,7 @@ defineExpose({ print, copy, whatsapp, load });
     font-size: 8pt;
     margin-bottom: 1mm;
   }
-  
+
   .receipt-payment-mode strong {
     font-weight: bold;
   }
@@ -460,7 +474,7 @@ defineExpose({ print, copy, whatsapp, load });
     font-size: 8pt;
     margin-bottom: 2mm;
   }
-  
+
   .receipt-invoice strong {
     font-weight: bold;
   }
@@ -470,7 +484,7 @@ defineExpose({ print, copy, whatsapp, load });
     font-size: 8pt;
     margin-bottom: 3mm;
   }
-  
+
   .receipt-client span {
     display: block;
     margin-bottom: 1mm;
@@ -483,49 +497,49 @@ defineExpose({ print, copy, whatsapp, load });
     font-size: 8pt;
     margin-bottom: 2mm;
   }
-  
+
   .receipt-items-table thead {
     border-bottom: 1px solid black;
   }
-  
+
   .receipt-items-table th {
-    text-align: left;
+    text-align: start;
     padding: 1mm 0;
     font-weight: bold;
     font-size: 8pt;
   }
-  
+
   .receipt-items-table td {
-    text-align: left;
+    text-align: start;
     padding: 1mm 0;
     vertical-align: top;
     border-bottom: 1px dotted #999;
   }
-  
+
   .receipt-items-table .col-item {
     width: 42%;
   }
-  
+
   .receipt-items-table .col-qty {
     width: 12%;
     text-align: center;
   }
-  
+
   .receipt-items-table .col-rate {
     width: 23%;
-    text-align: right;
+    text-align: end;
   }
-  
+
   .receipt-items-table .col-amt {
     width: 23%;
-    text-align: right;
+    text-align: end;
   }
-  
+
   .item-name {
     font-weight: normal;
     word-wrap: break-word;
   }
-  
+
   .item-batch {
     font-size: 7pt;
     color: #555;
@@ -546,7 +560,7 @@ defineExpose({ print, copy, whatsapp, load });
     border-bottom: 1px solid black;
     margin: 2mm 0;
   }
-  
+
   .receipt-summary-line strong {
     font-weight: bold;
   }
@@ -561,13 +575,13 @@ defineExpose({ print, copy, whatsapp, load });
 
   /* Total line */
   .receipt-total-line {
-    text-align: right;
+    text-align: end;
     font-size: 10pt;
     font-weight: bold;
     margin: 3mm 0;
     padding-right: 2mm;
   }
-  
+
   .receipt-total-line strong {
     font-size: 12pt;
     margin-left: 5mm;
@@ -590,11 +604,11 @@ defineExpose({ print, copy, whatsapp, load });
     margin-top: 3mm;
     line-height: 1.3;
   }
-  
+
   .receipt-footer p {
     margin: 2mm 0;
   }
-  
+
   .receipt-developer {
     font-weight: bold;
     margin-top: 2mm;

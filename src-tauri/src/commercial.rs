@@ -36,6 +36,7 @@ async fn role(pool: &Pool<Sqlite>, actor: &str, finance: bool) -> Result<(), Str
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EntryRequest {
+    bank_account_id: Option<String>,
     request_id: String,
     kind: String,
     customer_id: Option<String>,
@@ -81,6 +82,7 @@ pub(crate) async fn record_entry(
             && prior.get::<String, _>("kind") == r.kind
             && prior.get::<Option<String>, _>("customer_id") == r.customer_id
             && prior.get::<i64, _>("amount_cents") == r.amount_cents
+            && prior.get::<Option<String>, _>("bank_account_id") == r.bank_account_id
             && prior.get::<String, _>("method") == r.method
             && prior.get::<String, _>("category") == r.category.trim()
             && prior.get::<String, _>("description") == r.description.trim()
@@ -91,6 +93,19 @@ pub(crate) async fn record_entry(
             return Ok(prior.get("number"));
         }
         return Err("Payment request was already used; refresh before trying again".into());
+    }
+    if r.kind == "expense" {
+        let valid: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM expense_heads WHERE name=trim(?) COLLATE NOCASE AND is_active=1 AND deleted_at IS NULL")
+            .bind(&r.category).fetch_one(&mut *tx).await.map_err(|e|e.to_string())?;
+        if valid != 1 {
+            return Err("Choose an active expense head".into());
+        }
+    }
+    if let Some(bank) = &r.bank_account_id {
+        if r.method != "bank" {
+            return Err("Only bank payments can be assigned to a bank account".into());
+        }
+        crate::banking::require_bank(&mut tx, bank, &r.entry_date).await?;
     }
     let shift: Option<String> = if r.method == "cash" {
         Some(
@@ -116,8 +131,8 @@ pub(crate) async fn record_entry(
         return Err("Expenses cannot be linked to a customer".into());
     }
     let n = number(if r.kind == "receipt" { "CR" } else { "EX" });
-    sqlx::query("INSERT INTO account_entries (id,number,kind,customer_id,category,description,amount_cents,method,reference,entry_date,shift_id,recorded_by,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
-        .bind(&r.request_id).bind(&n).bind(&r.kind).bind(&r.customer_id).bind(r.category.trim()).bind(r.description.trim()).bind(r.amount_cents).bind(r.method).bind(r.reference.trim()).bind(r.entry_date).bind(shift).bind(actor).bind(chrono::Utc::now().to_rfc3339()).execute(&mut *tx).await.map_err(|e|e.to_string())?;
+    sqlx::query("INSERT INTO account_entries (id,number,kind,customer_id,category,description,amount_cents,method,reference,entry_date,shift_id,recorded_by,created_at,bank_account_id) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        .bind(&r.request_id).bind(&n).bind(&r.kind).bind(&r.customer_id).bind(r.category.trim()).bind(r.description.trim()).bind(r.amount_cents).bind(r.method).bind(r.reference.trim()).bind(r.entry_date).bind(shift).bind(actor).bind(chrono::Utc::now().to_rfc3339()).bind(&r.bank_account_id).execute(&mut *tx).await.map_err(|e|e.to_string())?;
     if r.kind == "receipt" {
         crate::credit::append(
             &mut tx,
@@ -165,6 +180,9 @@ pub(crate) async fn void_entry(
         .await
         .map_err(|e| e.to_string())?
         .ok_or("Entry is already void or unavailable")?;
+    if let Some(bank) = r.get::<Option<String>, _>("bank_account_id") {
+        crate::banking::period_open(&mut tx, &bank, &r.get::<String, _>("entry_date")).await?;
+    }
     if let Some(shift) = r.get::<Option<String>, _>("shift_id") {
         let open: i64 =
             sqlx::query_scalar("SELECT COUNT(*) FROM cashier_shifts WHERE id=? AND status='open'")

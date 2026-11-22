@@ -81,6 +81,16 @@ export function useDashboardWorkspace() {
 
   const pageTitle = computed(() => {
     const titles: [string, string, string][] = [
+      ['/user-rights', 'User Rights', 'صارف کے اختیارات'],
+      ['/login-history', 'Login History', 'لاگ ان کی تاریخ'],
+      ['/restore', 'Restore Data', 'ڈیٹا بحال کریں'],
+      ['/income-heads', 'Income Heads', 'آمدنی کی مدات'],
+      ['/bank-transactions', 'Bank Transactions', 'بینک لین دین'],
+      ['/incomes', 'Incomes', 'آمدنی'],
+      ['/expense-heads', 'Expense Heads', 'اخراجات کے مدات'],
+      ['/bank-accounts', 'Bank Accounts', 'بینک کھاتے'],
+      ['/opening-balances', 'Opening Balances', 'ابتدائی بیلنس'],
+      ['/batch-stickers', 'Print Batch Stickers', 'بیچ کے اسٹیکرز'],
       ['/categories', 'Categories', 'زمرے'],
       ['/manufacturers', 'Companies / Manufacturers', 'کمپنیاں / مینوفیکچررز'],
       ['/shelf-locations', 'Shelves / Locations', 'شیلف / مقامات'],
@@ -103,6 +113,8 @@ export function useDashboardWorkspace() {
       ['/customers', 'Customers', 'گاہک'],
       ['/sales-history', 'Sales History', 'فروخت کی تاریخ'],
       ['/daily-closing', 'Daily Closing', 'روزانہ بندش'],
+      ['/report-center', 'Report Center', 'رپورٹ مرکز'],
+      ['/purchase-settings', 'Purchase Form Settings', 'خریداری فارم ترتیبات'],
       ['/reports', 'Reports', 'رپورٹس'],
       ['/shifts', 'Cash Drawer', 'کیش دراز'],
       ['/suppliers', 'Suppliers', 'سپلائرز'],

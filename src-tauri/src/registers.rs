@@ -15,6 +15,9 @@ pub enum Kind {
     Category,
     Manufacturer,
     Shelf,
+    ExpenseHead,
+    IncomeHead,
+    Bank,
 }
 impl Kind {
     fn table(self) -> &'static str {
@@ -22,6 +25,9 @@ impl Kind {
             Self::Category => "categories",
             Self::Manufacturer => "manufacturers",
             Self::Shelf => "shelf_locations",
+            Self::ExpenseHead => "expense_heads",
+            Self::IncomeHead => "income_heads",
+            Self::Bank => "bank_accounts",
         }
     }
     fn column(self) -> &'static str {
@@ -29,10 +35,13 @@ impl Kind {
             Self::Category => "category_id",
             Self::Manufacturer => "manufacturer_id",
             Self::Shelf => "shelf_location_id",
+            Self::ExpenseHead => "expense_head_id",
+            Self::IncomeHead => "head_id",
+            Self::Bank => "entity_id",
         }
     }
     fn max_name(self) -> usize {
-        if matches!(self, Self::Shelf) {
+        if matches!(self, Self::Shelf | Self::ExpenseHead | Self::IncomeHead) {
             80
         } else {
             120
@@ -63,13 +72,23 @@ pub struct SaveRequest {
 
 async fn list(pool: &Pool<Sqlite>, actor: &str, kind: Kind) -> Result<Vec<Entry>, String> {
     crate::credit::require_role(pool, actor, &["admin", "manager"]).await?;
-    let query = format!(
-        "SELECT r.id,r.name,r.description,r.is_active,r.updated_at,
-        (SELECT COUNT(*) FROM products p WHERE p.{}=r.id AND p.deleted_at IS NULL) AS assigned_count
-        FROM {} r WHERE r.deleted_at IS NULL ORDER BY trim(r.name) COLLATE NOCASE,r.id",
-        kind.column(),
-        kind.table()
-    );
+    let assigned = match kind {
+        Kind::IncomeHead => {
+            "SELECT COUNT(*) FROM income_entries p WHERE p.head_id=r.id".to_string()
+        }
+        Kind::ExpenseHead => {
+            "SELECT COUNT(*) FROM account_entries p WHERE p.expense_head_id=r.id".to_string()
+        }
+        Kind::Bank => {
+            "SELECT COUNT(*) FROM opening_balances p WHERE p.kind='bank' AND p.entity_id=r.id"
+                .to_string()
+        }
+        _ => format!(
+            "SELECT COUNT(*) FROM products p WHERE p.{}=r.id AND p.deleted_at IS NULL",
+            kind.column()
+        ),
+    };
+    let query = format!("SELECT r.id,r.name,r.description,r.is_active,r.updated_at,({assigned}) AS assigned_count FROM {} r WHERE r.deleted_at IS NULL ORDER BY trim(r.name) COLLATE NOCASE,r.id", kind.table());
     let rows = sqlx::query(&query)
         .fetch_all(pool)
         .await

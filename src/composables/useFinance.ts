@@ -34,6 +34,8 @@ export function useFinance() {
     shift_status: string | null;
   };
 
+  const bankAccounts = ref<{ id: string; name: string }[]>([]);
+  const expenseHeads = ref<{ id: string; name: string }[]>([]);
   const customers = ref<Customer[]>([]),
     entries = ref<Entry[]>([]),
     busy = ref(false),
@@ -49,7 +51,8 @@ export function useFinance() {
   const form = ref({
     requestId: crypto.randomUUID(),
     customerId: String(route.query.customer || ''),
-    category: 'General',
+    category: '',
+    bankAccountId: '',
     description: '',
     amount: '',
     method: 'cash',
@@ -120,12 +123,25 @@ export function useFinance() {
     loading.value = true;
     error.value = '';
     try {
+      bankAccounts.value = await executeQuery<{ id: string; name: string }>(
+        'SELECT id,name FROM bank_accounts WHERE is_active=1 AND deleted_at IS NULL ORDER BY name',
+      );
+      expenseHeads.value = await executeQuery<{ id: string; name: string }>(
+        'SELECT id,name FROM expense_heads WHERE is_active=1 AND deleted_at IS NULL ORDER BY name COLLATE NOCASE',
+      );
+      if (!expense.value) form.value.category = 'Collection';
+      else if (!expenseHeads.value.some((head) => head.name === form.value.category))
+        form.value.category =
+          expenseHeads.value.find((head) => head.name === 'General')?.name ||
+          expenseHeads.value[0]?.name ||
+          '';
       customers.value = await executeQuery<Customer>(
         "SELECT id,first_name || ' ' || last_name || ' · ' || customer_code AS name,current_balance FROM customers WHERE deleted_at IS NULL AND (is_active=1 OR current_balance>0) ORDER BY first_name",
       );
       entries.value =
         await executeQuery<Entry>(`SELECT a.id,a.number,a.kind,COALESCE(c.first_name || ' ' || c.last_name,'Business expense') AS party,a.category,a.description,a.amount_cents,a.method,a.reference,a.entry_date,a.status,a.void_reason,sh.status AS shift_status FROM account_entries a LEFT JOIN customers c ON c.id=a.customer_id LEFT JOIN cashier_shifts sh ON sh.id=a.shift_id
    UNION ALL SELECT p.id,p.voucher_number,'supplier',s.name,'Supplier payment',COALESCE(p.notes,''),p.amount_cents,p.method,COALESCE(p.reference,''),p.paid_at,'posted',NULL,NULL FROM supplier_payments p JOIN suppliers s ON s.id=p.supplier_id
+   UNION ALL SELECT p.id,p.voucher_number,'supplier',s.name,'Supplier opening payment',COALESCE(p.notes,''),p.amount_cents,p.method,COALESCE(p.reference,''),p.paid_at,'posted',NULL,NULL FROM supplier_opening_payments p JOIN suppliers s ON s.id=p.supplier_id
    UNION ALL SELECT i.id,i.invoice_number,'sale',COALESCE(c.first_name || ' ' || c.last_name,'Walk-in'),'Sale payment',COALESCE(i.notes,''),CAST(ROUND(i.net_amount*100) AS INTEGER),i.payment_method,'',i.invoice_date,'posted',NULL,NULL FROM sales_invoices i LEFT JOIN customers c ON c.id=i.customer_id WHERE i.status='completed' AND i.payment_method<>'credit'
    UNION ALL SELECT r.id,COALESCE(r.refund_reference,r.return_number),'refund',COALESCE(c.first_name || ' ' || c.last_name,'Walk-in'),'Sales refund',r.return_number,CAST(ROUND(r.refund_amount*100) AS INTEGER),r.refund_method,COALESCE(r.refund_reference,''),r.return_date,'posted',NULL,NULL FROM sales_returns r JOIN sales_invoices i ON i.id=r.original_invoice_id LEFT JOIN customers c ON c.id=i.customer_id WHERE r.status='refunded' ORDER BY entry_date DESC`);
     } catch (e) {
@@ -148,6 +164,7 @@ export function useFinance() {
           kind: expense.value ? 'expense' : 'receipt',
           customerId: expense.value ? null : form.value.customerId || null,
           amountCents: cents,
+          bankAccountId: form.value.method === 'bank' ? form.value.bankAccountId || null : null,
         },
       });
       toast.success(`${expense.value ? 'Expense' : 'Receipt'} saved: ${number}`);
@@ -203,6 +220,8 @@ export function useFinance() {
     pick,
     expense,
     customers,
+    expenseHeads,
+    bankAccounts,
     entries,
     busy,
     loading,

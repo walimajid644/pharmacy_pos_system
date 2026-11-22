@@ -1,3 +1,6 @@
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+import { useSettingsStore } from '@/stores/settings';
+import { purchasePreferences } from '@/lib/purchasePreferences';
 import { reportDiagnostic } from '@/lib/diagnostics';
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
@@ -10,6 +13,9 @@ import type { Supplier, Product, PurchaseOrder, PurchaseOrderItem } from '@/lib/
 import type { PurchaseOrderFormData, PurchaseOrderLine } from '@/lib/purchaseOrderForm';
 
 export function usePurchaseOrderForm() {
+  const uiLabel = useWorkspaceLabels();
+  const settingsStore = useSettingsStore();
+  const preferences = computed(() => purchasePreferences(settingsStore.settings));
   const router = useRouter();
   const route = useRoute();
   const authStore = useAuthStore();
@@ -69,6 +75,7 @@ export function usePurchaseOrderForm() {
   async function loadData() {
     loading.value = true;
     try {
+      await settingsStore.loadSettings();
       // Load suppliers
       suppliers.value = await executeQuery<Supplier>(
         'SELECT * FROM suppliers WHERE deleted_at IS NULL AND is_active = 1 ORDER BY name',
@@ -96,17 +103,18 @@ export function usePurchaseOrderForm() {
                     product_name: product.name,
                     quantity_ordered: item.quantity,
                     unit_cost: product.cost_price,
-                    tax_rate: 0,
-                    discount_percent: 0,
+                    tax_rate: preferences.value.purchase_default_tax,
+                    discount_percent: preferences.value.purchase_default_discount,
                     line_total: roundMoney(item.quantity * product.cost_price),
                   },
                 ]
               : [];
           });
+          lineItems.value.forEach(calculateLineTotal);
           fromSuggestions.value = true;
           if (lineItems.value.length !== pending.items.length)
             showToast(
-              'Some products are no longer active. Review the remaining draft lines.',
+              uiLabel('Some products are no longer active. Review the remaining draft lines.'),
               'warning',
             );
           if (!lineItems.value.length) addLineItem();
@@ -115,7 +123,7 @@ export function usePurchaseOrderForm() {
         }
       }
     } catch {
-      showToast('Error loading data', 'error');
+      showToast(uiLabel('Error loading data'), 'error');
       reportDiagnostic('operation_failed', 'workspace');
     } finally {
       loading.value = false;
@@ -130,7 +138,7 @@ export function usePurchaseOrderForm() {
       );
 
       if (!existingPO) {
-        showToast('Purchase order not found', 'error');
+        showToast(uiLabel('Purchase order not found'), 'error');
         router.push('/purchase-orders');
         return;
       }
@@ -164,7 +172,7 @@ export function usePurchaseOrderForm() {
         line_total: item.line_total,
       }));
     } catch {
-      showToast('Error loading purchase order', 'error');
+      showToast(uiLabel('Error loading purchase order'), 'error');
       reportDiagnostic('operation_failed', 'workspace');
     }
   }
@@ -172,17 +180,17 @@ export function usePurchaseOrderForm() {
   function addLineItem() {
     lineItems.value.push({
       product_id: '',
-      quantity_ordered: 1,
+      quantity_ordered: preferences.value.purchase_default_quantity,
       unit_cost: 0,
-      tax_rate: 17,
-      discount_percent: 0,
+      tax_rate: preferences.value.purchase_default_tax,
+      discount_percent: preferences.value.purchase_default_discount,
       line_total: 0,
     });
   }
 
   function removeLineItem(index: number) {
     if (lineItems.value.length === 1) {
-      showToast('Cannot remove the last line item', 'error');
+      showToast(uiLabel('Cannot remove the last line item'), 'error');
       return;
     }
     lineItems.value.splice(index, 1);
@@ -204,7 +212,7 @@ export function usePurchaseOrderForm() {
   async function savePO(status: 'draft' | 'sent') {
     if (!validatePO()) return;
     if (!authStore.currentUser) {
-      showToast('Please sign in before saving an order', 'error');
+      showToast(uiLabel('Please sign in before saving an order'), 'error');
       return;
     }
     saving.value = true;
@@ -231,12 +239,16 @@ export function usePurchaseOrderForm() {
         },
       });
       showToast(
-        `Purchase order ${isEditing.value ? 'updated' : 'created'} successfully`,
+        uiLabel(
+          isEditing.value
+            ? 'Purchase order updated successfully'
+            : 'Purchase order created successfully',
+        ),
         'success',
       );
       router.push('/purchase-orders');
     } catch {
-      showToast('Error saving purchase order', 'error');
+      showToast(uiLabel('Error saving purchase order'), 'error');
       reportDiagnostic('operation_failed', 'workspace');
     } finally {
       saving.value = false;
@@ -244,17 +256,17 @@ export function usePurchaseOrderForm() {
   }
   function validatePO(): boolean {
     if (!po.value.supplier_id) {
-      showToast('Please select a supplier', 'error');
+      showToast(uiLabel('Please select a supplier'), 'error');
       return false;
     }
 
     if (!po.value.order_date) {
-      showToast('Please select order date', 'error');
+      showToast(uiLabel('Please select order date'), 'error');
       return false;
     }
 
     if (lineItems.value.length === 0) {
-      showToast('Please add at least one line item', 'error');
+      showToast(uiLabel('Please add at least one line item'), 'error');
       return false;
     }
 
@@ -270,7 +282,9 @@ export function usePurchaseOrderForm() {
       Math.abs(roundMoney(shipping) - shipping) > 0.0000001
     ) {
       showToast(
-        'Enter a valid discount and shipping cost (up to two decimals); discount cannot exceed subtotal',
+        uiLabel(
+          'Enter a valid discount and shipping cost (up to two decimals); discount cannot exceed subtotal',
+        ),
         'error',
       );
       return false;
@@ -278,15 +292,15 @@ export function usePurchaseOrderForm() {
 
     for (const item of lineItems.value) {
       if (!item.product_id) {
-        showToast('Please select products for all line items', 'error');
+        showToast(uiLabel('Please select products for all line items'), 'error');
         return false;
       }
       if (item.quantity_ordered <= 0) {
-        showToast('Quantity must be greater than 0', 'error');
+        showToast(uiLabel('Quantity must be greater than 0'), 'error');
         return false;
       }
       if (item.unit_cost < 0) {
-        showToast('Unit cost cannot be negative', 'error');
+        showToast(uiLabel('Unit cost cannot be negative'), 'error');
         return false;
       }
     }
@@ -295,12 +309,13 @@ export function usePurchaseOrderForm() {
   }
 
   function cancel() {
-    if (confirm('Are you sure you want to cancel? Unsaved changes will be lost.')) {
+    if (confirm(uiLabel('Are you sure you want to cancel? Unsaved changes will be lost.'))) {
       router.push('/purchase-orders');
     }
   }
 
   return {
+    preferences,
     isEditing,
     suppliers,
     products,

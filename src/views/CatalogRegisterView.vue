@@ -9,7 +9,7 @@ import { reportDiagnostic } from '@/lib/diagnostics';
 import { diagnosticReason } from '@/lib/diagnosticContext';
 import { errorMessage } from '@/lib/errors';
 
-type Kind = 'category' | 'manufacturer' | 'shelf';
+type Kind = 'category' | 'manufacturer' | 'shelf' | 'expense_head' | 'bank' | 'income_head';
 type Entry = {
   id: string;
   name: string;
@@ -23,6 +23,21 @@ const route = useRoute(),
   toast = useToast();
 const { pick, formatNumber } = useI18n();
 const registers = [
+  {
+    path: '/income-heads',
+    kind: 'income_head' as Kind,
+    en: 'Income Heads',
+    ur: 'آمدنی کی مدات',
+    max: 80,
+  },
+  {
+    path: '/expense-heads',
+    kind: 'expense_head' as Kind,
+    en: 'Expense Heads',
+    ur: 'اخراجات کے مدات',
+    max: 80,
+  },
+  { path: '/bank-accounts', kind: 'bank' as Kind, en: 'Bank Accounts', ur: 'بینک کھاتے', max: 120 },
   { path: '/categories', kind: 'category' as Kind, en: 'Categories', ur: 'زمرے', max: 120 },
   {
     path: '/manufacturers',
@@ -159,7 +174,7 @@ watch(
     <header class="tool-header">
       <div>
         <h1>{{ pick(config.en, config.ur) }}</h1>
-        <p>{{ pick('Reusable product register', 'مصنوعات کے لیے مشترکہ رجسٹر') }}</p>
+        <p>{{ pick('Reusable register entries', 'مشترکہ رجسٹر کے اندراجات') }}</p>
       </div>
       <div class="register-header-actions">
         <button type="button" :disabled="busy" @click="router.push('/products')">
@@ -214,7 +229,15 @@ watch(
               <tr>
                 <th>{{ pick('Name', 'نام') }}</th>
                 <th>{{ pick('Description', 'تفصیل') }}</th>
-                <th>{{ pick('Products', 'مصنوعات') }}</th>
+                <th>
+                  {{
+                    ['expense_head', 'income_head'].includes(config.kind)
+                      ? pick('Entries', 'اندراجات')
+                      : config.kind === 'bank'
+                        ? pick('Openings', 'ابتدائی بیلنس')
+                        : pick('Products', 'مصنوعات')
+                  }}
+                </th>
                 <th>{{ pick('Status', 'حیثیت') }}</th>
                 <th>{{ pick('Actions', 'اختیارات') }}</th>
               </tr>
@@ -297,7 +320,7 @@ watch(
           <p>
             {{
               pick(
-                'Inactive entries stay linked to existing products and can be reactivated.',
+                'Inactive entries preserve existing links and can be reactivated.',
                 'غیر فعال اندراجات موجودہ مصنوعات سے جڑے رہتے ہیں اور دوبارہ فعال کیے جا سکتے ہیں۔',
               )
             }}

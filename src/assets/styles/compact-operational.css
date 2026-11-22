@@ -899,8 +899,11 @@
   min-height: 0;
 }
 .workspace-body .tool-terminal.compact-workspace .tool-report-grid button {
-  min-height: 26px;
-  height: 26px;
+  height: auto;
+  min-height: 32px;
+  line-height: 1.15;
+  padding: 4px 6px;
+  white-space: normal;
   font-size: 11px;
   margin-bottom: 4px;
 }

@@ -25,10 +25,10 @@ let removeCloseListener: (() => void) | undefined;
 let closingAllowed = false;
 
 async function lockSession() {
-  if (locking || !auth.isAuthenticated) return;
+  if (locking || !auth.isAuthenticated || auth.maintenance) return;
   locking = true;
   try {
-    void auth.logout().catch(() => {
+    void auth.logout('idle').catch(() => {
       reportDiagnostic('operation_failed', 'workspace');
     });
     await router.replace('/login');
@@ -38,7 +38,7 @@ async function lockSession() {
 }
 
 function recordActivity() {
-  if (!auth.isAuthenticated || locking) return;
+  if (!auth.isAuthenticated || locking || auth.maintenance) return;
   const now = Date.now();
   if (now - lastActivity >= idleLimitMs) {
     void lockSession();
@@ -65,28 +65,33 @@ onMounted(() => {
   window.addEventListener('keydown', recordActivity);
   window.addEventListener('pointerdown', recordActivity);
   idleTimer = setInterval(() => {
-    if (auth.isAuthenticated && Date.now() - lastActivity >= idleLimitMs) void lockSession();
+    if (auth.isAuthenticated && !auth.maintenance && Date.now() - lastActivity >= idleLimitMs)
+      void lockSession();
   }, 1000);
   void getCurrentWindow()
     .onCloseRequested(async (event) => {
-      if (closingAllowed || !auth.isAuthenticated || !auth.hasRole(['admin', 'manager'])) return;
+      if (closingAllowed || !auth.isAuthenticated) return;
+      if (auth.maintenance) return;
       event.preventDefault();
       try {
-        const status = await invoke<{ path: string; created: boolean }>('backup_status');
-        const prompt =
-          language.value === 'ur'
-            ? 'آج درست بیک اپ محفوظ نہیں ہوا۔ بند کرنے سے پہلے ڈیٹابیس کا بیک اپ بنائیں؟'
-            : 'No valid backup was saved today. Save a database backup before closing?';
-        if (!status.created && window.confirm(prompt)) {
-          try {
-            await invoke('create_backup', { destinationDir: null });
-          } catch (error) {
-            window.alert(`Backup failed: ${String(error)}`);
+        if (auth.hasRole(['admin', 'manager']) && auth.can('backup.export')) {
+          const status = await invoke<{ path: string; created: boolean }>('backup_status');
+          const prompt =
+            language.value === 'ur'
+              ? 'آج درست بیک اپ محفوظ نہیں ہوا۔ بند کرنے سے پہلے ڈیٹابیس کا بیک اپ بنائیں؟'
+              : 'No valid backup was saved today. Save a database backup before closing?';
+          if (!status.created && window.confirm(prompt)) {
+            try {
+              await invoke('create_backup', { destinationDir: null });
+            } catch (error) {
+              window.alert(`Backup failed: ${String(error)}`);
+            }
           }
         }
       } catch {
         /* An expired session must not trap the desktop window. */
       }
+      await auth.logout('window_close').catch(() => {});
       closingAllowed = true;
       await getCurrentWindow().close();
     })

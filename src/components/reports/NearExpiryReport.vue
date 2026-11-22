@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import CompactPages from '@/components/ui/CompactPages.vue';
 import type { Ref } from 'vue';
 import type { useReports } from '@/composables/useReports';
@@ -39,7 +42,7 @@ defineProps<{
         </p>
       </div>
       <Button variant="outline" size="sm" @click="exportToCSV('near-expiry', nearExpiryData)">
-        📥 Export CSV
+        {{ uiLabel('📥 Export CSV') }}
       </Button>
     </div>
 
@@ -53,13 +56,13 @@ defineProps<{
         <table class="w-full border-collapse">
           <thead>
             <tr class="border-b bg-gray-50">
-              <th class="text-left p-3">{{ label('Product') }}</th>
-              <th class="text-left p-3">{{ label('Batch') }}</th>
-              <th class="text-left p-3">{{ pick('Expiry date', 'تاریخِ میعاد') }}</th>
-              <th class="text-right p-3">{{ pick('Days left', 'باقی دن') }}</th>
-              <th class="text-right p-3">{{ pick('Outside quarantine', 'قرنطینہ سے باہر') }}</th>
+              <th class="text-start p-3">{{ label('Product') }}</th>
+              <th class="text-start p-3">{{ label('Batch') }}</th>
+              <th class="text-start p-3">{{ pick('Expiry date', 'تاریخِ میعاد') }}</th>
+              <th class="text-end p-3">{{ pick('Days left', 'باقی دن') }}</th>
+              <th class="text-end p-3">{{ pick('Outside quarantine', 'قرنطینہ سے باہر') }}</th>
               <th>{{ pick('Quarantined', 'قرنطینہ') }}</th>
-              <th class="text-right p-3">{{ pick('Retail value', 'ریٹیل قیمت') }}</th>
+              <th class="text-end p-3">{{ pick('Retail value', 'ریٹیل قیمت') }}</th>
               <th>{{ pick('Actions', 'کارروائیاں') }}</th>
             </tr>
           </thead>
@@ -72,7 +75,7 @@ defineProps<{
               <td class="p-3">{{ row.product_name }}</td>
               <td class="p-3 font-mono text-sm">{{ row.batch_number }}</td>
               <td class="p-3 text-sm">{{ formatDate(row.expiry_date) }}</td>
-              <td class="p-3 text-right" :class="getDaysClass(row.days_until_expiry)">
+              <td class="p-3 text-end" :class="getDaysClass(row.days_until_expiry)">
                 {{ row.days_until_expiry }} {{ pick('days', 'دن')
                 }}<small class="block">{{
                   row.days_until_expiry < 0
@@ -80,13 +83,13 @@ defineProps<{
                     : pick('Near expiry', 'قریب المیعاد')
                 }}</small>
               </td>
-              <td class="p-3 text-right">{{ row.quantity_in_stock }}</td>
+              <td class="p-3 text-end">{{ row.quantity_in_stock }}</td>
               <td class="p-3">
                 <span v-if="row.quarantined_stock" class="stock-badge held"
                   >{{ pick('Quarantined', 'قرنطینہ') }}: {{ row.quarantined_stock }}</span
                 ><span v-else>0</span>
               </td>
-              <td class="p-3 text-right">{{ formatCurrency(row.batch_value) }}</td>
+              <td class="p-3 text-end">{{ formatCurrency(row.batch_value) }}</td>
               <td class="p-3">
                 <Button
                   v-if="auth.hasRole(['admin', 'manager'])"

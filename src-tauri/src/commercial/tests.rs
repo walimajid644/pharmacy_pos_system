@@ -14,6 +14,7 @@ async fn fixture() -> Pool<Sqlite> {
 }
 fn receipt(cents: i64) -> EntryRequest {
     EntryRequest {
+        bank_account_id: None,
         request_id: Uuid::new_v4().to_string(),
         kind: "receipt".into(),
         customer_id: Some("c".into()),

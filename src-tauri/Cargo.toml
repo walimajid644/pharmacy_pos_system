@@ -20,6 +20,7 @@ serde_json = "1"
 sqlx = { version = "0.8", default-features = false, features = ["sqlite", "runtime-tokio"] }
 uuid = { version = "1", features = ["v4"] }
 bcrypt = "0.17"
+sha2 = "0.10"
 reqwest = { version = "0.13", default-features = false, features = ["json", "native-tls"] }
 chrono = { version = "0.4", features = ["clock"] }
 tokio = { version = "1", features = ["sync"] }

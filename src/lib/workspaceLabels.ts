@@ -1,8 +1,12 @@
+import { uiTranslations } from '@/lib/uiTranslations';
 import { useI18n } from '@/lib/i18n';
 
 const ur: Record<string, string> = {
+  ...uiTranslations,
   'Payments & Receipts': 'ادائیگیاں اور وصولیاں',
   Expenses: 'اخراجات',
+  'Expense Head': 'اخراجات کی مد',
+  'Select expense head': 'اخراجات کی مد منتخب کریں',
   Estimates: 'تخمینے',
   'Customer Pre-orders': 'گاہک کے پیشگی آرڈر',
   'Advanced Item Search': 'تفصیلی مصنوعات تلاش',

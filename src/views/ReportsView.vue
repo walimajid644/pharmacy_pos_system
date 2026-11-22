@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import Card from '@/components/ui/Card.vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
@@ -40,6 +43,9 @@ const {
   <div class="tool-terminal compact-workspace p-6 h-full flex flex-col">
     <header class="tool-header">
       <h1>{{ label('Reports') }}</h1>
+      <Button variant="outline" @click="router.push('/report-center')">{{
+        uiLabel('Lists, Accounts & Purchase Reports')
+      }}</Button>
     </header>
     <div class="tool-report-grid grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
       <!-- Report Menu -->
@@ -82,7 +88,7 @@ const {
               @click="generateDailySalesReport"
               :disabled="loading"
             >
-              📊 Daily Sales Summary
+              {{ uiLabel('📊 Daily Sales Summary') }}
             </Button>
             <Button
               variant="outline"
@@ -90,7 +96,7 @@ const {
               @click="generateSalesByProductReport"
               :disabled="loading"
             >
-              📦 Sales by Product
+              {{ uiLabel('📦 Sales by Product') }}
             </Button>
 
             <h3 class="text-sm font-semibold text-gray-600 uppercase mt-6">
@@ -102,7 +108,7 @@ const {
               @click="generateLowStockReport"
               :disabled="loading"
             >
-              ⚠️ Low Stock Report
+              {{ uiLabel('⚠️ Low Stock Report') }}
             </Button>
             <Button
               variant="outline"
@@ -110,7 +116,7 @@ const {
               @click="generateNearExpiryReport"
               :disabled="loading"
             >
-              ⏰ Near Expiry Report
+              {{ uiLabel('⏰ Near Expiry Report') }}
             </Button>
             <Button
               variant="outline"
@@ -118,7 +124,7 @@ const {
               @click="generateStockValuationReport"
               :disabled="loading"
             >
-              💰 Stock Valuation
+              {{ uiLabel('💰 Stock Valuation') }}
             </Button>
           </div>
         </Card>
@@ -130,7 +136,7 @@ const {
           <div v-if="!selectedReport" class="flex-1 flex items-center justify-center text-gray-500">
             <div class="text-center">
               <div class="text-6xl mb-4">📈</div>
-              <div class="text-lg">Select a report to view</div>
+              <div class="text-lg">{{ uiLabel('Select a report to view') }}</div>
             </div>
           </div>
 

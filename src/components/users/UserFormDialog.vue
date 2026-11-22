@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import { ref } from 'vue';
 import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import { bindTemplateRef } from '@/lib/templateRefs';
@@ -45,21 +48,23 @@ useDialogKeyboard(formDialog, () => {
 
       <div class="p-6 space-y-4">
         <div>
-          <label for="field-userformdialog-1" class="block text-sm font-medium mb-2"
-            >Username *</label
-          >
+          <label for="field-userformdialog-1" class="block text-sm font-medium mb-2">{{
+            uiLabel('Username *')
+          }}</label>
           <Input
             id="field-userformdialog-1"
             v-model="formData.username"
             placeholder="e.g. john.doe"
             :disabled="!!editingUser"
           />
-          <p v-if="editingUser" class="text-xs text-gray-500 mt-1">Username cannot be changed</p>
+          <p v-if="editingUser" class="text-xs text-gray-500 mt-1">
+            {{ uiLabel('Username cannot be changed') }}
+          </p>
         </div>
 
         <div>
           <label for="field-userformdialog-2" class="block text-sm font-medium mb-2">
-            Password {{ editingUser ? '(leave blank to keep current)' : '*' }}
+            {{ uiLabel('Password') }} {{ editingUser ? '(leave blank to keep current)' : '*' }}
           </label>
           <Input
             id="field-userformdialog-2"
@@ -67,13 +72,15 @@ useDialogKeyboard(formDialog, () => {
             type="password"
             placeholder="Enter password"
           />
-          <p class="text-xs text-gray-500 mt-1">Password will be securely hashed (bcrypt)</p>
+          <p class="text-xs text-gray-500 mt-1">
+            {{ uiLabel('Password will be securely hashed (bcrypt)') }}
+          </p>
         </div>
 
         <div>
-          <label for="field-userformdialog-3" class="block text-sm font-medium mb-2"
-            >Full Name *</label
-          >
+          <label for="field-userformdialog-3" class="block text-sm font-medium mb-2">{{
+            uiLabel('Full Name *')
+          }}</label>
           <Input
             id="field-userformdialog-3"
             v-model="formData.full_name"
@@ -82,23 +89,25 @@ useDialogKeyboard(formDialog, () => {
         </div>
 
         <div>
-          <label for="field-userformdialog-4" class="block text-sm font-medium mb-2">Role *</label>
+          <label for="field-userformdialog-4" class="block text-sm font-medium mb-2">{{
+            uiLabel('Role *')
+          }}</label>
           <select
             id="field-userformdialog-4"
             v-model="formData.role"
             class="w-full border rounded-md p-2"
           >
-            <option value="cashier">Cashier - POS only</option>
-            <option value="manager">Manager - Products, customers, reports</option>
-            <option value="accountant">Accountant - Reports and closing</option>
-            <option value="admin">Administrator - Full access</option>
+            <option value="cashier">{{ uiLabel('Cashier - POS only') }}</option>
+            <option value="manager">{{ uiLabel('Manager - Products, customers, reports') }}</option>
+            <option value="accountant">{{ uiLabel('Accountant - Reports and closing') }}</option>
+            <option value="admin">{{ uiLabel('Administrator - Full access') }}</option>
           </select>
         </div>
 
         <div>
           <label class="flex items-center gap-2">
             <input v-model="formData.is_active" type="checkbox" />
-            <span class="text-sm font-medium">Active (can login)</span>
+            <span class="text-sm font-medium">{{ uiLabel('Active (can login)') }}</span>
           </label>
         </div>
       </div>

@@ -2,12 +2,16 @@ import { reportDiagnostic } from '@/lib/diagnostics';
 import { errorMessage } from '@/lib/errors';
 import { ref, onMounted, computed } from 'vue';
 import { executeQuery, executeUpdate } from '@/lib/database';
-import { formatCurrency, generateUUID } from '@/lib/utils';
+import { generateUUID } from '@/lib/utils';
+import { useI18n } from '@/lib/i18n';
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
 import { localDateKey, localDayBounds } from '@/lib/businessDay';
 import { useAuthStore } from '@/stores/auth';
 import { useToast } from '@/composables/useToast';
 
 export function useDailyClosing() {
+  const { formatCurrency } = useI18n();
+  const uiLabel = useWorkspaceLabels();
   interface DailySales {
     total_sales: number;
     total_cash: number;
@@ -95,7 +99,7 @@ export function useDailyClosing() {
       }
     } catch {
       reportDiagnostic('operation_failed', 'reports');
-      toast.error('Failed to load sales data');
+      toast.error(uiLabel('Failed to load sales data'));
     } finally {
       loading.value = false;
     }
@@ -132,7 +136,7 @@ export function useDailyClosing() {
 
   function openClosingForm() {
     if (salesData.value.invoice_count === 0) {
-      toast.warning('No sales for today. Nothing to close.');
+      toast.warning(uiLabel('No sales for today. Nothing to close.'));
       return;
     }
     showClosingForm.value = true;
@@ -153,7 +157,7 @@ export function useDailyClosing() {
       !Number.isFinite(Number(actualCard.value)) ||
       Number(actualCard.value) < 0
     ) {
-      toast.warning('Enter nonnegative cash and card amounts');
+      toast.warning(uiLabel('Enter nonnegative cash and card amounts'));
       return;
     }
 
@@ -179,13 +183,13 @@ export function useDailyClosing() {
         ],
       );
 
-      toast.success('Day closed successfully!');
+      toast.success(uiLabel('Day closed successfully!'));
       showClosingForm.value = false;
       todayClosed.value = true;
       await loadClosingHistory();
     } catch (error: unknown) {
       reportDiagnostic('operation_failed', 'reports');
-      toast.error('Failed to close day: ' + errorMessage(error));
+      toast.error(uiLabel('Failed to close day: ') + errorMessage(error));
     } finally {
       loading.value = false;
     }

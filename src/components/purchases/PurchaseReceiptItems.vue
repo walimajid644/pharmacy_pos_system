@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import type { Ref } from 'vue';
 import type { usePurchaseOrderReceive } from '@/composables/usePurchaseOrderReceive';
 import CompactPages from '@/components/ui/CompactPages.vue';
@@ -14,17 +17,17 @@ const receiveItems = defineModel<ViewValue<State['receiveItems']>>('receiveItems
 
 <template>
   <Card class="receive-items">
-    <h3 class="section-title">Items to Receive</h3>
+    <h3 class="section-title">{{ uiLabel('Items to Receive') }}</h3>
 
     <CompactPages :items="receiveItems" :row-height="42" :header-height="34" v-slot="{ rows }">
       <div class="items-table">
         <div class="table-header">
-          <div class="col-product">Product</div>
-          <div class="col-ordered">Ordered</div>
-          <div class="col-received">Already Received</div>
-          <div class="col-receive">Receive Now</div>
-          <div class="col-batch">Batch Number</div>
-          <div class="col-expiry">Expiry Date</div>
+          <div class="col-product">{{ uiLabel('Product') }}</div>
+          <div class="col-ordered">{{ uiLabel('Ordered') }}</div>
+          <div class="col-received">{{ uiLabel('Already Received') }}</div>
+          <div class="col-receive">{{ uiLabel('Receive Now') }}</div>
+          <div class="col-batch">{{ uiLabel('Batch Number') }}</div>
+          <div class="col-expiry">{{ uiLabel('Expiry Date') }}</div>
         </div>
 
         <div v-for="{ item } in rows" :key="item.id" class="table-row">

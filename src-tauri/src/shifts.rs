@@ -92,12 +92,18 @@ pub(crate) async fn close(
     let cash_refunds: i64 = sqlx::query_scalar(
         "SELECT COALESCE(SUM(CAST(ROUND(refund_amount * 100) AS INTEGER)), 0) FROM sales_returns WHERE refund_shift_id = ? AND status = 'refunded' AND refund_method = 'cash'",
     ).bind(&request.shift_id).fetch_one(&mut *tx).await.map_err(|e| e.to_string())?;
-    let supplier_cash: i64 = sqlx::query_scalar("SELECT COALESCE(SUM(amount_cents), 0) FROM supplier_payments WHERE shift_id = ? AND method = 'cash'")
+    let supplier_cash: i64 = sqlx::query_scalar("SELECT COALESCE(SUM(amount_cents), 0) FROM (SELECT amount_cents,shift_id,method FROM supplier_payments UNION ALL SELECT amount_cents,shift_id,method FROM supplier_opening_payments) WHERE shift_id = ? AND method = 'cash'")
         .bind(&request.shift_id).fetch_one(&mut *tx).await.map_err(|e| e.to_string())?;
     let account_cash:i64=sqlx::query_scalar("SELECT COALESCE(SUM(CASE WHEN kind='receipt' THEN amount_cents ELSE -amount_cents END),0) FROM account_entries WHERE shift_id=? AND method='cash' AND status='posted'").bind(&request.shift_id).fetch_one(&mut *tx).await.map_err(|e|e.to_string())?;
+    let bank_cash:i64=sqlx::query_scalar("SELECT COALESCE(SUM(CASE WHEN kind='deposit' THEN -amount_cents ELSE amount_cents END),0) FROM bank_transactions WHERE shift_id=? AND status='posted'")
+        .bind(&request.shift_id).fetch_one(&mut *tx).await.map_err(|e|e.to_string())?;
+    let income_cash:i64=sqlx::query_scalar("SELECT COALESCE(SUM(amount_cents),0) FROM income_entries WHERE shift_id=? AND method='cash' AND status='posted'")
+        .bind(&request.shift_id).fetch_one(&mut *tx).await.map_err(|e|e.to_string())?;
     let expected =
         row.get::<i64, _>("opening_cash_cents") + cash_sales - cash_refunds - supplier_cash
-            + account_cash;
+            + account_cash
+            + bank_cash
+            + income_cash;
     let variance = request.counted_cash_cents - expected;
     let now = chrono::Utc::now().to_rfc3339();
     let changed = sqlx::query("UPDATE cashier_shifts SET status = 'closed', closed_at = ?, closed_by = ?, counted_cash_cents = ?, expected_cash_cents = ?, variance_cents = ?, notes = ? WHERE id = ? AND status = 'open'")

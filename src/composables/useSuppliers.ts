@@ -89,7 +89,7 @@ export function useSuppliers() {
          COALESCE((SELECT SUM(i.line_total) FROM purchase_order_items i WHERE i.po_id = po.id), 0) AS ordered_value,
          COALESCE((SELECT SUM(CASE WHEN i.quantity_ordered > 0 THEN i.line_total * i.quantity_received / i.quantity_ordered ELSE 0 END) FROM purchase_order_items i WHERE i.po_id = po.id), 0) AS received_value,
          COALESCE((SELECT SUM(p.amount_cents) FROM supplier_payments p WHERE p.po_id = po.id), 0) AS paid_cents
-         FROM purchase_orders po WHERE po.status IN ('partial', 'received')`,
+         FROM purchase_orders po WHERE po.status IN ('partial', 'received') UNION ALL SELECT supplier_id,amount_cents/100.0,1,1,paid_cents FROM supplier_opening_outstanding`,
       );
       ledgerBalance.value = {};
       for (const row of balances) {
@@ -99,7 +99,7 @@ export function useSuppliers() {
             (row.ordered_value > 0 ? Math.min(1, row.received_value / row.ordered_value) : 0),
         );
         ledgerBalance.value[row.supplier_id] =
-          (ledgerBalance.value[row.supplier_id] || 0) + Math.max(0, accrued - row.paid_cents) / 100;
+          (ledgerBalance.value[row.supplier_id] || 0) + (accrued - row.paid_cents) / 100;
       }
     } catch {
       showToast(pick('Error loading suppliers', 'سپلائرز لوڈ کرنے میں خرابی'), 'error');
@@ -234,6 +234,16 @@ export function useSuppliers() {
   }
 
   async function deleteSupplier(id: string) {
+    if (Math.abs(ledgerBalance.value[id] || 0) >= 0.005) {
+      showToast(
+        pick(
+          'Settle the supplier balance before deleting this supplier.',
+          'سپلائر حذف کرنے سے پہلے بقایا ادا کریں۔',
+        ),
+        'error',
+      );
+      return;
+    }
     if (
       !confirm(
         pick(

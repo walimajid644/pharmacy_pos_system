@@ -1,4 +1,9 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
+import { useAuthStore } from '@/stores/auth';
+const auth = useAuthStore();
 import CompactPages from '@/components/ui/CompactPages.vue';
 import { bindTemplateRef } from '@/lib/templateRefs';
 import SupplierLedgerView from './SupplierLedgerView.vue';
@@ -10,6 +15,8 @@ const {
   pick,
   expense,
   customers,
+  expenseHeads,
+  bankAccounts,
   busy,
   loading,
   error,
@@ -88,7 +95,7 @@ const bindvoidDialog = bindTemplateRef(voidDialog);
           </button>
         </div>
         <div class="paged-table-host commercial-table-scroll">
-          <p v-if="loading" role="status">Loading entries…</p>
+          <p v-if="loading" role="status">{{ uiLabel('Loading entries…') }}</p>
           <CompactPages
             v-else
             :items="visible"
@@ -116,7 +123,9 @@ const bindvoidDialog = bindTemplateRef(voidDialog);
                   <td>
                     {{ e.party
                     }}<small>{{ e.category }} · {{ e.description }} {{ e.reference }}</small
-                    ><small v-if="e.void_reason">Voided: {{ e.void_reason }}</small>
+                    ><small v-if="e.void_reason"
+                      >{{ uiLabel('Voided:') }} {{ e.void_reason }}</small
+                    >
                   </td>
                   <td>{{ e.kind }}</td>
                   <td>{{ e.method }}</td>
@@ -179,31 +188,17 @@ const bindvoidDialog = bindTemplateRef(voidDialog);
             </select></label
           >
           <p v-if="selectedCustomer && !expense">
-            Outstanding: <strong>{{ formatCurrency(selectedCustomer.current_balance) }}</strong>
+            {{ uiLabel('Outstanding:') }}
+            <strong>{{ formatCurrency(selectedCustomer.current_balance) }}</strong>
           </p>
           <label v-if="expense"
-            >{{ label('Category')
-            }}<input
-              v-model="form.category"
-              required
-              maxlength="80"
-              list="expense-categories"
-            /><datalist id="expense-categories">
-              <option
-                v-for="c in [
-                  'Rent',
-                  'Utilities',
-                  'Salaries',
-                  'Transport',
-                  'Supplies',
-                  'Maintenance',
-                  'General',
-                ]"
-                :key="c"
-              >
-                {{ c }}
+            >{{ label('Expense Head')
+            }}<select v-model="form.category" required>
+              <option value="" disabled>{{ label('Select expense head') }}</option>
+              <option v-for="head in expenseHeads" :key="head.id" :value="head.name">
+                {{ head.name }}
               </option>
-            </datalist></label
+            </select></label
           >
           <label
             >{{ label('Description')
@@ -220,11 +215,25 @@ const bindvoidDialog = bindTemplateRef(voidDialog);
               <option value="mobile">{{ label('Mobile') }}</option>
             </select></label
           >
+          <label v-if="form.method === 'bank'"
+            >{{ pick('Bank account', 'بینک کھاتا')
+            }}<select v-model="form.bankAccountId" required>
+              <option value="" disabled>
+                {{ pick('Select bank account', 'بینک کھاتا منتخب کریں') }}
+              </option>
+              <option v-for="bank in bankAccounts" :key="bank.id" :value="bank.id">
+                {{ bank.name }}
+              </option>
+            </select></label
+          >
           <label
             >{{ label('Date')
             }}<input v-model="form.entryDate" type="date" required :max="today()" /></label
           ><label>{{ label('Reference') }}<input v-model="form.reference" maxlength="100" /></label
-          ><button class="bg-primary" :disabled="busy">
+          ><button
+            class="bg-primary"
+            :disabled="busy || !auth.can(expense ? 'finance.expenses' : 'finance.receipts')"
+          >
             {{
               busy ? label('Saving…') : expense ? label('Save expense') : label('Record receipt')
             }}
@@ -246,10 +255,13 @@ const bindvoidDialog = bindTemplateRef(voidDialog);
         class="commercial-dialog"
         @submit.prevent="voidEntry"
       >
-        <h2>Void {{ selected.number }}</h2>
+        <h2>{{ uiLabel('Void') }} {{ selected.number }}</h2>
         <p>
-          This preserves the original entry and reverses its balance effect. Cash entries can only
-          be voided while their drawer is open.
+          {{
+            uiLabel(
+              'This preserves the original entry and reverses its balance effect. Cash entries can only be voided while their drawer is open.',
+            )
+          }}
         </p>
         <p v-if="closedCash" role="alert" class="commercial-error">
           {{
@@ -281,7 +293,7 @@ const bindvoidDialog = bindTemplateRef(voidDialog);
       <p>{{ printing.description }}</p>
       <p>{{ printing.method }} · {{ printing.reference }}</p>
       <h2>{{ formatCurrency(printing.amount_cents / 100) }}</h2>
-      <p v-if="printing.void_reason">VOID: {{ printing.void_reason }}</p>
+      <p v-if="printing.void_reason">{{ uiLabel('VOID:') }} {{ printing.void_reason }}</p>
     </section></Teleport
   >
 </template>

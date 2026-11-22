@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import type { Ref } from 'vue';
 import type { useSettingsForm } from '@/composables/useSettingsForm';
 
@@ -14,9 +17,9 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
 function handleLogoUpload(event: Event) {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
-  
+
   if (!file) return;
-  
+
   // Validate file type
   const validTypes = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
   if (!validTypes.includes(file.type)) {
@@ -24,7 +27,7 @@ function handleLogoUpload(event: Event) {
     target.value = '';
     return;
   }
-  
+
   // Validate file size (max 5MB)
   const maxSize = 5 * 1024 * 1024; // 5MB in bytes
   if (file.size > maxSize) {
@@ -32,12 +35,12 @@ function handleLogoUpload(event: Event) {
     target.value = '';
     return;
   }
-  
+
   // Convert to base64 data URL for embedding
   const reader = new FileReader();
   reader.onload = (e) => {
-    const result = e.target?.result as string;
-    formData.value.receipt_logo_path = result; // Store base64 data URL
+    const result = e.target?.result;
+    if (typeof result === 'string') formData.value.receipt_logo_path = result;
   };
   reader.onerror = () => {
     alert('Error reading file. Please try again.');
@@ -61,7 +64,7 @@ function clearLogo() {
       <label for="field-receiptsettings-logo" class="block text-sm font-medium mb-2">{{
         pick('Pharmacy Logo (Optional)', 'فارمیسی کا لوگو (اختیاری)')
       }}</label>
-      
+
       <!-- File input for selecting logo -->
       <div class="space-y-2">
         <input
@@ -71,20 +74,23 @@ function clearLogo() {
           class="w-full border rounded-md p-2 text-sm"
           @change="handleLogoUpload"
         />
-        
+
         <!-- Show current logo path if exists -->
-        <div v-if="formData.receipt_logo_path" class="flex items-center gap-2 p-2 bg-gray-50 rounded border">
-          <span class="text-xs text-gray-600">Current:</span>
-          <span class="text-xs font-mono flex-1">{{ formData.receipt_logo_path }}</span>
-          <button
-            type="button"
-            class="text-xs text-red-600 hover:text-red-800"
-            @click="clearLogo"
-          >
+        <div
+          v-if="formData.receipt_logo_path"
+          class="flex items-center gap-2 p-2 bg-gray-50 rounded border"
+        >
+          <span class="text-xs text-gray-600">{{ uiLabel('Current:') }}</span>
+          <span class="text-xs font-mono flex-1">{{
+            formData.receipt_logo_path.startsWith('data:image/')
+              ? pick('Uploaded image', 'اپ لوڈ شدہ تصویر')
+              : formData.receipt_logo_path
+          }}</span>
+          <button type="button" class="text-xs text-red-600 hover:text-red-800" @click="clearLogo">
             {{ pick('Remove', 'ہٹائیں') }}
           </button>
         </div>
-        
+
         <!-- Or manual path input -->
         <details class="text-xs">
           <summary class="cursor-pointer text-gray-600 hover:text-gray-800">
@@ -98,9 +104,14 @@ function clearLogo() {
           />
         </details>
       </div>
-      
+
       <p class="text-xs text-gray-500 mt-1">
-        {{ pick('Upload PNG, JPG, or GIF image (recommended: 200-300px wide)', 'PNG، JPG، یا GIF تصویر اپ لوڈ کریں (تجویز: 200-300px چوڑی)') }}
+        {{
+          pick(
+            'Upload PNG, JPG, or GIF image (recommended: 200-300px wide)',
+            'PNG، JPG، یا GIF تصویر اپ لوڈ کریں (تجویز: 200-300px چوڑی)',
+          )
+        }}
       </p>
     </div>
 
@@ -115,7 +126,9 @@ function clearLogo() {
         rows="3"
         placeholder="Welcome to City Pharmacy&#10;Your Health, Our Priority"
       ></textarea>
-      <p class="text-xs text-gray-500 mt-1">Printed at the top of receipts (optional)</p>
+      <p class="text-xs text-gray-500 mt-1">
+        {{ uiLabel('Printed at the top of receipts (optional)') }}
+      </p>
     </div>
 
     <div>
@@ -129,7 +142,9 @@ function clearLogo() {
         rows="3"
         placeholder="Thank you for your business!&#10;Exchange policy: 7 days with receipt"
       ></textarea>
-      <p class="text-xs text-gray-500 mt-1">Printed at the bottom of receipts (optional)</p>
+      <p class="text-xs text-gray-500 mt-1">
+        {{ uiLabel('Printed at the bottom of receipts (optional)') }}
+      </p>
     </div>
 
     <div>
@@ -140,45 +155,54 @@ function clearLogo() {
         }}</span>
       </label>
       <p class="text-xs text-gray-500 mt-1 ml-6">
-        Display Drug Regulatory Authority of Pakistan registration numbers for controlled substances
+        {{
+          uiLabel(
+            'Display Drug Regulatory Authority of Pakistan registration numbers for controlled substances',
+          )
+        }}
       </p>
     </div>
 
     <div class="p-4 bg-gray-50 border border-gray-200 rounded-md">
       <div class="font-semibold mb-2">{{ pick('Receipt Preview', 'رسید کا نمونہ') }}</div>
-      
+
       <!-- Scrollable container for the receipt with increased height -->
-      <div class="overflow-y-auto border rounded bg-white" style="max-height: 70vh; min-height: 500px;">
-        <div class="text-xs font-mono p-3 max-w-md mx-auto" style="width: 80mm;">
-          
+      <div
+        class="overflow-y-auto border rounded bg-white"
+        style="max-height: 70vh; min-height: 500px"
+      >
+        <div class="text-xs font-mono p-3 max-w-md mx-auto" style="width: 80mm">
           <!-- Logo placeholder or actual image -->
           <div v-if="formData.receipt_logo_path" class="text-center mb-2">
             <!-- Show actual image if it's a data URL (base64) -->
-            <img 
+            <img
               v-if="formData.receipt_logo_path.startsWith('data:image')"
-              :src="formData.receipt_logo_path" 
+              :src="formData.receipt_logo_path"
               alt="Logo"
               class="mx-auto"
-              style="max-width: 60mm; max-height: 20mm; object-fit: contain;"
+              style="max-width: 60mm; max-height: 20mm; object-fit: contain"
             />
             <!-- Show placeholder if it's just a path -->
             <div v-else class="p-2 border border-dashed">
-              <div class="text-gray-400 text-xs">[LOGO]</div>
+              <div class="text-gray-400 text-xs">{{ uiLabel('[LOGO]') }}</div>
               <div class="text-gray-500 text-xs">{{ formData.receipt_logo_path }}</div>
             </div>
           </div>
-          
+
           <!-- Company Name -->
           <div class="text-center font-bold text-sm mb-1">
             {{ formData.company_name || 'Company Name' }}
           </div>
-          
+
           <!-- Company Address and Phone -->
-          <div v-if="formData.company_address || formData.company_phone" class="text-center text-xs mb-1">
+          <div
+            v-if="formData.company_address || formData.company_phone"
+            class="text-center text-xs mb-1"
+          >
             <div v-if="formData.company_address">{{ formData.company_address }}</div>
             <div v-if="formData.company_phone">{{ formData.company_phone }}</div>
           </div>
-          
+
           <!-- Receipt Header (Custom) -->
           <div
             v-if="formData.receipt_header"
@@ -186,184 +210,195 @@ function clearLogo() {
           >
             {{ formData.receipt_header }}
           </div>
-          
+
           <div class="border-t border-dashed my-2"></div>
-          
+
           <!-- Header: Date/Time and User -->
           <div class="flex justify-between mb-1">
-            <span>21-Nov-2026  01:22 PM</span>
+            <span>21-Nov-2026 01:22 PM</span>
             <span class="font-bold">ADMIN</span>
           </div>
-          
+
           <!-- Payment Mode -->
           <div class="mb-1">
-            <span>Payment Mode: </span>
-            <span class="font-bold">Cash</span>
+            <span>{{ uiLabel('Payment Mode:') }} </span>
+            <span class="font-bold">{{ uiLabel('Cash') }}</span>
           </div>
-          
+
           <!-- Section Title -->
-          <div class="text-center font-bold my-1">BILL/CASH MEMO</div>
-          
+          <div class="text-center font-bold my-1">{{ uiLabel('BILL/CASH MEMO') }}</div>
+
           <!-- Invoice Number -->
           <div class="mb-2">
-            <span>Inv #: </span>
+            <span>{{ uiLabel('Inv #:') }} </span>
             <span class="font-bold">55046</span>
           </div>
-          
+
           <!-- Client Name -->
           <div class="mb-2">
-            <div>Client Name:</div>
-            <div>Walk-in Customer</div>
+            <div>{{ uiLabel('Client Name:') }}</div>
+            <div>{{ uiLabel('Walk-in Customer') }}</div>
           </div>
-          
+
           <!-- Items Table Header -->
           <table class="w-full text-xs border-b border-black">
             <thead>
               <tr>
-                <th class="text-left pb-1">ITEM NAME</th>
-                <th class="text-center pb-1" style="width: 15%;">QTY</th>
-                <th class="text-right pb-1" style="width: 22%;">RATE</th>
-                <th class="text-right pb-1" style="width: 22%;">AMT</th>
+                <th class="text-left pb-1">{{ uiLabel('ITEM NAME') }}</th>
+                <th class="text-center pb-1" style="width: 15%">{{ uiLabel('QTY') }}</th>
+                <th class="text-right pb-1" style="width: 22%">{{ uiLabel('RATE') }}</th>
+                <th class="text-right pb-1" style="width: 22%">{{ uiLabel('AMT') }}</th>
               </tr>
             </thead>
           </table>
-          
+
           <!-- Items -->
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
               <tr>
-                <td class="text-left" style="width: 41%;">
+                <td class="text-left" style="width: 41%">
                   <div>HUMULIN 70/30 VIAL</div>
                 </td>
-                <td class="text-center" style="width: 15%;">1</td>
-                <td class="text-right" style="width: 22%;">1663.00</td>
-                <td class="text-right" style="width: 22%;">1663.00</td>
+                <td class="text-center" style="width: 15%">1</td>
+                <td class="text-right" style="width: 22%">1663.00</td>
+                <td class="text-right" style="width: 22%">1663.00</td>
               </tr>
             </table>
           </div>
-          
+
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
               <tr>
-                <td class="text-left" style="width: 41%;">
+                <td class="text-left" style="width: 41%">
                   <div>TREVIAMET 50/850MG</div>
-                  <div class="text-gray-500" style="font-size: 0.65rem;">TAB</div>
+                  <div class="text-gray-500" style="font-size: 0.65rem">TAB</div>
                 </td>
-                <td class="text-center" style="width: 15%;">30</td>
-                <td class="text-right" style="width: 22%;">32.50</td>
-                <td class="text-right" style="width: 22%;">975.00</td>
+                <td class="text-center" style="width: 15%">30</td>
+                <td class="text-right" style="width: 22%">32.50</td>
+                <td class="text-right" style="width: 22%">975.00</td>
               </tr>
             </table>
           </div>
-          
+
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
               <tr>
-                <td class="text-left" style="width: 41%;">
+                <td class="text-left" style="width: 41%">
                   <div>ZOPENT 40MG TAB</div>
-                  <div v-if="formData.show_drap" class="text-gray-500" style="font-size: 0.65rem;">
+                  <div v-if="formData.show_drap" class="text-gray-500" style="font-size: 0.65rem">
                     DRAP: 12345-ABC
                   </div>
                 </td>
-                <td class="text-center" style="width: 15%;">30</td>
-                <td class="text-right" style="width: 22%;">38.75</td>
-                <td class="text-right" style="width: 22%;">1162.50</td>
+                <td class="text-center" style="width: 15%">30</td>
+                <td class="text-right" style="width: 22%">38.75</td>
+                <td class="text-right" style="width: 22%">1162.50</td>
               </tr>
             </table>
           </div>
-          
+
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
               <tr>
-                <td class="text-left" style="width: 41%;">
+                <td class="text-left" style="width: 41%">
                   <div>LEVOPRAID 25MG TAB</div>
                 </td>
-                <td class="text-center" style="width: 15%;">30</td>
-                <td class="text-right" style="width: 22%;">26.85</td>
-                <td class="text-right" style="width: 22%;">805.50</td>
+                <td class="text-center" style="width: 15%">30</td>
+                <td class="text-right" style="width: 22%">26.85</td>
+                <td class="text-right" style="width: 22%">805.50</td>
               </tr>
             </table>
           </div>
-          
+
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
               <tr>
-                <td class="text-left" style="width: 41%;">
+                <td class="text-left" style="width: 41%">
                   <div>CIDINE 1MG TAB</div>
                 </td>
-                <td class="text-center" style="width: 15%;">30</td>
-                <td class="text-right" style="width: 22%;">35.90</td>
-                <td class="text-right" style="width: 22%;">1077.00</td>
+                <td class="text-center" style="width: 15%">30</td>
+                <td class="text-right" style="width: 22%">35.90</td>
+                <td class="text-right" style="width: 22%">1077.00</td>
               </tr>
             </table>
           </div>
-          
+
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
               <tr>
-                <td class="text-left" style="width: 41%;">
+                <td class="text-left" style="width: 41%">
                   <div>JARDY 10MG TAB</div>
                 </td>
-                <td class="text-center" style="width: 15%;">30</td>
-                <td class="text-right" style="width: 22%;">31.35</td>
-                <td class="text-right" style="width: 22%;">940.50</td>
+                <td class="text-center" style="width: 15%">30</td>
+                <td class="text-right" style="width: 22%">31.35</td>
+                <td class="text-right" style="width: 22%">940.50</td>
               </tr>
             </table>
           </div>
-          
+
           <div class="border-b border-dotted py-1">
             <table class="w-full text-xs">
               <tr>
-                <td class="text-left" style="width: 41%;">
+                <td class="text-left" style="width: 41%">
                   <div>BD INSULIN SYRINGE</div>
-                  <div class="text-gray-500" style="font-size: 0.65rem;">BRAUN</div>
+                  <div class="text-gray-500" style="font-size: 0.65rem">BRAUN</div>
                 </td>
-                <td class="text-center" style="width: 15%;">2</td>
-                <td class="text-right" style="width: 22%;">45.00</td>
-                <td class="text-right" style="width: 22%;">90.00</td>
+                <td class="text-center" style="width: 15%">2</td>
+                <td class="text-right" style="width: 22%">45.00</td>
+                <td class="text-right" style="width: 22%">90.00</td>
               </tr>
             </table>
           </div>
-          
+
           <!-- Summary Line -->
           <div class="flex justify-between py-1 border-t border-b border-black font-bold my-1">
-            <span>Items <strong>7</strong></span>
-            <span>Gross: <strong>6,713.50</strong></span>
+            <span>{{ uiLabel('Items') }} <strong>7</strong></span>
+            <span>{{ uiLabel('Gross:') }} <strong>6,713.50</strong></span>
           </div>
-          
+
           <!-- Thank You -->
           <div class="text-center font-bold my-2">
-            <div>THANK YOU</div>
-            <div>for Visiting us.</div>
+            <div>{{ uiLabel('THANK YOU') }}</div>
+            <div>{{ uiLabel('for Visiting us.') }}</div>
           </div>
-          
+
           <!-- Total -->
           <div class="text-right font-bold text-sm mb-2">
-            <span>Total:</span>
+            <span>{{ uiLabel('Total:') }}</span>
             <span class="ml-3 text-base">6714</span>
           </div>
-          
+
           <div class="border-t border-dashed my-2"></div>
-          
+
           <!-- Receipt Footer (Custom) -->
           <div
             v-if="formData.receipt_footer"
             class="text-center text-gray-600 mb-2 whitespace-pre-line"
-            style="font-size: 0.65rem; line-height: 1.3;"
+            style="font-size: 0.65rem; line-height: 1.3"
           >
             {{ formData.receipt_footer }}
           </div>
-          
+
           <!-- Default Footer -->
-          <div class="text-center text-gray-600 mt-2" style="font-size: 0.6rem; line-height: 1.3;">
-            <p>Please ensure that medicines and other item tally with your prescription/demand and is not expired and no claim / return / exchange would be entertained after leaving counter.</p>
+          <div class="text-center text-gray-600 mt-2" style="font-size: 0.6rem; line-height: 1.3">
+            <p>
+              {{
+                uiLabel(
+                  'Please ensure that medicines and other item tally with your prescription/demand and is not expired and no claim / return / exchange would be entertained after leaving counter.',
+                )
+              }}
+            </p>
             <p class="font-bold mt-1">Developed By IBS: (0304-5117454)</p>
           </div>
         </div>
       </div>
-      
+
       <p class="text-xs text-gray-500 mt-3 text-center">
-        {{ pick('Thermal printer format (80mm width) - Scroll to see full receipt', 'تھرمل پرنٹر فارمیٹ (80mm چوڑائی) - مکمل رسید دیکھنے کے لیے سکرول کریں') }}
+        {{
+          pick(
+            'Thermal printer format (80mm width) - Scroll to see full receipt',
+            'تھرمل پرنٹر فارمیٹ (80mm چوڑائی) - مکمل رسید دیکھنے کے لیے سکرول کریں',
+          )
+        }}
       </p>
     </div>
   </div>

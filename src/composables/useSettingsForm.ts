@@ -44,6 +44,7 @@ export function useSettingsForm() {
     near_expiry_days: 60,
     receipt_header: '',
     receipt_footer: '',
+    receipt_logo_path: '',
     show_drap: true,
   });
 
@@ -69,6 +70,7 @@ export function useSettingsForm() {
           near_expiry_days: s.near_expiry_days ?? 60,
           receipt_header: s.receipt_header || '',
           receipt_footer: s.receipt_footer || '',
+          receipt_logo_path: s.receipt_logo_path ?? '',
           show_drap: s.show_drap !== 0,
         };
       }
@@ -109,7 +111,7 @@ export function useSettingsForm() {
             company_name = ?, company_address = ?, company_phone = ?,
             tax_rate = ?, currency_symbol = ?,
             low_stock_threshold = ?, near_expiry_days = ?,
-            receipt_header = ?, receipt_footer = ?, show_drap = ?,
+            receipt_header = ?, receipt_footer = ?, receipt_logo_path = ?, show_drap = ?,
             updated_at = ?
            WHERE id = ?`,
           [
@@ -122,6 +124,7 @@ export function useSettingsForm() {
             formData.value.near_expiry_days,
             formData.value.receipt_header,
             formData.value.receipt_footer,
+            formData.value.receipt_logo_path || null,
             formData.value.show_drap ? 1 : 0,
             now,
             formData.value.id,
@@ -135,9 +138,9 @@ export function useSettingsForm() {
             id, company_name, company_address, company_phone,
             tax_rate, currency_symbol,
             low_stock_threshold, near_expiry_days,
-            receipt_header, receipt_footer, show_drap,
+            receipt_header, receipt_footer, receipt_logo_path, show_drap,
             theme, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
           [
             id,
             formData.value.company_name,
@@ -149,6 +152,7 @@ export function useSettingsForm() {
             formData.value.near_expiry_days,
             formData.value.receipt_header,
             formData.value.receipt_footer,
+            formData.value.receipt_logo_path || null,
             formData.value.show_drap ? 1 : 0,
             'light',
             now,

@@ -581,6 +581,9 @@ Object.assign(window, {
               line_total: 16.5,
             },
           ];
+        if (q.includes('from bank_accounts') && !q.includes('opening_balances'))
+          return [{ id: 'bank-a', name: 'Test Bank', is_active: 1 }];
+        if (q.includes('from expense_heads')) return [{ id: 'expense-general', name: 'General' }];
         if (q.includes('from app_settings'))
           return [
             {

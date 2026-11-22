@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import CompactPages from '@/components/ui/CompactPages.vue';
 import Card from '@/components/ui/Card.vue';
 import Button from '@/components/ui/Button.vue';
@@ -32,15 +35,15 @@ const {
     <!-- Header -->
     <div class="view-header">
       <div>
-        <h2 class="view-title">Purchases</h2>
-        <p class="view-subtitle">{{ purchaseOrders.length }} total orders</p>
+        <h2 class="view-title">{{ uiLabel('Purchases') }}</h2>
+        <p class="view-subtitle">{{ purchaseOrders.length }} {{ uiLabel('total orders') }}</p>
       </div>
       <Button variant="outline" @click="router.push('/purchase-suggestions')">{{
         pick('Purchase Suggestions', 'خریداری کی تجاویز')
       }}</Button>
       <Button @click="createNewPO" size="lg">
         <span class="button-icon">+</span>
-        Create Purchase Order
+        {{ uiLabel('Create Purchase Order') }}
       </Button>
     </div>
 
@@ -61,7 +64,7 @@ const {
         class="status-tab"
         :class="{ 'status-tab-active': statusFilter === status }"
       >
-        {{ status.charAt(0).toUpperCase() + status.slice(1) }}
+        {{ uiLabel(status) }}
         <span class="status-count">{{ statusCounts[status as keyof typeof statusCounts] }}</span>
       </button>
     </div>
@@ -71,17 +74,22 @@ const {
       <div class="filters-grid">
         <Input
           v-model="searchQuery"
-          aria-label="Search purchase orders by number or supplier"
-          placeholder="Search by PO number or supplier..."
+          :aria-label="uiLabel('Search purchase orders by number or supplier')"
+          :placeholder="uiLabel('Search by PO number or supplier...')"
           class="search-input"
         />
         <Input
           v-model="dateFrom"
           type="date"
-          aria-label="Order date from"
-          placeholder="From date"
+          :aria-label="uiLabel('Order date from')"
+          :placeholder="uiLabel('From date')"
         />
-        <Input v-model="dateTo" type="date" aria-label="Order date to" placeholder="To date" />
+        <Input
+          v-model="dateTo"
+          type="date"
+          :aria-label="uiLabel('Order date to')"
+          :placeholder="uiLabel('To date')"
+        />
         <Button
           @click="
             searchQuery = '';
@@ -90,7 +98,7 @@ const {
           "
           variant="outline"
         >
-          Clear Filters
+          {{ uiLabel('Clear Filters') }}
         </Button>
       </div>
     </Card>
@@ -99,18 +107,20 @@ const {
       <!-- Loading State -->
       <div v-if="loading" class="loading-state">
         <div class="spinner"></div>
-        <p>Loading purchase orders...</p>
+        <p>{{ uiLabel('Loading purchase orders...') }}</p>
       </div>
 
       <!-- Empty State -->
       <div v-else-if="filteredPOs.length === 0" class="empty-state">
         <div class="empty-icon">📦</div>
-        <h3 class="empty-title">No Purchase Orders Found</h3>
+        <h3 class="empty-title">{{ uiLabel('No Purchase Orders Found') }}</h3>
         <p class="empty-subtitle">
           {{
-            searchQuery || statusFilter !== 'all'
-              ? 'Try adjusting your filters'
-              : 'Create your first purchase order'
+            uiLabel(
+              searchQuery || statusFilter !== 'all'
+                ? 'Try adjusting your filters'
+                : 'Create your first purchase order',
+            )
           }}
         </p>
         <Button
@@ -118,7 +128,7 @@ const {
           @click="createNewPO"
           variant="outline"
         >
-          Create Purchase Order
+          {{ uiLabel('Create Purchase Order') }}
         </Button>
       </div>
 
@@ -143,16 +153,17 @@ const {
     </div>
     <footer class="purchase-summary">
       <div>
-        <small>Orders shown</small
-        ><strong>{{ filteredPOs.length }} / {{ purchaseOrders.length }}</strong>
+        <small>{{ uiLabel('Orders shown') }}</small><strong
+          >{{ filteredPOs.length }} / {{ purchaseOrders.length }}</strong
+        >
       </div>
       <div>
-        <small>Awaiting receipt</small
-        ><strong>{{ statusCounts.sent + statusCounts.partial }}</strong>
+        <small>{{ uiLabel('Awaiting receipt') }}</small><strong>{{
+          statusCounts.sent + statusCounts.partial
+        }}</strong>
       </div>
       <div class="purchase-summary-total">
-        <small>Filtered order total</small
-        ><strong>{{
+        <small>{{ uiLabel('Filtered order total') }}</small><strong>{{
           formatCurrency(filteredPOs.reduce((sum, po) => sum + Number(po.total_amount), 0))
         }}</strong>
       </div>

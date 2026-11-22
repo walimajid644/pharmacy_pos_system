@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import type { Ref } from 'vue';
 import type { useSettingsForm } from '@/composables/useSettingsForm';
 import Input from '@/components/ui/Input.vue';
@@ -28,7 +31,7 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
         placeholder="e.g. 17"
       />
       <p class="text-xs text-gray-500 mt-1">
-        Applied to all sales. Pakistan GST is typically 17-18%
+        {{ uiLabel('Default tax rate applied to sales') }}
       </p>
     </div>
 
@@ -42,7 +45,7 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
         placeholder="e.g. Rs, $, €"
         maxlength="5"
       />
-      <p class="text-xs text-muted mt-1">Used in price displays and reports</p>
+      <p class="text-xs text-muted mt-1">{{ uiLabel('Used in price displays and reports') }}</p>
     </div>
 
     <div
@@ -51,9 +54,9 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
       <div class="flex items-start gap-3">
         <span class="text-2xl">ℹ️</span>
         <div>
-          <div class="font-semibold text-info-text">Price Format</div>
+          <div class="font-semibold text-info-text">{{ uiLabel('Price Format') }}</div>
           <div class="text-sm text-info-text mt-1">
-            Prices will be displayed as: {{ formData.currency_symbol }} 1,234.56
+            {{ uiLabel('Prices will be displayed as:') }} {{ formData.currency_symbol }} 1,234.56
           </div>
         </div>
       </div>

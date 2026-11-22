@@ -59,7 +59,7 @@ async fn release_gate_counter_day_on_fresh_and_upgraded_database() {
             .unwrap()
             .unwrap();
         assert!(user.must_change_password);
-        let session = SessionState(RwLock::new(Some(login)));
+        let session = SessionState(RwLock::new(Some(login)), RwLock::new(None));
         assert!(current_actor(&session).await.is_err());
         change_user_password(&pool, &user.id, "admin123", "Synthetic counter test 2026")
             .await

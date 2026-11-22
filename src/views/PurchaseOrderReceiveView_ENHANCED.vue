@@ -9,6 +9,15 @@ import { invoke } from '@tauri-apps/api/core';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from '@/lib/i18n';
 import { useToast } from '@/composables/useToast';
+import type { PurchaseOrder } from '@/lib/types';
+
+interface ReceivingProduct {
+  id: string;
+  name: string;
+  total_stock: number | null;
+  purchase_price: number;
+  sale_price: number;
+}
 
 const router = useRouter();
 const route = useRoute();
@@ -21,14 +30,14 @@ const loading = ref(true);
 const saving = ref(false);
 
 // Purchase Order Data
-const po = ref<any>(null);
+const po = ref<(PurchaseOrder & { supplier_name: string }) | null>(null);
 const invoiceNumber = ref('');
 const supplierBillNumber = ref('');
 const paymentMethod = ref('cash');
 const receiveDate = ref(new Date().toISOString().split('T')[0]);
 
 // Item being added
-const selectedProduct = ref<any>(null);
+const selectedProduct = ref<ReceivingProduct | null>(null);
 const quickEntry = ref({
   quantity: 0,
   bonusQuantity: 0,
@@ -43,7 +52,7 @@ const quickEntry = ref({
 // Receive Items
 interface ReceiveItem {
   id: string;
-  product_id: number;
+  product_id: string;
   product_name: string;
   quantity: number;
   bonus_quantity: number;
@@ -111,7 +120,7 @@ function calculateLineItem(item: ReceiveItem) {
   const afterDisc = baseAmount - item.discount_amount;
   item.advance_tax_amount = (afterDisc * item.advance_tax_percent) / 100;
   item.line_total = afterDisc + item.advance_tax_amount;
-  
+
   // Calculate margin
   if (item.purchase_price > 0) {
     item.margin_percent = ((item.sale_price - item.purchase_price) / item.purchase_price) * 100;
@@ -170,7 +179,7 @@ function removeItem(index: number) {
 
 // Recalculate all items
 function recalculateAll() {
-  receiveItems.value.forEach(item => calculateLineItem(item));
+  receiveItems.value.forEach((item) => calculateLineItem(item));
 }
 
 // Load PO
@@ -181,30 +190,29 @@ onMounted(async () => {
 async function loadPO() {
   loading.value = true;
   try {
-    const [poData] = await executeQuery(
+    const [poData] = await executeQuery<PurchaseOrder & { supplier_name: string }>(
       `SELECT po.*, s.name as supplier_name
        FROM purchase_orders po
        JOIN suppliers s ON po.supplier_id = s.id
        WHERE po.id = ?`,
       [poId],
     );
-    
+
     if (!poData) {
       showToast('Purchase order not found', 'error');
       router.push('/purchase-orders');
       return;
     }
-    
+
     po.value = poData;
-    
+
     // Generate invoice number
-    const lastInvoice = await executeQuery(
-      'SELECT invoice_number FROM purchase_receipts ORDER BY id DESC LIMIT 1'
+    const lastInvoice = await executeQuery<{ invoice_number: string | null }>(
+      'SELECT invoice_number FROM purchase_receipts ORDER BY id DESC LIMIT 1',
     );
     const lastNum = lastInvoice[0]?.invoice_number?.match(/\d+$/)?.[0] || '0';
     invoiceNumber.value = `PI-${String(Number(lastNum) + 1).padStart(6, '0')}`;
-    
-  } catch (error) {
+  } catch {
     showToast('Error loading purchase order', 'error');
   } finally {
     loading.value = false;
@@ -213,16 +221,16 @@ async function loadPO() {
 
 // Search products
 const productSearch = ref('');
-const productResults = ref<any[]>([]);
+const productResults = ref<ReceivingProduct[]>([]);
 async function searchProducts() {
   if (productSearch.value.length < 2) return;
-  
-  const results = await executeQuery(
+
+  const results = await executeQuery<ReceivingProduct>(
     `SELECT id, name, total_stock, purchase_price, sale_price 
      FROM products 
      WHERE name LIKE ? 
      LIMIT 10`,
-    [`%${productSearch.value}%`]
+    [`%${productSearch.value}%`],
   );
   productResults.value = results;
 }
@@ -240,7 +248,7 @@ async function saveReceipt() {
   }
 
   saving.value = true;
-  
+
   try {
     await invoke('receive_purchase_with_details', {
       request: {
@@ -317,16 +325,19 @@ async function saveReceipt() {
         <div class="product-search">
           <label>{{ pick('ITEM', 'آئٹم') }}</label>
           <div class="search-wrapper">
-            <Input 
-              v-model="productSearch" 
+            <Input
+              v-model="productSearch"
               @input="searchProducts"
               placeholder="Search product..."
             />
             <div v-if="productResults.length" class="search-results">
-              <div 
-                v-for="product in productResults" 
+              <div
+                v-for="product in productResults"
                 :key="product.id"
-                @click="selectedProduct = product; productResults = []"
+                @click="
+                  selectedProduct = product;
+                  productResults = [];
+                "
                 class="search-result-item"
               >
                 {{ product.name }} - Stock: {{ product.total_stock }}
@@ -374,8 +385,8 @@ async function saveReceipt() {
           <Button @click="addItem" class="add-btn">↓ {{ pick('Add', 'شامل') }}</Button>
         </div>
         <div v-if="selectedProduct" class="selected-product">
-          <strong>Selected:</strong> {{ selectedProduct.name }} 
-          | <span>Current Stock: {{ selectedProduct.total_stock }}</span>
+          <strong>Selected:</strong> {{ selectedProduct.name }} |
+          <span>Current Stock: {{ selectedProduct.total_stock }}</span>
         </div>
       </Card>
 
@@ -407,15 +418,49 @@ async function saveReceipt() {
                   <div>{{ item.product_name }}</div>
                   <small>Batch: {{ item.batch_number }}</small>
                 </td>
-                <td><Input v-model.number="item.quantity" type="number" @change="calculateLineItem(item)" /></td>
+                <td>
+                  <Input
+                    v-model.number="item.quantity"
+                    type="number"
+                    @change="calculateLineItem(item)"
+                  />
+                </td>
                 <td>{{ item.bonus_quantity }}</td>
-                <td><Input v-model.number="item.purchase_price" type="number" step="0.01" @change="calculateLineItem(item)" /></td>
-                <td><Input v-model.number="item.discount_percent" type="number" step="0.01" @change="calculateLineItem(item)" /></td>
+                <td>
+                  <Input
+                    v-model.number="item.purchase_price"
+                    type="number"
+                    step="0.01"
+                    @change="calculateLineItem(item)"
+                  />
+                </td>
+                <td>
+                  <Input
+                    v-model.number="item.discount_percent"
+                    type="number"
+                    step="0.01"
+                    @change="calculateLineItem(item)"
+                  />
+                </td>
                 <td>{{ formatCurrency(item.discount_amount) }}</td>
-                <td><Input v-model.number="item.advance_tax_percent" type="number" step="0.01" @change="calculateLineItem(item)" /></td>
+                <td>
+                  <Input
+                    v-model.number="item.advance_tax_percent"
+                    type="number"
+                    step="0.01"
+                    @change="calculateLineItem(item)"
+                  />
+                </td>
                 <td>{{ formatCurrency(item.advance_tax_amount) }}</td>
                 <td class="total-cell">{{ formatCurrency(item.line_total) }}</td>
-                <td><Input v-model.number="item.sale_price" type="number" step="0.01" @change="calculateLineItem(item)" /></td>
+                <td>
+                  <Input
+                    v-model.number="item.sale_price"
+                    type="number"
+                    step="0.01"
+                    @change="calculateLineItem(item)"
+                  />
+                </td>
                 <td class="margin-cell">{{ item.margin_percent.toFixed(2) }}%</td>
                 <td>
                   <button @click="removeItem(index)" class="remove-btn">×</button>
@@ -427,9 +472,16 @@ async function saveReceipt() {
 
         <!-- Summary -->
         <div class="items-summary">
-          <span>{{ pick('Items', 'آئٹمز') }}: <strong>{{ receiveItems.length }}</strong></span>
-          <span>{{ pick('Item Disc', 'آئٹم رعایت') }}: <strong>{{ formatCurrency(totalItemDiscount) }}</strong></span>
-          <span>{{ pick('GST', 'جی ایس ٹی') }}: <strong>{{ formatCurrency(totalGST) }}</strong></span>
+          <span
+            >{{ pick('Items', 'آئٹمز') }}: <strong>{{ receiveItems.length }}</strong></span
+          >
+          <span
+            >{{ pick('Item Disc', 'آئٹم رعایت') }}:
+            <strong>{{ formatCurrency(totalItemDiscount) }}</strong></span
+          >
+          <span
+            >{{ pick('GST', 'جی ایس ٹی') }}: <strong>{{ formatCurrency(totalGST) }}</strong></span
+          >
         </div>
       </Card>
 
@@ -440,14 +492,29 @@ async function saveReceipt() {
           <div class="adjustments">
             <div class="adjustment-row">
               <label>{{ pick('Invoice Advance Tax', 'انوائس ٹیکس') }} %:</label>
-              <Input v-model.number="invoiceAdvanceTaxPercent" type="number" step="0.01" class="small-input" />
+              <Input
+                v-model.number="invoiceAdvanceTaxPercent"
+                type="number"
+                step="0.01"
+                class="small-input"
+              />
               <Button @click="recalculateAll" size="sm">{{ pick('Calculate', 'حساب') }}</Button>
             </div>
             <div class="adjustment-row">
               <label>{{ pick('Invoice Discount', 'انوائس رعایت') }} %:</label>
-              <Input v-model.number="invoiceDiscountPercent" type="number" step="0.01" class="small-input" />
+              <Input
+                v-model.number="invoiceDiscountPercent"
+                type="number"
+                step="0.01"
+                class="small-input"
+              />
               <label>{{ pick('Flat', 'فلیٹ') }}:</label>
-              <Input v-model.number="invoiceDiscountFlat" type="number" step="0.01" class="small-input" />
+              <Input
+                v-model.number="invoiceDiscountFlat"
+                type="number"
+                step="0.01"
+                class="small-input"
+              />
             </div>
           </div>
 
@@ -477,7 +544,11 @@ async function saveReceipt() {
           {{ pick('Cancel', 'منسوخ') }}
         </Button>
         <Button @click="saveReceipt" :disabled="saving || receiveItems.length === 0">
-          {{ saving ? pick('Saving...', 'محفوظ ہو رہا ہے...') : pick('Save & Update Stock', 'محفوظ کریں اور اسٹاک اپ ڈیٹ کریں') }}
+          {{
+            saving
+              ? pick('Saving...', 'محفوظ ہو رہا ہے...')
+              : pick('Save & Update Stock', 'محفوظ کریں اور اسٹاک اپ ڈیٹ کریں')
+          }}
         </Button>
       </div>
     </div>

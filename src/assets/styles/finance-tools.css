@@ -1,0 +1,237 @@
+.money-terminal {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  gap: 7px;
+  background: var(--surface-card);
+}
+.money-terminal .money-toolbar {
+  display: flex;
+  gap: 7px;
+  align-items: end;
+  flex-wrap: wrap;
+}
+.money-terminal label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12px;
+  min-width: 0;
+}
+.money-terminal input,
+.money-terminal select,
+.money-terminal textarea {
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 6px;
+  color: var(--text-primary);
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.money-terminal button {
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+.money-terminal button:disabled {
+  opacity: 0.5;
+}
+.money-terminal button[aria-pressed='true'],
+.money-terminal .money-save {
+  background: var(--color-primary-600);
+  color: var(--text-inverse);
+}
+.money-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 10px;
+}
+.money-list {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.money-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  min-height: 0;
+}
+.money-editor p,
+.money-terminal small {
+  font-size: 11px;
+}
+.money-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+}
+.money-terminal table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.money-terminal td,
+.money-terminal th {
+  padding: 5px;
+  text-align: start;
+  border-bottom: 1px solid var(--border);
+}
+.money-terminal td small {
+  display: block;
+}
+.money-summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface-secondary);
+  font-size: 12px;
+}
+.money-terminal [role='alert'] {
+  color: var(--color-danger);
+}
+.money-terminal .money-check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+}
+.money-check input {
+  width: auto;
+}
+.finance-print-root {
+  display: none;
+}
+@media print {
+  body.printing-finance-document > *:not(.finance-print-root) {
+    display: none !important;
+  }
+  body > .finance-print-root {
+    display: block !important;
+    color: #000;
+    background: #fff;
+    font:
+      10pt Arial,
+      sans-serif;
+  }
+  .finance-print-root table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .finance-print-root td,
+  .finance-print-root th {
+    padding: 5px;
+    border: 1px solid #999;
+    text-align: left;
+  }
+  .finance-print-root tr {
+    break-inside: avoid;
+  }
+  .finance-print-root thead {
+    display: table-header-group;
+  }
+}
+
+.money-list {
+  flex: 1;
+}
+.bank-reconcile {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-content: start;
+  gap: 5px;
+}
+.bank-reconcile > :is(h2, p, strong, button) {
+  grid-column: 1/-1;
+}
+.bank-terminal .money-body:has(.bank-form) {
+  grid-template-columns: 1fr;
+}
+.bank-terminal .money-body:has(.bank-form) > .money-list {
+  display: none;
+}
+.bank-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-content: start;
+}
+.bank-form > :is(h2, p, button) {
+  grid-column: 1/-1;
+}
+.money-editor h2 {
+  font-size: 15px;
+}
+.money-editor p {
+  line-height: 1.3;
+}
+
+.money-terminal table {
+  table-layout: fixed;
+}
+.money-terminal td {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.money-terminal td small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bank-statement-table th:first-child {
+  width: 6%;
+}
+.bank-statement-table th:nth-child(2) {
+  width: 23%;
+}
+.bank-statement-table th:nth-child(3) {
+  width: 24%;
+}
+.bank-statement-table th:nth-child(4),
+.bank-statement-table th:nth-child(5) {
+  width: 17%;
+}
+.bank-statement-table th:last-child {
+  width: 13%;
+}
+.bank-statement-table input[type='checkbox'] {
+  width: auto;
+}
+
+/* Keep numeric entry and native date controls readable when the workspace is RTL. */
+.money-terminal input:is([type='date'], [type='number']),
+.po-form-view input:is([type='date'], [type='number']) {
+  direction: ltr;
+  text-align: start;
+}
+.money-terminal :is(button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 2px;
+}
+.money-terminal button:hover:not(:disabled) {
+  border-color: var(--border-focus);
+}
+.money-terminal th {
+  overflow-wrap: anywhere;
+}
+.money-terminal .money-toolbar > * {
+  min-width: 0;
+}
+@media print {
+  .finance-print-root :is(td, th) {
+    text-align: start;
+  }
+}

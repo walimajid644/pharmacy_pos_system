@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import Card from '@/components/ui/Card.vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
@@ -32,7 +35,9 @@ const {
       <div class="tool-header p-6 border-b flex justify-between items-center">
         <div>
           <h1 class="text-2xl font-bold">{{ label('User Management') }}</h1>
-          <p class="text-sm text-gray-600 mt-1">Manage staff accounts and permissions</p>
+          <p class="text-sm text-gray-600 mt-1">
+            {{ uiLabel('Manage staff accounts and permissions') }}
+          </p>
         </div>
         <Button @click="openAddModal">{{ label('Add User') }}</Button>
       </div>

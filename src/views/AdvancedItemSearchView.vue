@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import CompactPages from '@/components/ui/CompactPages.vue';
 import { bindTemplateRef } from '@/lib/templateRefs';
 
@@ -50,8 +53,8 @@ const bindbatchDialog = bindTemplateRef(batchDialog);
           <option value="name">{{ label('Product name') }}</option>
           <option value="generic">{{ label('Generic name') }}</option>
           <option value="sku">SKU</option>
-          <option value="barcode">Barcode</option>
-          <option value="registration">DRAP registration</option>
+          <option value="barcode">{{ uiLabel('Barcode') }}</option>
+          <option value="registration">{{ uiLabel('DRAP registration') }}</option>
         </select></label
       >
       <label
@@ -133,7 +136,8 @@ const bindbatchDialog = bindTemplateRef(batchDialog);
                 {{ p.category || '—' }}<small>{{ p.manufacturer }}</small>
               </td>
               <td>
-                {{ formatCurrency(p.unit_price) }}<small>{{ p.pack_size }} units / pack</small>
+                {{ formatCurrency(p.unit_price)
+                }}<small>{{ p.pack_size }} {{ uiLabel('units / pack') }}</small>
               </td>
               <td :class="{ 'commercial-error': p.stock <= p.reorder_level }">{{ p.stock }}</td>
               <td>{{ p.expired_stock }}</td>
@@ -185,12 +189,12 @@ const bindbatchDialog = bindTemplateRef(batchDialog);
         :aria-label="selected.name"
       >
         <header class="tool-header">
-          <h2>{{ selected.name }} · Batches</h2>
+          <h2>{{ selected.name }} {{ uiLabel('· Batches') }}</h2>
           <button @click="selected = null">{{ label('Close') }}</button>
         </header>
         <p>
-          DRAP: {{ selected.drap_registration_number || 'Not recorded' }} · Earliest expiry is sold
-          first.
+          DRAP: {{ selected.drap_registration_number || 'Not recorded' }}
+          {{ uiLabel('· Earliest expiry is sold first.') }}
         </p>
         <CompactPages
           :items="batches"

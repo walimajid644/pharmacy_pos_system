@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import { reportDiagnostic } from '@/lib/diagnostics';
 
 import { errorMessage } from '@/lib/errors';
@@ -171,7 +174,7 @@ function cancelAdd() {
       <!-- Header -->
       <div class="p-6 border-b flex justify-between items-center">
         <div>
-          <h2 class="text-xl font-bold">Batch Management</h2>
+          <h2 class="text-xl font-bold">{{ uiLabel('Batch Management') }}</h2>
           <p class="text-sm text-gray-600 mt-1">
             {{ product.name }} ({{ product.sku }}) | Total Stock: {{ totalStock }}
           </p>
@@ -193,13 +196,13 @@ function cancelAdd() {
       <div class="batch-dialog-content">
         <!-- Add Batch Form -->
         <Card v-if="showAddForm" class="batch-add-form">
-          <h3 class="font-semibold mb-4">Add New Batch</h3>
+          <h3 class="font-semibold mb-4">{{ uiLabel('Add New Batch') }}</h3>
 
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div>
-              <label for="field-batchmanager-1" class="block text-sm font-medium mb-2"
-                >Batch Number *</label
-              >
+              <label for="field-batchmanager-1" class="block text-sm font-medium mb-2">{{
+                uiLabel('Batch Number *')
+              }}</label>
               <Input
                 id="field-batchmanager-1"
                 v-model="formData.batch_number"
@@ -207,18 +210,18 @@ function cancelAdd() {
               />
             </div>
             <div>
-              <label for="field-batchmanager-2" class="block text-sm font-medium mb-2"
-                >Expiry Date *</label
-              >
+              <label for="field-batchmanager-2" class="block text-sm font-medium mb-2">{{
+                uiLabel('Expiry Date *')
+              }}</label>
               <Input id="field-batchmanager-2" v-model="formData.expiry_date" type="date" />
             </div>
           </div>
 
           <div class="grid grid-cols-3 gap-4 mb-4">
             <div>
-              <label for="field-batchmanager-3" class="block text-sm font-medium mb-2"
-                >Quantity *</label
-              >
+              <label for="field-batchmanager-3" class="block text-sm font-medium mb-2">{{
+                uiLabel('Quantity *')
+              }}</label>
               <Input
                 id="field-batchmanager-3"
                 v-model.number="formData.quantity_in_stock"
@@ -226,9 +229,9 @@ function cancelAdd() {
               />
             </div>
             <div>
-              <label for="field-batchmanager-4" class="block text-sm font-medium mb-2"
-                >Cost Price (Rs) *</label
-              >
+              <label for="field-batchmanager-4" class="block text-sm font-medium mb-2">{{
+                uiLabel('Cost Price (Rs) *')
+              }}</label>
               <Input
                 id="field-batchmanager-4"
                 v-model.number="formData.cost_price_at_batch"
@@ -237,9 +240,9 @@ function cancelAdd() {
               />
             </div>
             <div>
-              <label for="field-batchmanager-5" class="block text-sm font-medium mb-2"
-                >Received Date *</label
-              >
+              <label for="field-batchmanager-5" class="block text-sm font-medium mb-2">{{
+                uiLabel('Received Date *')
+              }}</label>
               <Input id="field-batchmanager-5" v-model="formData.received_date" type="date" />
             </div>
           </div>
@@ -253,16 +256,16 @@ function cancelAdd() {
         </Card>
 
         <div v-else class="mb-6">
-          <Button @click="showAddForm = true">Add New Batch</Button>
+          <Button @click="showAddForm = true">{{ uiLabel('Add New Batch') }}</Button>
         </div>
 
         <!-- Batches List -->
         <div v-if="loading && batches.length === 0" class="text-center py-12 text-gray-500">
-          Loading batches...
+          {{ uiLabel('Loading batches...') }}
         </div>
 
         <div v-else-if="batches.length === 0" class="text-center py-12 text-gray-500">
-          No batches yet. Add your first batch to track stock and expiry.
+          {{ uiLabel('No batches yet. Add your first batch to track stock and expiry.') }}
         </div>
 
         <CompactPages
@@ -275,11 +278,11 @@ function cancelAdd() {
           <table class="w-full border-collapse">
             <thead>
               <tr class="border-b bg-gray-50">
-                <th class="text-left p-3 font-semibold">Batch #</th>
-                <th class="text-left p-3 font-semibold">Expiry Date</th>
+                <th class="text-left p-3 font-semibold">{{ uiLabel('Batch #') }}</th>
+                <th class="text-left p-3 font-semibold">{{ uiLabel('Expiry Date') }}</th>
                 <th class="text-right p-3 font-semibold">Stock</th>
-                <th class="text-right p-3 font-semibold">Cost Price</th>
-                <th class="text-left p-3 font-semibold">Received</th>
+                <th class="text-right p-3 font-semibold">{{ uiLabel('Cost Price') }}</th>
+                <th class="text-left p-3 font-semibold">{{ uiLabel('Received') }}</th>
                 <th class="text-center p-3 font-semibold">{{ pick('Status', 'حالت') }}</th>
                 <th>{{ pick('Actions', 'کارروائیاں') }}</th>
               </tr>
@@ -308,7 +311,7 @@ function cancelAdd() {
                           (1000 * 60 * 60 * 24),
                       )
                     }}
-                    days)
+                    {{ uiLabel('days)') }}
                   </span>
                 </td>
                 <td class="p-3 text-right font-semibold">

@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
+import { ref, computed, nextTick } from 'vue';
 import type { Product } from '@/lib/types';
 import type { PurchaseOrderLine } from '@/lib/purchaseOrderForm';
 import { useI18n } from '@/lib/i18n';
@@ -8,7 +11,10 @@ import Card from '@/components/ui/Card.vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
 
-const props = defineProps<{ products: Product[] }>();
+const props = withDefaults(
+  defineProps<{ products: Product[]; showTax?: boolean; showDiscount?: boolean }>(),
+  { showTax: true, showDiscount: true },
+);
 const lineItems = defineModel<PurchaseOrderLine[]>({ required: true });
 const emit = defineEmits<{
   add: [];
@@ -18,6 +24,8 @@ const emit = defineEmits<{
 }>();
 const { formatCurrency } = useI18n();
 const productSearch = ref('');
+const activeLine = ref<PurchaseOrderLine | null>(null);
+const activeProductIndex = ref(0);
 const filteredProducts = computed(() => {
   if (!productSearch.value) return [];
   const query = productSearch.value.toLowerCase();
@@ -34,16 +42,45 @@ const filteredProducts = computed(() => {
 function getProductName(id: string) {
   return props.products.find((product) => product.id === id)?.name || '';
 }
-function onProductInput(event: Event) {
+function onProductInput(item: PurchaseOrderLine, event: Event) {
+  activeProductIndex.value = 0;
+  activeLine.value = item;
   productSearch.value = (event.target as HTMLInputElement).value;
+  item.product_id = '';
+  item.product_name = '';
+  item.unit_cost = 0;
+  emit('recalculate', item);
 }
-function unlockSearch(event: MouseEvent) {
-  productSearch.value = '';
-  const input = event.target as HTMLInputElement;
-  input.removeAttribute('readonly');
+function focusSearch(item: PurchaseOrderLine, event: FocusEvent) {
+  activeProductIndex.value = 0;
+  activeLine.value = item;
+  productSearch.value = item.product_name || getProductName(item.product_id);
+  (event.target as HTMLInputElement).select();
+}
+function onProductKeydown(item: PurchaseOrderLine, event: KeyboardEvent) {
+  if (event.isComposing || activeLine.value !== item || !productSearch.value) return;
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    event.stopPropagation();
+    activeLine.value = null;
+    productSearch.value = '';
+  } else if (['ArrowDown', 'ArrowUp'].includes(event.key) && filteredProducts.value.length) {
+    event.preventDefault();
+    activeProductIndex.value =
+      (activeProductIndex.value +
+        (event.key === 'ArrowDown' ? 1 : -1) +
+        filteredProducts.value.length) %
+      filteredProducts.value.length;
+  } else if (event.key === 'Enter' && filteredProducts.value[activeProductIndex.value]) {
+    event.preventDefault();
+    const row = (event.target as HTMLElement).closest('.line-item');
+    selectProduct(item, filteredProducts.value[activeProductIndex.value]);
+    void nextTick(() => row?.querySelector<HTMLInputElement>('input[type="number"]')?.focus());
+  }
 }
 function selectProduct(item: PurchaseOrderLine, product: Product) {
   productSearch.value = '';
+  activeLine.value = null;
   emit('select', item, product);
 }
 </script>
@@ -51,8 +88,10 @@ function selectProduct(item: PurchaseOrderLine, product: Product) {
 <template>
   <Card class="form-section order-lines-section">
     <div class="section-header">
-      <h3 class="section-title">Order Items</h3>
-      <Button @click="emit('add')" variant="outline" size="sm"> + Add Item </Button>
+      <h3 class="section-title">{{ uiLabel('Order Items') }}</h3>
+      <Button @click="emit('add')" variant="outline" size="sm">
+        {{ uiLabel('+ Add Item') }}
+      </Button>
     </div>
 
     <CompactPages
@@ -69,34 +108,64 @@ function selectProduct(item: PurchaseOrderLine, product: Product) {
           <div class="line-item-fields">
             <!-- Product Selection -->
             <div class="form-field">
-              <label>Product *</label>
+              <label>{{ uiLabel('Product *') }}</label>
               <div class="product-select">
                 <Input
-                  :model-value="item.product_name || getProductName(item.product_id)"
-                  @input="onProductInput"
-                  placeholder="Search product..."
-                  readonly
-                  @click="unlockSearch"
+                  :model-value="
+                    activeLine === item
+                      ? productSearch
+                      : item.product_name || getProductName(item.product_id)
+                  "
+                  @input="onProductInput(item, $event)"
+                  :placeholder="uiLabel('Search product...')"
+                  @focus="focusSearch(item, $event)"
+                  :aria-label="uiLabel('Product') + ' ' + (index + 1)"
+                  @keydown="onProductKeydown(item, $event)"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  :aria-expanded="
+                    activeLine === item && !!productSearch && !!filteredProducts.length
+                  "
+                  :aria-controls="
+                    activeLine === item && productSearch && filteredProducts.length
+                      ? `purchase-products-${index}`
+                      : undefined
+                  "
+                  :aria-activedescendant="
+                    activeLine === item && productSearch && filteredProducts.length
+                      ? `purchase-product-${index}-${activeProductIndex}`
+                      : undefined
+                  "
                 />
-                <div v-if="productSearch && filteredProducts.length > 0" class="product-dropdown">
+                <div
+                  v-if="activeLine === item && productSearch && filteredProducts.length > 0"
+                  class="product-dropdown"
+                >
                   <CompactPages
                     :items="filteredProducts"
+                    :active-index="activeProductIndex"
                     :row-height="46"
                     :header-height="0"
                     v-slot="{ rows: choices }"
                   >
-                    <button
-                      v-for="{ item: product } in choices"
-                      :key="product.id"
-                      @click="selectProduct(item, product)"
-                      class="product-option"
-                      type="button"
-                    >
-                      <div class="product-option-name">{{ product.name }}</div>
-                      <div class="product-option-details">
-                        {{ product.sku }} | Cost: {{ formatCurrency(product.cost_price) }}
-                      </div>
-                    </button>
+                    <div :id="`purchase-products-${index}`" class="line-items" role="listbox">
+                      <button
+                        v-for="{ item: product, index: choiceIndex } in choices"
+                        :id="`purchase-product-${index}-${choiceIndex}`"
+                        role="option"
+                        :aria-selected="choiceIndex === activeProductIndex"
+                        :key="product.id"
+                        @click="selectProduct(item, product)"
+                        class="product-option"
+                        type="button"
+                      >
+                        <div class="product-option-name">{{ product.name }}</div>
+                        <div class="product-option-details">
+                          {{ product.sku }} {{ uiLabel('| Cost:') }}
+                          {{ formatCurrency(product.cost_price) }}
+                        </div>
+                      </button>
+                    </div>
                   </CompactPages>
                 </div>
               </div>
@@ -104,9 +173,10 @@ function selectProduct(item: PurchaseOrderLine, product: Product) {
 
             <!-- Quantity -->
             <div class="form-field">
-              <label>Quantity *</label>
+              <label :for="`po-quantity-${index}`">{{ uiLabel('Quantity *') }}</label>
               <Input
                 v-model.number="item.quantity_ordered"
+                :id="`po-quantity-${index}`"
                 type="number"
                 min="1"
                 @update:model-value="emit('recalculate', item)"
@@ -116,9 +186,10 @@ function selectProduct(item: PurchaseOrderLine, product: Product) {
 
             <!-- Unit Cost -->
             <div class="form-field">
-              <label>Unit Cost *</label>
+              <label :for="`po-cost-${index}`">{{ uiLabel('Unit Cost *') }}</label>
               <Input
                 v-model.number="item.unit_cost"
+                :id="`po-cost-${index}`"
                 type="number"
                 step="0.01"
                 min="0"
@@ -128,10 +199,11 @@ function selectProduct(item: PurchaseOrderLine, product: Product) {
             </div>
 
             <!-- Tax Rate -->
-            <div class="form-field">
-              <label>Tax %</label>
+            <div v-if="showTax || item.tax_rate !== 0" class="form-field">
+              <label :for="`po-tax-${index}`">{{ uiLabel('Tax %') }}</label>
               <Input
                 v-model.number="item.tax_rate"
+                :id="`po-tax-${index}`"
                 type="number"
                 step="0.01"
                 min="0"
@@ -141,10 +213,11 @@ function selectProduct(item: PurchaseOrderLine, product: Product) {
             </div>
 
             <!-- Discount -->
-            <div class="form-field">
-              <label>Discount %</label>
+            <div v-if="showDiscount || item.discount_percent !== 0" class="form-field">
+              <label :for="`po-discount-${index}`">{{ uiLabel('Discount %') }}</label>
               <Input
                 v-model.number="item.discount_percent"
+                :id="`po-discount-${index}`"
                 type="number"
                 step="0.01"
                 min="0"
@@ -155,7 +228,7 @@ function selectProduct(item: PurchaseOrderLine, product: Product) {
 
             <!-- Line Total -->
             <div class="form-field">
-              <label>Line Total</label>
+              <label>{{ uiLabel('Line Total') }}</label>
               <div class="line-total">{{ formatCurrency(item.line_total) }}</div>
             </div>
           </div>
@@ -165,6 +238,7 @@ function selectProduct(item: PurchaseOrderLine, product: Product) {
             variant="outline"
             size="sm"
             class="remove-button"
+            :aria-label="uiLabel('Remove item') + ' ' + (index + 1)"
             :disabled="lineItems.length === 1"
           >
             ×
@@ -259,15 +333,22 @@ function selectProduct(item: PurchaseOrderLine, product: Product) {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  max-height: 300px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  height: 200px;
+  max-height: 200px;
+  overflow: hidden;
   box-shadow: var(--shadow-lg);
+}
+
+.product-dropdown .line-items {
+  gap: 0;
 }
 
 .product-option {
   width: 100%;
   padding: 0.75rem;
-  text-align: left;
+  text-align: start;
   background: none;
   border: none;
   border-bottom: 1px solid var(--color-border);
@@ -277,6 +358,11 @@ function selectProduct(item: PurchaseOrderLine, product: Product) {
 
 .product-option:hover {
   background-color: var(--color-hover);
+}
+
+.product-option[aria-selected='true'] {
+  background: var(--surface-secondary);
+  outline: 1px solid var(--border-focus);
 }
 
 .product-option-name {
@@ -297,7 +383,7 @@ function selectProduct(item: PurchaseOrderLine, product: Product) {
   border-radius: var(--radius);
   font-weight: 600;
   color: var(--color-primary);
-  text-align: right;
+  text-align: end;
 }
 
 .remove-button {

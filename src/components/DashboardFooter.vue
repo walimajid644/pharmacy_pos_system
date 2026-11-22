@@ -75,7 +75,9 @@ const links = [
   },
 ];
 
-const visibleLinks = computed(() => links.filter((l) => auth.hasRole(l.roles as UserRole[])));
+const visibleLinks = computed(() =>
+  links.filter((l) => auth.hasRole(l.roles as UserRole[]) && auth.canRoute(l.path)),
+);
 </script>
 
 <template>

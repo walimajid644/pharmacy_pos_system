@@ -8,6 +8,8 @@ use uuid::Uuid;
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PaymentRequest {
+    bank_account_id: Option<String>,
+    request_id: Option<String>,
     po_id: String,
     amount_cents: i64,
     method: String,
@@ -40,6 +42,12 @@ pub(crate) async fn record(
     {
         return Err("Reference or notes are too long".into());
     }
+    if request.bank_account_id.is_some() && request.method != "bank" {
+        return Err("Only bank payments can be assigned to a bank account".into());
+    }
+    if let Some(id) = &request.request_id {
+        Uuid::parse_str(id).map_err(|_| "Invalid payment request identifier")?;
+    }
     let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
     let role: Option<String> = sqlx::query_scalar(
         "SELECT role FROM users WHERE id = ? AND is_active = 1 AND deleted_at IS NULL",
@@ -50,6 +58,35 @@ pub(crate) async fn record(
     .map_err(|e| e.to_string())?;
     if !matches!(role.as_deref(), Some("admin" | "manager" | "accountant")) {
         return Err("Only managers and accountants can record supplier payments".into());
+    }
+    if let Some(opening) = sqlx::query("SELECT o.*,s.is_active,s.deleted_at FROM supplier_opening_outstanding o JOIN suppliers s ON s.id=o.supplier_id WHERE o.id=?")
+        .bind(&request.po_id).fetch_optional(&mut *tx).await.map_err(|e|e.to_string())? {
+        let id = request.request_id.clone().ok_or("Refresh before paying an opening balance")?;
+        Uuid::parse_str(&id).map_err(|_| "Invalid payment request identifier")?;
+        if let Some(prior) = sqlx::query("SELECT * FROM supplier_opening_payments WHERE id=?")
+            .bind(&id).fetch_optional(&mut *tx).await.map_err(|e|e.to_string())? {
+            if prior.get::<String,_>("opening_id") == request.po_id && prior.get::<i64,_>("amount_cents") == request.amount_cents
+                && prior.get::<String,_>("method") == request.method && prior.get::<Option<String>,_>("reference") == request.reference
+                && prior.get::<Option<String>,_>("notes") == request.notes && prior.get::<String,_>("recorded_by") == actor && prior.get::<Option<String>,_>("bank_account_id") == request.bank_account_id {
+                return Ok(PaymentReceipt {id,voucher_number:prior.get("voucher_number"),amount_cents:request.amount_cents,balance_cents:opening.get::<i64,_>("amount_cents")-opening.get::<i64,_>("paid_cents")});
+            }
+            return Err("This payment request was already used. Refresh before trying again".into());
+        }
+        let due = opening.get::<i64,_>("amount_cents") - opening.get::<i64,_>("paid_cents");
+        if request.amount_cents > due || opening.get::<i64,_>("is_active") != 1 || opening.get::<Option<String>,_>("deleted_at").is_some() {
+            return Err("Payment exceeds the opening balance or supplier is inactive".into());
+        }
+        if let Some(bank)=&request.bank_account_id {crate::banking::require_bank(&mut tx,bank,&chrono::Local::now().format("%Y-%m-%d").to_string()).await?;}
+        let shift: Option<String> = if request.method == "cash" {
+            Some(sqlx::query_scalar("SELECT id FROM cashier_shifts WHERE status='open'").fetch_optional(&mut *tx).await.map_err(|e|e.to_string())?.ok_or("Open a cash drawer before paying a supplier in cash")?)
+        } else {None};
+        let voucher = format!("SP-{}", &Uuid::new_v4().simple().to_string()[..12].to_uppercase());
+        sqlx::query("INSERT INTO supplier_opening_payments(id,voucher_number,opening_id,supplier_id,amount_cents,method,reference,notes,paid_at,recorded_by,shift_id,bank_account_id,bank_entry_date) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)")
+            .bind(&id).bind(&voucher).bind(&request.po_id).bind(opening.get::<String,_>("supplier_id"))
+            .bind(request.amount_cents).bind(&request.method).bind(&request.reference).bind(&request.notes)
+            .bind(chrono::Utc::now().to_rfc3339()).bind(actor).bind(shift).bind(&request.bank_account_id).bind(chrono::Local::now().format("%Y-%m-%d").to_string()).execute(&mut *tx).await.map_err(|e|e.to_string())?;
+        tx.commit().await.map_err(|e|e.to_string())?;
+        return Ok(PaymentReceipt {id,voucher_number:voucher,amount_cents:request.amount_cents,balance_cents:due-request.amount_cents});
     }
     let po =
         sqlx::query("SELECT supplier_id, status, total_amount FROM purchase_orders WHERE id = ?")
@@ -92,6 +129,45 @@ pub(crate) async fn record(
     .fetch_one(&mut *tx)
     .await
     .map_err(|e| e.to_string())?;
+    if let Some(id) = &request.request_id {
+        if let Some(prior) = sqlx::query("SELECT * FROM supplier_payments WHERE id=?")
+            .bind(id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?
+        {
+            if prior.get::<String, _>("po_id") == request.po_id
+                && prior.get::<i64, _>("amount_cents") == request.amount_cents
+                && prior.get::<String, _>("method") == request.method
+                && prior.get::<Option<String>, _>("bank_account_id") == request.bank_account_id
+                && prior.get::<Option<String>, _>("reference")
+                    == request
+                        .reference
+                        .as_deref()
+                        .map(str::trim)
+                        .map(String::from)
+                && prior.get::<Option<String>, _>("notes")
+                    == request.notes.as_deref().map(str::trim).map(String::from)
+                && prior.get::<String, _>("recorded_by") == actor
+            {
+                return Ok(PaymentReceipt {
+                    id: id.clone(),
+                    voucher_number: prior.get("voucher_number"),
+                    amount_cents: request.amount_cents,
+                    balance_cents: accrued_cents - paid_cents,
+                });
+            }
+            return Err("This payment request was already used".into());
+        }
+    }
+    if let Some(bank) = &request.bank_account_id {
+        crate::banking::require_bank(
+            &mut tx,
+            bank,
+            &chrono::Local::now().format("%Y-%m-%d").to_string(),
+        )
+        .await?;
+    }
     if request.amount_cents > accrued_cents - paid_cents {
         return Err(format!("Payment of Rs {:.2} exceeds the outstanding received-goods balance of Rs {:.2}. Overpayment is not allowed. Reduce the amount or receive the remaining goods first.", request.amount_cents as f64 / 100.0, (accrued_cents - paid_cents).max(0) as f64 / 100.0));
     }
@@ -106,17 +182,20 @@ pub(crate) async fn record(
     } else {
         None
     };
-    let id = Uuid::new_v4().to_string();
+    let id = request
+        .request_id
+        .clone()
+        .unwrap_or_else(|| Uuid::new_v4().to_string());
     let voucher_number = format!(
         "SP-{}",
         Uuid::new_v4().simple().to_string()[..12].to_uppercase()
     );
     let now = chrono::Utc::now().to_rfc3339();
-    sqlx::query("INSERT INTO supplier_payments (id, voucher_number, supplier_id, po_id, amount_cents, method, reference, notes, paid_at, recorded_by, shift_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
+    sqlx::query("INSERT INTO supplier_payments (id, voucher_number, supplier_id, po_id, amount_cents, method, reference, notes, paid_at, recorded_by, shift_id, bank_account_id, bank_entry_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")
         .bind(&id).bind(&voucher_number).bind(po.get::<String, _>("supplier_id"))
         .bind(&request.po_id).bind(request.amount_cents).bind(&request.method)
         .bind(request.reference.as_deref().map(str::trim)).bind(request.notes.as_deref().map(str::trim))
-        .bind(now).bind(actor).bind(shift_id).execute(&mut *tx).await.map_err(|e| e.to_string())?;
+        .bind(now).bind(actor).bind(shift_id).bind(&request.bank_account_id).bind(chrono::Local::now().format("%Y-%m-%d").to_string()).execute(&mut *tx).await.map_err(|e| e.to_string())?;
     tx.commit().await.map_err(|e| e.to_string())?;
     Ok(PaymentReceipt {
         id,
@@ -165,6 +244,8 @@ mod tests {
         sqlx::query("INSERT INTO cashier_shifts (id, cashier_id, opened_at, opening_cash_cents, status) VALUES ('drawer', ?, '2026-10-29', 10000, 'open')")
             .bind(actor).execute(&pool).await.unwrap();
         let request = |cents| PaymentRequest {
+            bank_account_id: None,
+            request_id: None,
             po_id: "po".into(),
             amount_cents: cents,
             method: "cash".into(),

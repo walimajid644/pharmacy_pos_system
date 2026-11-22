@@ -67,7 +67,7 @@
   },
   "plugins": {
     "sql": {
-      "preload": ["sqlite:pharmacy.db"]
+      "preload": []
     }
   }
 }

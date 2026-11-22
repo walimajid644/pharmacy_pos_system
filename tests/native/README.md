@@ -27,3 +27,8 @@ Still separate: clean Windows/NSIS installation, old-schema migration through th
 After the counter-day run and persistence check, run `node tests/native_desktop_smoke.mjs --verify-security`. It verifies the patched SQLite engine, effective inline-script/network blocking, dynamic receipt styles, and enum-only diagnostic logging. Expected CSP violations belong to this separate security run and do not mask counter-day errors. Results are in ignored `test-results/native-acceptance/security.json`.
 
 The normal counter-day run also asserts that no unexpected frontend diagnostic events occurred, so the global error handler cannot silently turn an application exception into a passing test.
+
+
+## Step 5 focused acceptance
+
+After building the isolated native binary above, run `node tests/access_restore_native_smoke.mjs`. It verifies the application data identifier before authenticating; creates a synthetic manager; checks revoked native commands and safe-SQL writes; reads real login history; creates/inspects a verified backup; and rejects an incorrect restore confirmation. It preserves sales and stock, deactivates the synthetic manager on success, and writes results under `test-results/access-restore/native/`. It does not schedule replacement of the acceptance database. File-based native tests in `restore_tests.rs` exercise scheduling, safety copies, older-schema staging, blocked restores and restart-time replacement on disposable databases.

@@ -66,7 +66,9 @@ const tasks = [
     roles: ['admin', 'manager', 'cashier'],
   },
 ];
-const visibleTasks = computed(() => tasks.filter((task) => auth.hasRole(task.roles as UserRole[])));
+const visibleTasks = computed(() =>
+  tasks.filter((task) => auth.hasRole(task.roles as UserRole[]) && auth.canRoute(task.path)),
+);
 </script>
 
 <template>

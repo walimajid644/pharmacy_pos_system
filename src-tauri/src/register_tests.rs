@@ -39,7 +39,14 @@ async fn register_crud_guards_roles_duplicates_and_stale_edits() {
         sqlx::query("INSERT INTO users(id,username,password_hash,full_name,role,created_at,updated_at) VALUES(?,?, 'x',?,?, 'now','now')")
             .bind(role).bind(format!("register-{role}")).bind(role).bind(role).execute(&p).await.unwrap();
     }
-    for kind in [Kind::Category, Kind::Manufacturer, Kind::Shelf] {
+    for kind in [
+        Kind::Category,
+        Kind::Manufacturer,
+        Kind::Shelf,
+        Kind::ExpenseHead,
+        Kind::IncomeHead,
+        Kind::Bank,
+    ] {
         for actor in ["cashier", "accountant"] {
             assert!(save(&p, actor, request(kind, "Forbidden register"))
                 .await

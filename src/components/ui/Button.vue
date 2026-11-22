@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useAuthStore } from '@/stores/auth';
 import { computed } from 'vue';
 import { cn } from '@/lib/utils';
 
@@ -7,12 +8,14 @@ interface Props {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'default' | 'destructive';
   size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'default';
   disabled?: boolean;
+  permission?: string;
   loading?: boolean;
   icon?: boolean;
   fullWidth?: boolean;
   ripple?: boolean;
 }
 
+const auth = useAuthStore();
 const props = withDefaults(defineProps<Props>(), {
   type: 'button',
   variant: 'primary',
@@ -105,7 +108,11 @@ const loadingSpinnerSize = computed(() => {
 </script>
 
 <template>
-  <button :class="buttonClass" :disabled="disabled || loading" :type="type">
+  <button
+    :class="buttonClass"
+    :disabled="disabled || loading || (!!permission && !auth.can(permission))"
+    :type="type"
+  >
     <!-- Loading spinner -->
     <svg
       v-if="loading"

@@ -6,7 +6,7 @@ import sqlite3
 root = Path(__file__).resolve().parents[1]
 db = sqlite3.connect(':memory:')
 db.row_factory = sqlite3.Row
-for name in ['001_initial_schema', '004_phase5_inventory', '007_desktop_operations', '008_supplier_drawer', '009_pos_sale_details', '010_commercial_operations', '011_credit_and_expiry', '012_pricing_and_audit', '013_catalog_and_controlled']:
+for name in ['001_initial_schema', '004_phase5_inventory', '007_desktop_operations', '008_supplier_drawer', '009_pos_sale_details', '010_commercial_operations', '011_credit_and_expiry', '012_pricing_and_audit', '013_catalog_and_controlled', '018_register_openings']:
     db.executescript((root / 'src-tauri/migrations' / (name + '.sql')).read_text(encoding='utf-8'))
 finance = (root / 'src/composables/useFinance.ts').read_text(encoding='utf-8')
 query = re.search(r'entries.value\s*=\s*await executeQuery<Entry>\(\s*`(.*?)`\s*,?\s*\)', finance, re.S).group(1)

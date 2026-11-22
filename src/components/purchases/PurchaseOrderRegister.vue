@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import type { Ref } from 'vue';
 import type { usePurchaseOrders } from '@/composables/usePurchaseOrders';
 import Button from '@/components/ui/Button.vue';
@@ -21,13 +24,13 @@ defineProps<{
   <table class="purchase-table">
     <thead>
       <tr>
-        <th>PO Number</th>
-        <th>Supplier</th>
-        <th>Order Date</th>
-        <th>Expected Delivery</th>
-        <th>Status</th>
-        <th class="money">Total Amount</th>
-        <th>Actions</th>
+        <th>{{ uiLabel('PO Number') }}</th>
+        <th>{{ uiLabel('Supplier') }}</th>
+        <th>{{ uiLabel('Order Date') }}</th>
+        <th>{{ uiLabel('Expected Delivery') }}</th>
+        <th>{{ uiLabel('Status') }}</th>
+        <th class="money">{{ uiLabel('Total Amount') }}</th>
+        <th>{{ uiLabel('Actions') }}</th>
       </tr>
     </thead>
     <tbody>
@@ -47,14 +50,14 @@ defineProps<{
         <td>
           <div class="purchase-row-actions">
             <Button @click="viewPO(po.id)" variant="outline" size="sm">{{
-              po.status === 'draft' ? 'Edit order' : 'View details'
+              uiLabel(po.status === 'draft' ? 'Edit order' : 'View details')
             }}</Button>
             <Button
               v-if="po.status === 'sent' || po.status === 'partial'"
               class="receive-goods"
               @click="receivePO(po.id)"
               size="sm"
-              >Receive goods</Button
+              >{{ uiLabel('Receive goods') }}</Button
             >
             <Button
               v-if="po.status === 'draft' || po.status === 'sent'"
@@ -62,7 +65,7 @@ defineProps<{
               @click="cancelPO(po.id)"
               variant="destructive"
               size="sm"
-              >Cancel</Button
+              >{{ uiLabel('Cancel') }}</Button
             >
           </div>
         </td>

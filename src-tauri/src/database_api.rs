@@ -2,7 +2,7 @@ use serde::Serialize;
 use serde_json::{Map, Value};
 use sqlx::{Column, Pool, Row, Sqlite, TypeInfo, ValueRef};
 use std::time::{Duration, Instant};
-use tauri::{AppHandle, Manager, State};
+use tauri::State;
 use tauri_plugin_sql::{DbInstances, DbPool};
 use tokio::sync::RwLock;
 use uuid::Uuid;
@@ -10,10 +10,13 @@ use uuid::Uuid;
 const SESSION_IDLE_TIMEOUT: Duration = Duration::from_secs(12 * 60 * 60);
 
 #[derive(Default)]
-pub struct SessionState(RwLock<Option<LoginSession>>);
+pub struct SessionState(
+    pub(crate) RwLock<Option<LoginSession>>,
+    pub(crate) RwLock<Option<Pool<Sqlite>>>,
+);
 
-struct LoginSession {
-    user_id: String,
+pub(crate) struct LoginSession {
+    pub(crate) user_id: String,
     must_change_password: bool,
     last_activity: Instant,
 }
@@ -30,6 +33,7 @@ pub struct PublicUser {
     updated_at: String,
     deleted_at: Option<String>,
     must_change_password: bool,
+    permissions: Vec<String>,
 }
 
 fn is_bcrypt_hash(value: &str) -> bool {
@@ -56,7 +60,19 @@ async fn session_user(
     let mut guard = session.0.write().await;
     let active = guard.as_mut().ok_or("Please sign in again")?;
     if active.last_activity.elapsed() >= SESSION_IDLE_TIMEOUT {
+        let expired_id = active.user_id.clone();
         *guard = None;
+        drop(guard);
+        if let Some(db) = session.1.read().await.clone() {
+            crate::access::record_login(
+                &db,
+                Some(&expired_id),
+                None,
+                "session_expired",
+                "idle_timeout",
+            )
+            .await?;
+        }
         return Err(
             "Session locked after 12 hours of inactivity. Please sign in again".to_string(),
         );
@@ -70,7 +86,11 @@ async fn session_user(
 
 #[tauri::command]
 pub async fn touch_session(session: State<'_, SessionState>) -> Result<(), String> {
-    session_user(&session, true).await.map(|_| ())
+    let actor = session_user(&session, true).await?;
+    if let Some(db) = session.1.read().await.clone() {
+        crate::access::effective(&db, &actor).await?;
+    }
+    Ok(())
 }
 
 pub async fn require_matching_actor(
@@ -116,6 +136,10 @@ pub async fn initialize(pool: &Pool<Sqlite>) -> Result<(), String> {
         (
             "receipt_footer",
             "ALTER TABLE app_settings ADD COLUMN receipt_footer TEXT",
+        ),
+        (
+            "receipt_logo_path",
+            "ALTER TABLE app_settings ADD COLUMN receipt_logo_path TEXT",
         ),
         (
             "show_drap",
@@ -395,27 +419,94 @@ pub async fn initialize(pool: &Pool<Sqlite>) -> Result<(), String> {
     }
     sqlx::query("INSERT INTO app_settings (id, company_name, tax_rate, currency_symbol, theme, created_at, updated_at) SELECT ?, 'Pharmacy POS', 0, 'Rs', 'light', datetime('now'), datetime('now') WHERE NOT EXISTS (SELECT 1 FROM app_settings)")
         .bind(Uuid::new_v4().to_string()).execute(pool).await.map_err(|e| e.to_string())?;
-    
-    // Enhanced purchase receipt fields migration
-    let has_enhanced_purchase: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM schema_migrations WHERE version='017_enhanced_purchase_receipt'"
+
+    // Enhanced purchase receipt tables migration.
+    // We check for the actual table (not just schema_migrations) because a previous
+    // broken migration path may have recorded the version without creating the tables.
+    let has_purchase_receipts_table: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='purchase_receipts'",
     )
     .fetch_one(pool)
     .await
     .map_err(|e| e.to_string())?;
-    if has_enhanced_purchase == 0 {
+    if has_purchase_receipts_table == 0 {
         let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
-        sqlx::raw_sql(include_str!("../../migrations/add_enhanced_purchase_receipt_fields.sql"))
-            .execute(&mut *tx)
-            .await
-            .map_err(|e| e.to_string())?;
-        sqlx::query("INSERT INTO schema_migrations(version) VALUES('017_enhanced_purchase_receipt')")
+        sqlx::raw_sql(include_str!(
+            "../migrations/017_enhanced_purchase_receipt.sql"
+        ))
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| e.to_string())?;
+        // Insert into schema_migrations, ignoring if already recorded from a failed attempt.
+        sqlx::query("INSERT OR IGNORE INTO schema_migrations(version) VALUES('017_enhanced_purchase_receipt')")
             .execute(&mut *tx)
             .await
             .map_err(|e| e.to_string())?;
         tx.commit().await.map_err(|e| e.to_string())?;
     }
-    
+
+    let opening_registers: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM schema_migrations WHERE version='018_register_openings'",
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+    if opening_registers == 0 {
+        let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
+        sqlx::raw_sql(include_str!("../migrations/018_register_openings.sql"))
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        sqlx::query("INSERT INTO schema_migrations(version) VALUES('018_register_openings')")
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        tx.commit().await.map_err(|e| e.to_string())?;
+    }
+    let banking: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM schema_migrations WHERE version='019_banking_income'",
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+    if banking == 0 {
+        let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
+        sqlx::raw_sql(include_str!("../migrations/019_banking_income.sql"))
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        sqlx::query("INSERT INTO schema_migrations(version) VALUES('019_banking_income')")
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        tx.commit().await.map_err(|e| e.to_string())?;
+    }
+    let access: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM schema_migrations WHERE version='020_access_and_history'",
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|e| e.to_string())?;
+    if access == 0 {
+        let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
+        sqlx::raw_sql(include_str!("../migrations/020_access_and_history.sql"))
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        sqlx::query("INSERT INTO schema_migrations(version) VALUES('020_access_and_history')")
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        tx.commit().await.map_err(|e| e.to_string())?;
+    }
+    let preferences: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM schema_migrations WHERE version='021_purchase_preferences'")
+        .fetch_one(pool).await.map_err(|e| e.to_string())?;
+    if preferences == 0 {
+        let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
+        sqlx::raw_sql(include_str!("../migrations/021_purchase_preferences.sql")).execute(&mut *tx).await.map_err(|e| e.to_string())?;
+        sqlx::query("INSERT INTO schema_migrations(version) VALUES('021_purchase_preferences')").execute(&mut *tx).await.map_err(|e| e.to_string())?;
+        tx.commit().await.map_err(|e| e.to_string())?;
+    }
     Ok(())
 }
 
@@ -428,6 +519,7 @@ pub async fn login_user(
 ) -> Result<Option<PublicUser>, String> {
     *session.0.write().await = None;
     let pool = pool(&instances).await?;
+    *session.1.write().await = Some(pool.clone());
     let result = authenticate_user(&pool, &username, &password).await?;
     if let Some((_, active)) = &result {
         *session.0.write().await = Some(LoginSession {
@@ -440,6 +532,36 @@ pub async fn login_user(
 }
 
 async fn authenticate_user(
+    pool: &Pool<Sqlite>,
+    username: &str,
+    password: &str,
+) -> Result<Option<(PublicUser, LoginSession)>, String> {
+    let result = authenticate_credentials(pool, username, password).await;
+    match &result {
+        Ok(Some((user, _))) => {
+            crate::access::record_login(
+                pool,
+                Some(&user.id),
+                Some(username),
+                "sign_in",
+                "authenticated",
+            )
+            .await?
+        }
+        _ => {
+            crate::access::record_login(
+                pool,
+                None,
+                Some(username),
+                "failed_sign_in",
+                "invalid_credentials",
+            )
+            .await?
+        }
+    }
+    result
+}
+async fn authenticate_credentials(
     pool: &Pool<Sqlite>,
     username: &str,
     password: &str,
@@ -511,6 +633,7 @@ async fn authenticate_user(
             updated_at: row.get("updated_at"),
             deleted_at: row.get("deleted_at"),
             must_change_password,
+            permissions: crate::access::effective(pool, &active.user_id).await?,
         },
         active,
     )))
@@ -579,8 +702,21 @@ async fn change_user_password(
 }
 
 #[tauri::command]
-pub async fn logout_user(session: State<'_, SessionState>) -> Result<(), String> {
-    *session.0.write().await = None;
+pub async fn logout_user(
+    session: State<'_, SessionState>,
+    reason: Option<String>,
+) -> Result<(), String> {
+    let prior = session.0.write().await.take();
+    if let Some(active) = prior {
+        if let Some(db) = session.1.read().await.clone() {
+            let (event, reason) = match reason.as_deref() {
+                Some("idle") => ("session_expired", "idle_timeout"),
+                Some("window_close") => ("window_closed", "window_close"),
+                _ => ("sign_out", "user_request"),
+            };
+            crate::access::record_login(&db, Some(&active.user_id), None, event, reason).await?;
+        }
+    }
     Ok(())
 }
 
@@ -633,8 +769,26 @@ pub async fn database_select(
 
 async fn authorize_select(db: &Pool<Sqlite>, actor: &str, query: &str) -> Result<(), String> {
     let q = query.to_ascii_lowercase();
+    crate::access::authorize_query(db, actor, &q).await?;
     if q.contains("audit_events") || q.contains("catalog_operations") {
         crate::credit::require_role(db, actor, &["admin", "manager"]).await?;
+    }
+    if [
+        "bank_ledger",
+        "bank_transactions",
+        "bank_reconciliations",
+        "bank_clearances",
+        "unassigned_bank_entries",
+        "income_entries",
+        "opening_balances",
+        "bank_accounts",
+        "supplier_opening_payments",
+        "supplier_opening_outstanding",
+    ]
+    .iter()
+    .any(|table| q.contains(table))
+    {
+        crate::credit::require_role(db, actor, &["admin", "manager", "accountant"]).await?;
     }
     if q.contains("sales_invoices") || q.contains("sales_invoice_items") {
         crate::credit::require_role(db, actor, &["admin", "manager", "accountant"]).await?;
@@ -757,6 +911,15 @@ async fn execute_safe(
     .await
     .map_err(|e| e.to_string())?
     .ok_or("User account is unavailable")?;
+    let permission = match table.as_str() {
+        "users" => "users.manage",
+        "products" => "catalog.write",
+        "suppliers" => "suppliers.write",
+        "app_settings" => "settings.manage",
+        "daily_closing" => "reports.close",
+        _ => "unsupported",
+    };
+    crate::access::require(pool, actor, permission).await?;
     if !allowed_table(&table, &role) {
         return Err("This write is not permitted".to_string());
     }
@@ -765,10 +928,6 @@ async fn execute_safe(
         .await
         .map_err(|e| e.to_string())?;
     Ok(result.last_insert_rowid())
-}
-
-pub fn app_pool(app: &AppHandle) -> Result<Pool<Sqlite>, String> {
-    tauri::async_runtime::block_on(pool(&app.state::<DbInstances>()))
 }
 
 #[cfg(test)]

@@ -11,6 +11,9 @@ const cases = [
     'pos_product_search_smoke',
     'product_registration_storage_smoke',
     'catalog_registers_storage_smoke',
+    'opening_balances_storage_smoke',
+    'banking_income_storage_smoke',
+    'reports_preferences_storage_smoke',
   ].map((name) => ['python', [`tests/${name}.py`]]),
 ];
 for (const [command, args] of cases) {

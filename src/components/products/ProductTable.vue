@@ -122,16 +122,31 @@ function isLowStock(product: Product) {
             </td>
             <td class="p-3 text-center whitespace-nowrap">
               <div class="inline-flex gap-1">
-                <Button variant="outline" size="sm" @click="emit('batches', product)">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  permission="stock.batches"
+                  @click="emit('batches', product)"
+                >
                   {{ pick('Batches', 'بیچ') }}
                 </Button>
-                <Button variant="outline" size="sm" @click="emit('edit', product)">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  permission="catalog.write"
+                  @click="emit('edit', product)"
+                >
                   {{ pick('Edit', 'تدوین') }}
                 </Button>
                 <Button variant="ghost" size="sm" @click="emit('label', product)">
                   {{ pick('Label', 'لیبل') }}
                 </Button>
-                <Button variant="danger" size="sm" @click="emit('delete', product)">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  permission="catalog.write"
+                  @click="emit('delete', product)"
+                >
                   {{ pick('Delete', 'حذف') }}
                 </Button>
               </div>

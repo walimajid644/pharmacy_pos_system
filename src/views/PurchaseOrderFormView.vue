@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import { onActionKeydown } from '@/lib/actionKeys';
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import { useI18n } from '@/lib/i18n';
 import { usePurchaseOrderForm } from '@/composables/usePurchaseOrderForm';
 import Button from '@/components/ui/Button.vue';
@@ -8,6 +12,7 @@ import PurchaseOrderTotals from '@/components/purchases/PurchaseOrderTotals.vue'
 
 const { pick } = useI18n();
 const {
+  preferences,
   isEditing,
   suppliers,
   products,
@@ -29,19 +34,23 @@ const {
 </script>
 
 <template>
-  <div class="tool-terminal po-form-view compact-workspace">
+  <div class="tool-terminal po-form-view compact-workspace" @keydown="onActionKeydown">
     <div class="tool-header view-header">
       <div>
-        <h2 class="view-title">{{ isEditing ? 'Edit' : 'Create' }} Purchase Order</h2>
+        <h2 class="view-title">
+          {{ uiLabel(isEditing ? 'Edit' : 'Create') }} {{ uiLabel('Purchase Order') }}
+        </h2>
         <p class="view-subtitle">
           {{
-            isEditing
-              ? 'Update purchase order details'
-              : 'Add products and quantities to order from supplier'
+            uiLabel(
+              isEditing
+                ? 'Update purchase order details'
+                : 'Add products and quantities to order from supplier',
+            )
           }}
         </p>
       </div>
-      <Button @click="cancel" variant="outline">Cancel</Button>
+      <Button @click="cancel" variant="outline">{{ uiLabel('Cancel') }}</Button>
     </div>
 
     <p v-if="fromSuggestions" class="commercial-hint">
@@ -54,7 +63,7 @@ const {
     </p>
     <div v-if="loading" class="loading-state">
       <div class="spinner"></div>
-      <p>Loading...</p>
+      <p>{{ uiLabel('Loading...') }}</p>
     </div>
 
     <div v-else class="form-container">
@@ -62,6 +71,8 @@ const {
       <PurchaseOrderLines
         v-model="lineItems"
         :products="products"
+        :show-tax="!!preferences.purchase_show_tax"
+        :show-discount="!!preferences.purchase_show_discount"
         @add="addLineItem"
         @remove="removeLineItem"
         @select="selectProduct"
@@ -75,12 +86,21 @@ const {
       />
 
       <div class="form-actions">
-        <Button @click="cancel" variant="outline" :disabled="saving">Cancel</Button>
-        <Button @click="savePO('draft')" variant="outline" :disabled="saving">
-          {{ saving ? 'Saving...' : 'Save as Draft' }}
+        <small>{{ uiLabel('Ctrl+S: Save draft') }}</small>
+        <Button @click="cancel" variant="outline" :disabled="saving">{{
+          uiLabel('Cancel')
+        }}</Button>
+        <Button
+          permission="purchases.write"
+          aria-keyshortcuts="Control+s"
+          @click="savePO('draft')"
+          variant="outline"
+          :disabled="saving"
+        >
+          {{ uiLabel(saving ? 'Saving...' : 'Save as Draft') }}
         </Button>
-        <Button @click="savePO('sent')" :disabled="saving">
-          {{ saving ? 'Saving...' : 'Save & Send to Supplier' }}
+        <Button permission="purchases.write" @click="savePO('sent')" :disabled="saving">
+          {{ uiLabel(saving ? 'Saving...' : 'Save & Send to Supplier') }}
         </Button>
       </div>
     </div>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useAuthStore } from '@/stores/auth';
+const auth = useAuthStore();
 import { ref } from 'vue';
 import CompactPages from '@/components/ui/CompactPages.vue';
 import { useSupplierLedger } from '@/composables/useSupplierLedger';
@@ -12,6 +14,8 @@ const {
   selectedPo,
   amount,
   method,
+  bankAccounts,
+  bankAccountId,
   reference,
   notes,
   error,
@@ -23,6 +27,7 @@ const {
   visibleRows,
   suppliers,
   outstanding,
+  openingOutstanding,
   aging,
   load,
   save,
@@ -40,10 +45,14 @@ const ledgerTab = ref<'balances' | 'payment' | 'vouchers'>('balances');
     <p>
       {{
         pick(
-          'Balances use goods actually received. Due dates use supplier payment terms.',
-          'بقایا صرف موصولہ مال پر مبنی ہے۔ ادائیگی کی تاریخ سپلائر کی مدت سے بنتی ہے۔',
+          'Balances include received goods and openings. Opening age is unknown.',
+          'بقایا موصولہ مال اور ابتدائی بیلنس پر مبنی ہے۔ ابتدائی بیلنس کی عمر نامعلوم ہے۔',
         )
       }}
+      <span v-if="openingOutstanding">
+        · {{ pick('Opening balance (age unknown)', 'ابتدائی بیلنس (عمر نامعلوم)') }}:
+        {{ formatCurrency(openingOutstanding / 100) }}</span
+      >
     </p>
     <p v-if="error" role="alert" class="ledger-error">{{ error }}</p>
     <div v-if="loading">{{ pick('Loading ledger…', 'کھاتہ لوڈ ہو رہا ہے…') }}</div>
@@ -101,7 +110,7 @@ const ledgerTab = ref<'balances' | 'payment' | 'vouchers'>('balances');
             <thead>
               <tr>
                 <th>{{ pick('Supplier / PO', 'سپلائر / آرڈر') }}</th>
-                <th>{{ pick('Received value', 'موصولہ مالیت') }}</th>
+                <th>{{ pick('Received / opening', 'موصولہ / ابتدائی مالیت') }}</th>
                 <th>{{ pick('Paid', 'ادا شدہ') }}</th>
                 <th>{{ pick('Balance', 'بقایا') }}</th>
                 <th>{{ pick('Days overdue', 'تاخیر کے دن') }}</th>
@@ -117,7 +126,7 @@ const ledgerTab = ref<'balances' | 'payment' | 'vouchers'>('balances');
                 <td>
                   <strong>{{ formatCurrency(balanceCents(row) / 100) }}</strong>
                 </td>
-                <td>{{ daysOverdue(row) }}</td>
+                <td>{{ row.status === 'opening' ? '—' : daysOverdue(row) }}</td>
               </tr>
               <tr v-if="!visibleRows.length">
                 <td colspan="5">
@@ -131,9 +140,11 @@ const ledgerTab = ref<'balances' | 'payment' | 'vouchers'>('balances');
       <form v-show="ledgerTab === 'payment'" class="ledger-form" @submit.prevent="save">
         <h3>{{ pick('Record payment', 'ادائیگی درج کریں') }}</h3>
         <label
-          >{{ pick('Purchase order', 'خریداری آرڈر') }}
+          >{{ pick('Purchase order / opening', 'خریداری آرڈر / ابتدائی بیلنس') }}
           <select v-model="selectedPo" required>
-            <option value="" disabled>{{ pick('Select order', 'آرڈر منتخب کریں') }}</option>
+            <option value="" disabled>
+              {{ pick('Select order or opening', 'آرڈر یا ابتدائی بیلنس منتخب کریں') }}
+            </option>
             <option
               v-for="row in visibleRows.filter((item) => balanceCents(item) > 0)"
               :key="row.id"
@@ -156,11 +167,22 @@ const ledgerTab = ref<'balances' | 'payment' | 'vouchers'>('balances');
             <option value="mobile">{{ pick('Mobile transfer', 'موبائل ٹرانسفر') }}</option>
           </select></label
         >
+        <label v-if="method === 'bank'"
+          >{{ pick('Bank account', 'بینک کھاتا')
+          }}<select v-model="bankAccountId" required>
+            <option value="" disabled>
+              {{ pick('Select bank account', 'بینک کھاتا منتخب کریں') }}
+            </option>
+            <option v-for="bank in bankAccounts" :key="bank.id" :value="bank.id">
+              {{ bank.name }}
+            </option>
+          </select></label
+        >
         <label
           >{{ pick('Reference', 'حوالہ') }} <input v-model="reference" maxlength="100"
         /></label>
         <label>{{ pick('Notes', 'نوٹس') }} <input v-model="notes" maxlength="500" /></label>
-        <button type="submit" :disabled="saving">
+        <button type="submit" :disabled="saving || !auth.can('supplier.pay')">
           {{
             saving
               ? pick('Saving…', 'محفوظ ہو رہا ہے…')

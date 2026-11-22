@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import { computed, ref, watch } from 'vue';
 import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import { bindTemplateRef } from '@/lib/templateRefs';
@@ -226,10 +229,10 @@ watch(
         <div class="p-field-row">
           <label for="pf-uom" class="p-field-lbl">{{ pick('UOM', 'UOM') }}</label>
           <select id="pf-uom" v-model="formData.uom" class="p-field-ctrl">
-            <option value="box">BOX</option>
-            <option value="strip">STRIP</option>
-            <option value="unit">UNIT</option>
-            <option value="bottle">BOTTLE</option>
+            <option value="box">{{ uiLabel('BOX') }}</option>
+            <option value="strip">{{ uiLabel('STRIP') }}</option>
+            <option value="unit">{{ uiLabel('UNIT') }}</option>
+            <option value="bottle">{{ uiLabel('BOTTLE') }}</option>
           </select>
         </div>
         <!-- Pack Size (UOM Detail) -->

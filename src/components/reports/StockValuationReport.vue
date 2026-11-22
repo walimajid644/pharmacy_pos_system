@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useWorkspaceLabels } from '@/lib/workspaceLabels';
+const uiLabel = useWorkspaceLabels();
+
 import CompactPages from '@/components/ui/CompactPages.vue';
 import type { Ref } from 'vue';
 import type { useReports } from '@/composables/useReports';
@@ -19,15 +22,15 @@ defineProps<{
   <div class="flex-1 flex flex-col">
     <div class="p-6 border-b flex justify-between items-center">
       <div>
-        <h2 class="text-xl font-bold">Stock Valuation Report</h2>
-        <p class="text-sm text-gray-600">Current inventory value</p>
+        <h2 class="text-xl font-bold">{{ uiLabel('Stock Valuation Report') }}</h2>
+        <p class="text-sm text-gray-600">{{ uiLabel('Current inventory value') }}</p>
       </div>
       <Button
         variant="outline"
         size="sm"
         @click="exportToCSV('stock-valuation', stockValuationData)"
       >
-        📥 Export CSV
+        {{ uiLabel('📥 Export CSV') }}
       </Button>
     </div>
 
@@ -41,46 +44,50 @@ defineProps<{
         <table class="w-full border-collapse">
           <thead>
             <tr class="border-b bg-gray-50">
-              <th class="text-left p-3">{{ label('Product') }}</th>
-              <th class="text-right p-3">{{ label('Stock') }}</th>
-              <th class="text-right p-3">Cost Value</th>
-              <th class="text-right p-3">Retail Value</th>
-              <th class="text-right p-3">Potential Profit</th>
+              <th class="text-start p-3">{{ label('Product') }}</th>
+              <th class="text-end p-3">{{ label('Stock') }}</th>
+              <th class="text-end p-3">{{ uiLabel('Cost Value') }}</th>
+              <th class="text-end p-3">{{ uiLabel('Retail Value') }}</th>
+              <th class="text-end p-3">{{ uiLabel('Potential Profit') }}</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="{ item: row } in pageRows" :key="row.sku" class="border-b hover:bg-surface-page">
+            <tr
+              v-for="{ item: row } in pageRows"
+              :key="row.sku"
+              class="border-b hover:bg-surface-page"
+            >
               <td class="p-3">
                 <div>{{ row.product_name }}</div>
                 <div class="text-sm text-secondary">{{ row.sku }}</div>
               </td>
-              <td class="p-3 text-right">
+              <td class="p-3 text-end">
                 {{ row.total_stock
                 }}<small v-if="row.quarantined_stock" class="block text-danger"
                   >{{ row.quarantined_stock }}
                   {{ pick('quarantined (included)', 'قرنطینہ (شامل)') }}</small
                 >
               </td>
-              <td class="p-3 text-right">{{ formatCurrency(row.cost_value) }}</td>
-              <td class="p-3 text-right font-semibold">{{ formatCurrency(row.retail_value) }}</td>
-              <td class="p-3 text-right text-success font-semibold">
+              <td class="p-3 text-end">{{ formatCurrency(row.cost_value) }}</td>
+              <td class="p-3 text-end font-semibold">{{ formatCurrency(row.retail_value) }}</td>
+              <td class="p-3 text-end text-success font-semibold">
                 {{ formatCurrency(row.potential_profit) }}
               </td>
             </tr>
           </tbody>
           <tfoot v-if="stockValuationData.length > 0" class="border-t bg-surface-page">
             <tr class="font-bold">
-              <td class="p-3">TOTAL</td>
-              <td class="p-3 text-right">
+              <td class="p-3">{{ uiLabel('TOTAL') }}</td>
+              <td class="p-3 text-end">
                 {{ stockValuationData.reduce((sum, r) => sum + r.total_stock, 0) }}
               </td>
-              <td class="p-3 text-right">
+              <td class="p-3 text-end">
                 {{ formatCurrency(stockValuationData.reduce((sum, r) => sum + r.cost_value, 0)) }}
               </td>
-              <td class="p-3 text-right">
+              <td class="p-3 text-end">
                 {{ formatCurrency(stockValuationData.reduce((sum, r) => sum + r.retail_value, 0)) }}
               </td>
-              <td class="p-3 text-right text-success">
+              <td class="p-3 text-end text-success">
                 {{
                   formatCurrency(stockValuationData.reduce((sum, r) => sum + r.potential_profit, 0))
                 }}

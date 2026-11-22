@@ -722,3 +722,12 @@ npx tauri build --ci
 ## Release gate
 
 The app is ready for a live pharmacy trial only when section 1 and the core workflow gaps in section 2 are complete, every workflow in section 3 passes, backup and restore are verified, and the release candidate has been installed on a clean machine. The optional planned enhancements in section 2 are not part of this gate. Record the test date and result here when that happens.
+
+## Legacy screenshot feature sequence — November 22, 2026
+
+1. Product registration field persistence and error diagnostics: implemented.
+2. Category, manufacturer, shelf/location and expense-head management: implemented.
+3. Customer/supplier/bank opening balances and batch stickers: implemented, with focused automated regression checks. Native printer alignment remains an operator check.
+4. Bank deposits/withdrawals/transfers, statements/reconciliation, legacy bank-voucher assignment, income heads and non-sales income: implemented. Bank-method customer/supplier payments and expenses can be linked to accounts; drawer reconciliation includes bank cash movements and cash income.
+5. Configurable user rights within existing role limits, login/sign-out/expiry history and reviewed restore with a verified safety copy and restart-time replacement: implemented. Covered by focused backend/file tests, mocked browser checks and isolated native IPC acceptance.
+6. Expanded printable/exportable reports and purchase-form settings: implemented. Report Center provides 12 list/account/purchase/trend reports with full-result print/CSV; purchase defaults and zero-value field visibility persist in schema 021. Exact contents of closed reference submenus remain unspecified.
