@@ -74,17 +74,29 @@ async fn restore_drains_writes_preserves_safety_and_applies_only_during_restart(
         .lock()
         .await
         .insert(plan.id.clone(), plan.clone());
-    assert!(
-        schedule(&pool, &state, &config, &dir, ADMIN, &plan.id, "wrong", "RESTORE")
-            .await
-            .is_err()
-    );
+    assert!(schedule(
+        &pool,
+        &state,
+        (&config, &dir),
+        ADMIN,
+        &plan.id,
+        "wrong",
+        "RESTORE"
+    )
+    .await
+    .is_err());
     assert!(!state.maintenance.load(Ordering::Acquire));
-    assert!(
-        schedule(&pool, &state, &config, &dir, ADMIN, &plan.id, PASSWORD, "WRONG")
-            .await
-            .is_err()
-    );
+    assert!(schedule(
+        &pool,
+        &state,
+        (&config, &dir),
+        ADMIN,
+        &plan.id,
+        PASSWORD,
+        "WRONG"
+    )
+    .await
+    .is_err());
     let mut in_flight = pool.begin().await.unwrap();
     sqlx::query("UPDATE app_settings SET company_name='LIVE-FINAL'")
         .execute(&mut *in_flight)
@@ -99,8 +111,7 @@ async fn restore_drains_writes_preserves_safety_and_applies_only_during_restart(
         schedule(
             &task_pool,
             &task_state,
-            &task_config,
-            &task_dir,
+            (&task_config, &task_dir),
             ADMIN,
             &id,
             PASSWORD,
@@ -207,11 +218,17 @@ async fn invalid_newer_and_changed_backups_never_replace_the_current_database() 
     let state = RestoreState::default();
     let id = plan.id.clone();
     state.plans.lock().await.insert(id.clone(), plan);
-    assert!(
-        schedule(&pool, &state, &config, &dir, ADMIN, &id, PASSWORD, "RESTORE")
-            .await
-            .is_err()
-    );
+    assert!(schedule(
+        &pool,
+        &state,
+        (&config, &dir),
+        ADMIN,
+        &id,
+        PASSWORD,
+        "RESTORE"
+    )
+    .await
+    .is_err());
     assert!(!state.maintenance.load(Ordering::Acquire));
     assert!(!dir.join("pending.json").exists());
     assert_eq!(
@@ -234,18 +251,30 @@ async fn open_drawers_and_unauthorized_operators_cannot_schedule_restore() {
     let id = plan.id.clone();
     state.plans.lock().await.insert(id.clone(), plan);
     crate::shifts::open(&pool, ADMIN, 0).await.unwrap();
-    assert!(
-        schedule(&pool, &state, &config, &dir, ADMIN, &id, PASSWORD, "RESTORE")
-            .await
-            .is_err()
-    );
+    assert!(schedule(
+        &pool,
+        &state,
+        (&config, &dir),
+        ADMIN,
+        &id,
+        PASSWORD,
+        "RESTORE"
+    )
+    .await
+    .is_err());
     assert!(!state.maintenance.load(Ordering::Acquire));
     sqlx::query("INSERT INTO users(id,username,password_hash,full_name,role,created_at,updated_at) VALUES('manager','restore-manager','x','Manager','manager','now','now')").execute(&pool).await.unwrap();
-    assert!(
-        schedule(&pool, &state, &config, &dir, "manager", &id, PASSWORD, "RESTORE")
-            .await
-            .is_err()
-    );
+    assert!(schedule(
+        &pool,
+        &state,
+        (&config, &dir),
+        "manager",
+        &id,
+        PASSWORD,
+        "RESTORE"
+    )
+    .await
+    .is_err());
     pool.close().await;
     cleanup(&root).await;
 }
@@ -259,7 +288,13 @@ async fn startup_stops_on_sidecars_or_changed_safety_snapshot_without_swapping()
     let id = plan.id.clone();
     state.plans.lock().await.insert(id.clone(), plan);
     let result = schedule(
-        &pool, &state, &config, &dir, ADMIN, &id, PASSWORD, "RESTORE",
+        &pool,
+        &state,
+        (&config, &dir),
+        ADMIN,
+        &id,
+        PASSWORD,
+        "RESTORE",
     )
     .await
     .unwrap();
@@ -323,7 +358,7 @@ async fn older_backups_are_upgraded_in_the_staged_copy_only() {
     .unwrap();
     assert_eq!(count, 1);
     let defaults: (i64, f64, i64) = sqlx::query_as("SELECT purchase_default_quantity,purchase_default_tax,purchase_fill_remaining FROM app_settings LIMIT 1").fetch_one(&mut staged).await.unwrap();
-    assert_eq!(defaults, (1,17.0,1));
+    assert_eq!(defaults, (1, 17.0, 1));
     let events: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM login_events")
         .fetch_one(&mut staged)
         .await

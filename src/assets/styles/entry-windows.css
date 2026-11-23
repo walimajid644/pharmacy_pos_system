@@ -1,0 +1,76 @@
+/* Entry forms use a content-sized desktop window; registers keep their full workspace. */
+#app .workspace-dialog:has(.backup-page) {
+  --entry-window-width: 660px;
+}
+#app .workspace-dialog:has(.receipt-workspace) {
+  --entry-window-width: 850px;
+}
+#app .workspace-dialog:has(.expense-workspace) {
+  --entry-window-width: 720px;
+}
+#app .workspace-dialog:has(.ledger-page.payment-active) {
+  --entry-window-width: 790px;
+}
+#app
+  .workspace-dialog:has(
+    .backup-page,
+    .receipt-workspace,
+    .expense-workspace,
+    .ledger-page.payment-active
+  ) {
+  width: min(var(--entry-window-width), 100%);
+  /* The shared short-screen workspace rule otherwise forces a full-height window. */
+  height: auto !important;
+  min-height: 0;
+  max-height: calc(100dvh - 32px);
+}
+#app
+  .workspace-dialog:has(
+    .backup-page,
+    .receipt-workspace,
+    .expense-workspace,
+    .ledger-page.payment-active
+  )
+  > .workspace-body {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+#app
+  .workspace-dialog:has(
+    .backup-page,
+    .receipt-workspace,
+    .expense-workspace,
+    .ledger-page.payment-active
+  )
+  .workspace-body
+  > .tool-terminal,
+#app .workspace-dialog .workspace-body .ledger-page.payment-active {
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+}
+#app
+  .workspace-dialog
+  .workspace-body
+  :is(
+    .backup-page > .backup-card,
+    .receipt-workspace > .receipt-entry,
+    .expense-workspace > .expense-entry,
+    .ledger-page.payment-active .supplier-payment-form
+  ) {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  flex: none;
+}
+#app .workspace-dialog .workspace-body .backup-page > .backup-restore-note {
+  width: auto;
+  margin: 7px 12px;
+}
+#app .workspace-dialog .workspace-body .supplier-payment-workspace > .ledger-page.payment-active {
+  margin: 0;
+}

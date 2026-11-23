@@ -274,6 +274,10 @@ try {
   await check('/catalog-bulk/review');
   await shot('compact-catalog-review');
   await open('/expenses', 'admin', false);
+  await evaluate(
+    "[...document.querySelectorAll('.commercial-tabs button')].find(b=>b.textContent.includes('Expense history')).click()",
+  );
+  await until("!!document.querySelector('.commercial-table-scroll tbody button')");
   await clickText('Void', '.workspace-body tbody button');
   await check('/expenses/void');
   await open('/catalog-import');

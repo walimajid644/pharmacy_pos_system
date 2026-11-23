@@ -1,9 +1,11 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue';
+import ExpenseEntryForm from '@/components/finance/ExpenseEntryForm.vue';
+import ReceiptEntryForm from '@/components/finance/ReceiptEntryForm.vue';
+import { useToast } from '@/composables/useToast';
 import { useWorkspaceLabels } from '@/lib/workspaceLabels';
 const uiLabel = useWorkspaceLabels();
 
-import { useAuthStore } from '@/stores/auth';
-const auth = useAuthStore();
 import CompactPages from '@/components/ui/CompactPages.vue';
 import { bindTemplateRef } from '@/lib/templateRefs';
 import SupplierLedgerView from './SupplierLedgerView.vue';
@@ -32,7 +34,6 @@ const {
   voidDialog,
   voidError,
   closedCash,
-  selectedCustomer,
   visible,
   total,
   load,
@@ -41,9 +42,42 @@ const {
   printEntry,
 } = useFinance();
 const bindvoidDialog = bindTemplateRef(voidDialog);
+const receiptHistory = ref(false);
+const expenseHistory = ref(false);
+watch(expense, () => {
+  expenseHistory.value = false;
+});
+const toast = useToast();
+async function saveReceipt(details: { invoice: string; cheque: string }) {
+  if (busy.value) return;
+  const remarks = form.value.description;
+  form.value.description =
+    [
+      details.invoice ? `Invoice: ${details.invoice}` : '',
+      details.cheque ? `Cheque / Draft: ${details.cheque}` : '',
+      remarks.trim(),
+    ]
+      .filter(Boolean)
+      .join(' · ') || 'Customer balance receipt';
+  if (new TextEncoder().encode(form.value.description).length > 500) {
+    form.value.description = remarks;
+    toast.error('Receipt details are too long; shorten the remarks');
+    return;
+  }
+  const number = await save();
+  if (!number) form.value.description = remarks;
+  return number;
+}
 </script>
 <template>
-  <div class="tool-terminal compact-workspace finance-terminal">
+  <div
+    class="tool-terminal compact-workspace finance-terminal"
+    :class="{
+      'receipt-workspace': !expense && !receiptHistory && !supplierMode,
+      'supplier-payment-workspace': supplierMode && !expense,
+      'expense-workspace': expense && !expenseHistory,
+    }"
+  >
     <header class="tool-header">
       <div>
         <h1>{{ expense ? label('Expenses') : label('Payments & Receipts') }}</h1>
@@ -51,7 +85,7 @@ const bindvoidDialog = bindTemplateRef(voidDialog);
           {{
             expense
               ? 'Record business spending and track cash outflows'
-              : 'Customer balance collections, supplier payments and sale receipts'
+              : 'Record customer receipts and review payment history'
           }}
         </p>
       </div>
@@ -59,22 +93,79 @@ const bindvoidDialog = bindTemplateRef(voidDialog);
     </header>
     <div v-if="!expense" class="commercial-tabs">
       <button
-        :aria-pressed="!supplierMode"
+        :aria-pressed="!supplierMode && !receiptHistory"
+        :disabled="busy"
         @click="
           supplierMode = false;
+          receiptHistory = false;
+        "
+      >
+        {{ pick('Receipt', 'رسید') }}</button><button
+        :aria-pressed="!supplierMode && receiptHistory"
+        :disabled="busy"
+        @click="
+          supplierMode = false;
+          receiptHistory = true;
           load();
         "
       >
-        {{ label('Receipts & history') }}</button><button
-        :aria-pressed="supplierMode"
-        @click="supplierMode = true"
-      >
+        {{ label('Receipts & history') }}</button
+      ><button :aria-pressed="supplierMode" :disabled="busy" @click="supplierMode = true">
         {{ label('Pay supplier') }}
       </button>
     </div>
+    <div v-if="expense" class="commercial-tabs">
+      <button
+        type="button"
+        :disabled="busy"
+        :aria-pressed="!expenseHistory"
+        @click="expenseHistory = false"
+      >
+        {{ pick('Expense Details', 'اخراجات کی تفصیل') }}
+      </button>
+      <button
+        type="button"
+        :disabled="busy"
+        :aria-pressed="expenseHistory"
+        @click="
+          expenseHistory = true;
+          load();
+        "
+      >
+        {{ pick('Expense history', 'اخراجات کی تاریخ') }}
+      </button>
+    </div>
     <p v-if="error" class="commercial-error" role="alert">{{ error }}</p>
-    <SupplierLedgerView v-if="supplierMode && !expense" />
-    <div v-else class="commercial-split">
+    <ReceiptEntryForm
+      v-if="!expense"
+      v-show="!supplierMode && !receiptHistory"
+      v-model="form"
+      :customers="customers"
+      :bank-accounts="bankAccounts"
+      :busy="busy"
+      :loading="loading"
+      :today="today()"
+      :save="saveReceipt"
+      @history="receiptHistory = true"
+    />
+    <ExpenseEntryForm
+      v-if="expense"
+      v-show="!expenseHistory"
+      v-model="form"
+      :expense-heads="expenseHeads"
+      :bank-accounts="bankAccounts"
+      :busy="busy"
+      :loading="loading"
+      :today="today()"
+      :save="save"
+      @history="expenseHistory = true"
+    />
+    <SupplierLedgerView v-if="supplierMode && !expense" payment-entry />
+    <div
+      v-else-if="expense ? expenseHistory : receiptHistory"
+      class="commercial-split"
+      :class="{ 'receipt-history': !expense, 'expense-history': expense }"
+    >
       <section class="commercial-main">
         <div class="commercial-filters">
           <input
@@ -170,76 +261,6 @@ const bindvoidDialog = bindTemplateRef(voidDialog);
           </div>
         </footer>
       </section>
-      <aside class="commercial-dock">
-        <h2>{{ expense ? label('Record expense') : label('Collect customer balance') }}</h2>
-        <p class="commercial-hint">
-          {{
-            expense
-              ? 'Cash expenses reduce the open drawer balance.'
-              : 'Collections reduce an existing customer balance. Sale payments appear in history automatically.'
-          }}
-        </p>
-        <form @submit.prevent="save">
-          <label v-if="!expense"
-            >{{ label('Customer')
-            }}<select v-model="form.customerId" required>
-              <option value="">{{ label('Select customer') }}</option>
-              <option v-for="c in customers" :key="c.id" :value="c.id">{{ c.name }}</option>
-            </select></label
-          >
-          <p v-if="selectedCustomer && !expense">
-            {{ uiLabel('Outstanding:') }}
-            <strong>{{ formatCurrency(selectedCustomer.current_balance) }}</strong>
-          </p>
-          <label v-if="expense"
-            >{{ label('Expense Head')
-            }}<select v-model="form.category" required>
-              <option value="" disabled>{{ label('Select expense head') }}</option>
-              <option v-for="head in expenseHeads" :key="head.id" :value="head.name">
-                {{ head.name }}
-              </option>
-            </select></label
-          >
-          <label
-            >{{ label('Description')
-            }}<input v-model="form.description" required maxlength="500" /></label
-          ><label
-            >{{ label('Amount (Rs)')
-            }}<input v-model="form.amount" required type="number" min="0.01" step="0.01"
-          /></label>
-          <label
-            >{{ label('Method')
-            }}<select v-model="form.method">
-              <option value="cash">{{ label('Cash drawer') }}</option>
-              <option value="bank">{{ label('Bank') }}</option>
-              <option value="mobile">{{ label('Mobile') }}</option>
-            </select></label
-          >
-          <label v-if="form.method === 'bank'"
-            >{{ pick('Bank account', 'بینک کھاتا')
-            }}<select v-model="form.bankAccountId" required>
-              <option value="" disabled>
-                {{ pick('Select bank account', 'بینک کھاتا منتخب کریں') }}
-              </option>
-              <option v-for="bank in bankAccounts" :key="bank.id" :value="bank.id">
-                {{ bank.name }}
-              </option>
-            </select></label
-          >
-          <label
-            >{{ label('Date')
-            }}<input v-model="form.entryDate" type="date" required :max="today()" /></label
-          ><label>{{ label('Reference') }}<input v-model="form.reference" maxlength="100" /></label
-          ><button
-            class="bg-primary"
-            :disabled="busy || !auth.can(expense ? 'finance.expenses' : 'finance.receipts')"
-          >
-            {{
-              busy ? label('Saving…') : expense ? label('Save expense') : label('Record receipt')
-            }}
-          </button>
-        </form>
-      </aside>
     </div>
     <div
       v-if="selected"
@@ -297,3 +318,20 @@ const bindvoidDialog = bindTemplateRef(voidDialog);
     </section></Teleport
   >
 </template>
+
+<style scoped>
+.receipt-workspace > .tool-header,
+.supplier-payment-workspace > .tool-header,
+.expense-workspace > .tool-header {
+  display: none;
+}
+.workspace-body .tool-terminal.compact-workspace > .receipt-entry,
+.workspace-body .tool-terminal.compact-workspace > .expense-entry {
+  margin: auto;
+}
+
+.workspace-body .tool-terminal.compact-workspace .commercial-split.receipt-history,
+.workspace-body .tool-terminal.compact-workspace .commercial-split.expense-history {
+  grid-template-columns: minmax(0, 1fr);
+}
+</style>

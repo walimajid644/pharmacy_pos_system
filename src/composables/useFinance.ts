@@ -173,6 +173,7 @@ export function useFinance() {
       form.value.description = '';
       form.value.reference = '';
       await load();
+      return number;
     } catch (e) {
       toast.error(String(e));
     } finally {

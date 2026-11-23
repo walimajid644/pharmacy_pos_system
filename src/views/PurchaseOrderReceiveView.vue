@@ -364,7 +364,15 @@ async function saveReceipt() {
   <div class="purchase-receive-enhanced" :class="{ 'direct-invoice': direct }">
     <!-- Header -->
     <div class="receive-header">
-      <div>
+      <div v-if="direct" class="invoice-brand">
+        <span class="brand-symbol" aria-hidden="true">✚</span>
+        <div>
+          <strong>{{ settings.settings?.company_name || 'Pharmacy POS' }}</strong><span
+            >Purchase management</span
+          >
+        </div>
+      </div>
+      <div :class="{ 'invoice-heading': direct }">
         <h2>
           {{
             direct
@@ -406,8 +414,8 @@ async function saveReceipt() {
                 placeholder="Supplier bill number"
               />
             </div>
-            <div class="field">
-              <label>{{ pick('Distributor', 'ڈسٹری بیوٹر') }}</label>
+            <div class="field supplier-field">
+              <label>{{ pick('Supplier', 'ڈسٹری بیوٹر') }}</label>
               <select
                 v-if="direct"
                 v-model="supplierId"
@@ -423,7 +431,11 @@ async function saveReceipt() {
               </select>
               <Input v-else :model-value="po?.supplier_name" aria-label="Distributor" readonly />
             </div>
-            <div class="field">
+            <div v-if="direct" class="field payment-method-field">
+              <label>{{ pick('Payment', 'ادائیگی') }}</label>
+              <Input model-value="Credit" aria-label="Payment method" readonly />
+            </div>
+            <div class="field date-field">
               <label>{{ pick('Date', 'تاریخ') }}</label>
               <Input v-model="receiveDate" aria-label="Receive date" type="date" />
             </div>
@@ -551,9 +563,22 @@ async function saveReceipt() {
               <label>{{ pick('Expiry', 'ختم ہونے') }}</label>
               <Input v-model="quickEntry.expiryDate" aria-label="Expiry date" type="date" />
             </div>
-            <Button @click="addItem" class="add-btn"
-              >↓ {{ direct ? pick('Add', 'شامل') : pick('Apply', 'شامل') }}</Button
+            <Button
+              @click="addItem"
+              class="add-btn"
+              :aria-label="direct ? 'Add purchase item' : 'Apply item changes'"
             >
+              <span aria-hidden="true">↓</span>
+              {{ direct ? pick('Add', 'شامل') : pick('Apply', 'شامل') }}
+            </Button>
+            <div v-if="direct" class="quick-field stock-field">
+              <label>{{ pick('Current Stock', 'موجودہ اسٹاک') }}</label>
+              <Input
+                :model-value="selectedProduct?.current_stock ?? ''"
+                aria-label="Current stock"
+                readonly
+              />
+            </div>
           </div>
           <div v-if="selectedProduct" class="selected-product">
             <strong>Selected:</strong> {{ selectedProduct.product_name }} |
@@ -563,7 +588,11 @@ async function saveReceipt() {
 
         <!-- Items Table -->
         <Card class="items-table-card">
-          <CompactPages :items="receiveItems" :row-height="90" v-slot="{ rows }"
+          <CompactPages
+            :items="receiveItems"
+            :row-height="direct ? 52 : 90"
+            follow-added
+            v-slot="{ rows }"
             ><div class="table-scroll">
               <p v-if="!receiveItems.length" class="empty-invoice">
                 {{
@@ -573,7 +602,10 @@ async function saveReceipt() {
                   )
                 }}
               </p>
-              <table v-else class="items-table">
+              <table
+                class="items-table"
+                :aria-label="pick('Purchase invoice items', 'خریداری آئٹمز')"
+              >
                 <thead>
                   <tr>
                     <th>{{ pick('Sr', 'نمبر') }}</th>
@@ -702,7 +734,7 @@ async function saveReceipt() {
             </div>
           </CompactPages>
           <!-- Summary -->
-          <div class="items-summary">
+          <div v-if="!direct" class="items-summary">
             <span
               >{{ pick('Items', 'آئٹمز') }}: <strong>{{ receiveItems.length }}</strong></span
             >
@@ -719,6 +751,21 @@ async function saveReceipt() {
         <!-- Footer Section -->
         <div class="footer-section">
           <Card class="footer-card">
+            <!-- Summary -->
+            <div v-if="direct" class="items-summary">
+              <span
+                >{{ pick('Items', 'آئٹمز') }}: <strong>{{ receiveItems.length }}</strong></span
+              >
+              <span
+                >{{ pick('Item Disc', 'آئٹم رعایت') }}:
+                <strong>{{ formatCurrency(totalItemDiscount) }}</strong></span
+              >
+              <span
+                >{{ pick('GST', 'جی ایس ٹی') }}:
+                <strong>{{ formatCurrency(totalGST) }}</strong></span
+              >
+            </div>
+
             <!-- Invoice Adjustments -->
             <div class="adjustments">
               <div class="adjustment-row">
@@ -757,7 +804,25 @@ async function saveReceipt() {
             </div>
 
             <div class="payment-section">
-              <p>
+              <template v-if="direct">
+                <div class="balance-row">
+                  <span>{{ pick('Payment', 'ادائیگی') }}</span><output>{{
+                    formatCurrency(0)
+                  }}</output>
+                </div>
+                <div class="balance-row">
+                  <span>{{ pick('Balance', 'بقایا') }}</span><output>{{
+                    formatCurrency(netPayable)
+                  }}</output>
+                </div>
+                <small>{{
+                  pick(
+                    'Payments are recorded in Supplier Ledger.',
+                    'ادائیگی سپلائر لیجر میں درج کریں۔',
+                  )
+                }}</small>
+              </template>
+              <p v-else>
                 {{
                   pick(
                     'Record supplier payments in Supplier Ledger after receiving this invoice.',
@@ -778,7 +843,7 @@ async function saveReceipt() {
       <!-- Actions -->
       <div class="action-buttons">
         <Button @click="router.push('/purchase-orders')" variant="outline" :disabled="saving">
-          {{ pick('Cancel', 'منسوخ') }}
+          {{ direct ? pick('Exit', 'بند کریں') : pick('Cancel', 'منسوخ') }}
         </Button>
         <Button @click="saveReceipt" permission="purchases.receive" :disabled="saving || !canSave">
           {{
@@ -1134,5 +1199,454 @@ async function saveReceipt() {
   padding: 2px 8px;
   height: 28px;
   font-size: 12px;
+}
+</style>
+
+<style>
+/* Reference field layout using the existing application theme. */
+:is(#app, .compact-dialog) .direct-invoice {
+  color: var(--text-primary);
+  font-family: Arial, sans-serif;
+  background: var(--surface-page);
+  border: 3px solid var(--border);
+  border-radius: 0;
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+:is(#app, .compact-dialog) .direct-invoice .receive-header {
+  min-height: 64px;
+  padding: 7px 12px;
+  background: var(--surface-card);
+  border-bottom: 2px solid var(--border);
+}
+.invoice-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+.brand-symbol {
+  color: var(--color-primary);
+  font-size: 39px;
+  line-height: 1;
+}
+.invoice-brand strong {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 27px;
+  line-height: 1.1;
+}
+.invoice-brand span:last-child {
+  display: block;
+  color: var(--text-secondary);
+  font-size: 12px;
+  text-align: right;
+}
+:is(#app, .compact-dialog) .direct-invoice .invoice-heading {
+  margin-left: auto;
+}
+:is(#app, .compact-dialog) .direct-invoice .invoice-heading h2 {
+  font-size: 15px;
+  color: var(--text-secondary);
+}
+:is(#app, .compact-dialog) .direct-invoice .receive-header button {
+  min-height: 38px;
+  border-radius: 0;
+  font-size: 12px;
+}
+:is(#app, .compact-dialog) .direct-invoice .receive-content {
+  padding: 7px 5px 0;
+  gap: 0;
+}
+:is(#app, .compact-dialog) .direct-invoice .receipt-fields {
+  gap: 0;
+}
+:is(#app, .compact-dialog) .direct-invoice .invoice-header-card,
+:is(#app, .compact-dialog) .direct-invoice .quick-entry-card {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 4px 6px;
+}
+:is(#app, .compact-dialog) .direct-invoice .header-fields {
+  grid-template-columns: 190px minmax(170px, 1fr) 190px 190px;
+  gap: 6px 12px;
+  max-width: 980px;
+}
+:is(#app, .compact-dialog) .direct-invoice .field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+:is(#app, .compact-dialog) .direct-invoice .field label {
+  white-space: nowrap;
+  font-weight: 700;
+  font-size: 12px;
+}
+:is(#app, .compact-dialog) .direct-invoice .field > :last-child {
+  flex: 1;
+  min-width: 0;
+}
+:is(#app, .compact-dialog) .direct-invoice .supplier-field {
+  grid-column: 1 / 5;
+  grid-row: 2;
+}
+:is(#app, .compact-dialog) .direct-invoice .supplier-field label {
+  width: 69px;
+  text-align: right;
+}
+:is(#app, .compact-dialog) .direct-invoice .payment-method-field {
+  grid-column: 3;
+  grid-row: 1;
+}
+:is(#app, .compact-dialog) .direct-invoice .date-field {
+  grid-column: 4;
+  grid-row: 1;
+}
+:is(#app, .compact-dialog) .direct-invoice input,
+:is(#app, .compact-dialog) .direct-invoice .supplier-select {
+  height: 23px;
+  min-height: 0;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 1px 5px;
+  color: var(--text-primary);
+  background: var(--surface-card);
+  font-size: 12px;
+  box-shadow: none;
+}
+:is(#app, .compact-dialog) .direct-invoice input:read-only {
+  background: var(--surface-page);
+}
+:is(#app, .compact-dialog) .direct-invoice input:focus,
+:is(#app, .compact-dialog) .direct-invoice .supplier-select:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+  box-shadow: none;
+}
+:is(#app, .compact-dialog) .direct-invoice .product-search {
+  margin: 0 0 9px;
+}
+:is(#app, .compact-dialog) .direct-invoice .product-search > label {
+  width: 69px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+}
+:is(#app, .compact-dialog) .direct-invoice .quick-entry-row {
+  grid-template-columns:
+    repeat(6, minmax(50px, 1fr)) minmax(75px, 1fr) minmax(105px, 1.2fr)
+    65px 90px;
+  gap: 6px;
+}
+:is(#app, .compact-dialog) .direct-invoice .quick-field {
+  min-width: 0;
+}
+:is(#app, .compact-dialog) .direct-invoice .quick-field label {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: normal;
+  min-height: 24px;
+  line-height: 12px;
+  overflow-wrap: anywhere;
+  margin-bottom: 2px;
+}
+:is(#app, .compact-dialog) .direct-invoice .add-btn {
+  height: 27px;
+  padding: 0 5px;
+  border-radius: 1px;
+}
+:is(#app, .compact-dialog) .direct-invoice .add-btn span {
+  font-size: 24px;
+  line-height: 1;
+}
+:is(#app, .compact-dialog) .direct-invoice .selected-product {
+  margin-top: 3px;
+  font-size: 11px;
+}
+:is(#app, .compact-dialog) .direct-invoice .search-results {
+  color: var(--text-primary);
+  background: var(--surface-card);
+  border-color: var(--border);
+  box-shadow: none;
+}
+:is(#app, .compact-dialog) .direct-invoice .search-result-item:hover {
+  background: var(--color-hover);
+}
+:is(#app, .compact-dialog) .direct-invoice .items-table-card {
+  margin-top: 4px;
+  border: 3px solid var(--border);
+  border-radius: 0;
+  background: var(--surface-card);
+  box-shadow: none;
+}
+:is(#app, .compact-dialog) .direct-invoice .table-scroll {
+  position: relative;
+  background: var(--surface-card);
+}
+:is(#app, .compact-dialog) .direct-invoice .items-table {
+  min-width: 0;
+  table-layout: fixed;
+  font-size: 15px;
+}
+:is(#app, .compact-dialog) .direct-invoice .items-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 3px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 400;
+  border: 1px solid var(--border);
+  white-space: normal;
+}
+:is(#app, .compact-dialog) .direct-invoice .items-table th:first-child {
+  width: 30px;
+}
+:is(#app, .compact-dialog) .direct-invoice .items-table th:nth-child(2) {
+  width: 29%;
+}
+:is(#app, .compact-dialog) .direct-invoice .items-table td {
+  min-width: 0;
+  padding: 2px 3px;
+  color: var(--text-primary);
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  vertical-align: top;
+  font-weight: 400;
+}
+:is(#app, .compact-dialog) .direct-invoice .items-table tr:focus-within td {
+  background: var(--color-hover);
+}
+:is(#app, .compact-dialog) .direct-invoice .items-table td.product-cell {
+  min-width: 0;
+}
+:is(#app, .compact-dialog) .direct-invoice .product-cell > div {
+  text-transform: uppercase;
+  line-height: 20px;
+}
+:is(#app, .compact-dialog) .direct-invoice .product-cell label {
+  font-size: 9px;
+  color: var(--text-secondary);
+  margin: 0 3px 0 0;
+  gap: 2px;
+}
+:is(#app, .compact-dialog) .direct-invoice .product-cell label input {
+  width: 70px;
+  height: 18px;
+  font-size: 10px;
+}
+:is(#app, .compact-dialog) .direct-invoice .product-cell label input[type='date'] {
+  width: 99px;
+}
+:is(#app, .compact-dialog) .direct-invoice .items-table input {
+  width: 100%;
+  min-width: 0;
+  height: 22px;
+  padding: 0 1px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-primary);
+  box-shadow: none;
+  font-size: 15px;
+  border-radius: 0;
+}
+:is(#app, .compact-dialog) .direct-invoice .items-table input:focus {
+  background: var(--surface-card);
+}
+:is(#app, .compact-dialog) .direct-invoice input[type='number'] {
+  appearance: textfield;
+}
+:is(#app, .compact-dialog) .direct-invoice input::-webkit-inner-spin-button,
+:is(#app, .compact-dialog) .direct-invoice input::-webkit-outer-spin-button {
+  appearance: none;
+  margin: 0;
+}
+:is(#app, .compact-dialog) .direct-invoice .empty-invoice {
+  position: absolute;
+  top: 45px;
+  width: 100%;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+:is(#app, .compact-dialog) .direct-invoice .footer-card {
+  display: grid;
+  grid-template-columns: minmax(170px, 1.3fr) minmax(225px, 1fr) minmax(170px, 1fr) minmax(
+      120px,
+      0.8fr
+    );
+  gap: 12px;
+  min-height: 91px;
+  padding: 9px 12px;
+  background: var(--surface-page);
+  border: 2px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+  color: var(--text-primary);
+}
+:is(#app, .compact-dialog) .direct-invoice .items-summary {
+  padding: 0;
+  justify-content: space-between;
+  gap: 12px;
+  align-self: start;
+  font-size: 11px;
+  font-weight: 700;
+}
+:is(#app, .compact-dialog) .direct-invoice .items-summary span {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+:is(#app, .compact-dialog) .direct-invoice .adjustment-row {
+  font-size: 11px;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+:is(#app, .compact-dialog) .direct-invoice .adjustment-row > label:first-child {
+  width: 100%;
+  font-weight: 700;
+}
+:is(#app, .compact-dialog) .direct-invoice .adjustment-row .small-input {
+  width: 65px;
+}
+:is(#app, .compact-dialog) .direct-invoice .balance-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 5px;
+  font-size: 11px;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+:is(#app, .compact-dialog) .direct-invoice .balance-row span {
+  width: 48px;
+}
+:is(#app, .compact-dialog) .direct-invoice .balance-row output {
+  flex: 1;
+  padding: 2px 5px;
+  border: 1px solid var(--border);
+  background: var(--surface-card);
+  font-weight: 400;
+}
+:is(#app, .compact-dialog) .direct-invoice .payment-section small {
+  font-size: 9px;
+  color: var(--text-secondary);
+}
+:is(#app, .compact-dialog) .direct-invoice .net-payable {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+:is(#app, .compact-dialog) .direct-invoice .net-amount {
+  color: var(--color-primary);
+  font-family: Georgia, serif;
+  font-size: 22px;
+  margin-top: 5px;
+}
+:is(#app, .compact-dialog) .direct-invoice .action-buttons {
+  padding: 7px 12px;
+  border-top: 3px solid var(--border);
+  justify-content: flex-end;
+  background: var(--surface-page);
+}
+:is(#app, .compact-dialog) .direct-invoice .action-buttons button {
+  height: 38px;
+  border-radius: 0;
+  font-size: 12px;
+}
+@container (max-width: 900px) {
+  :is(#app, .compact-dialog) .direct-invoice .header-fields {
+    grid-template-columns: 140px minmax(120px, 1fr) 130px 160px;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .footer-card {
+    grid-template-columns: minmax(140px, 1fr) 185px 150px 120px;
+    gap: 6px;
+    padding: 7px;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .quick-entry-row {
+    gap: 3px;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .quick-field label {
+    font-size: 9px;
+  }
+}
+@media (max-width: 760px) {
+  :is(#app, .compact-dialog) .direct-invoice .header-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .supplier-field {
+    grid-column: 1 / 3;
+    grid-row: 3;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .payment-method-field {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .date-field {
+    grid-column: 2;
+    grid-row: 2;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .quick-entry-row {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+  :is(#app, .compact-dialog) .direct-invoice .footer-card {
+    grid-template-columns: 1fr 1fr;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .invoice-heading {
+    display: none;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .invoice-brand strong {
+    font-size: 20px;
+  }
+}
+@media (max-height: 650px) {
+  :is(#app, .compact-dialog) .direct-invoice .receive-header {
+    min-height: 46px;
+    padding: 4px 8px;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .invoice-brand strong {
+    font-size: 22px;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .brand-symbol {
+    font-size: 30px;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .receive-content {
+    padding-top: 3px;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .quick-entry-card {
+    padding: 3px 6px;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .footer-card {
+    min-height: 80px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+  }
+  :is(#app, .compact-dialog) .direct-invoice .action-buttons {
+    padding: 4px 8px;
+  }
+}
+
+:is(#app, .compact-dialog) .direct-invoice .invoice-heading {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+:is(#app, .compact-dialog) .direct-invoice .receive-header > :last-child {
+  margin-left: auto;
+}
+:is(#app, .compact-dialog) .direct-invoice .add-btn {
+  white-space: nowrap;
+  font-size: 11px;
+}
+:is(#app, .compact-dialog) .direct-invoice .add-btn span {
+  font-size: 20px;
 }
 </style>

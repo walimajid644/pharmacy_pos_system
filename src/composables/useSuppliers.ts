@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n';
 import { useToast } from '@/composables/useToast';
 import type { Supplier } from '@/lib/types';
 
-export function useSuppliers() {
+export function useSuppliers(options: { loadList?: boolean } = {}) {
   const { t, pick, formatCurrency, formatNumber } = useI18n();
 
   const { showToast } = useToast();
@@ -67,7 +67,7 @@ export function useSuppliers() {
   });
 
   onMounted(async () => {
-    await loadSuppliers();
+    if (options.loadList !== false) await loadSuppliers();
   });
 
   async function loadSuppliers() {
@@ -222,7 +222,8 @@ export function useSuppliers() {
       }
 
       showModal.value = false;
-      await loadSuppliers();
+      if (options.loadList !== false) await loadSuppliers();
+      return true;
     } catch (error: unknown) {
       if (errorMessage(error).includes('UNIQUE constraint')) {
         showToast(pick('Supplier code already exists', 'سپلائر کوڈ پہلے سے موجود ہے'), 'error');
@@ -270,6 +271,7 @@ export function useSuppliers() {
     formatCurrency,
     formatNumber,
     suppliers,
+    loadSuppliers,
     loading,
     searchQuery,
     statusFilter,

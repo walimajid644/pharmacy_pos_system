@@ -373,6 +373,10 @@ try {
   results.push('Estimate dialog traps Tab; Escape closes only the inner dialog and restores focus');
   await open('/expenses');
   await evaluate(
+    "[...document.querySelectorAll('.commercial-tabs button')].find(b=>b.textContent.includes('Expense history')).click()",
+  );
+  await until("!!document.querySelector('.commercial-table-scroll tbody button')");
+  await evaluate(
     "[...document.querySelectorAll('.commercial-table-scroll button')].find(b=>b.textContent.includes('Void')).click()",
   );
   await until("document.querySelector('.commercial-dialog')!==null");

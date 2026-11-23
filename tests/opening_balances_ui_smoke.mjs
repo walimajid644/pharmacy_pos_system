@@ -220,16 +220,16 @@ try {
   await fits('.ledger-page');
   await button('.ledger-page .commercial-tabs button', 'Record payment');
   await field(
-    '.ledger-form select',
+    'select[aria-label="Payment order or opening"]',
     await evaluate("step3Rows.find(r=>r.kind==='supplier').id"),
     'change',
   );
   await field('.ledger-form input[type=number]', '23.45');
-  await field('.ledger-form label:nth-of-type(3) select', 'bank', 'change');
+  await field('select[aria-label="Payment method"]', 'bank', 'change');
   await until(
-    "!!document.querySelector('.ledger-form label:nth-of-type(4) select option[value=bank-a]')",
+    '!!document.querySelector(\'select[aria-label="Payment bank account"] option[value=bank-a]\')',
   );
-  await field('.ledger-form label:nth-of-type(4) select', 'bank-a', 'change');
+  await field('select[aria-label="Payment bank account"]', 'bank-a', 'change');
   await evaluate("document.querySelector('.ledger-form button[type=submit]').click()");
   await until('!!window.openingPayment');
   assert.equal(await evaluate('openingPayment.amountCents'), 2345);

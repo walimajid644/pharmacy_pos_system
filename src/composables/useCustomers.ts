@@ -10,7 +10,7 @@ import { useToast } from '@/composables/useToast';
 import { useI18n } from '@/lib/i18n';
 import type { Customer } from '@/lib/types';
 
-export function useCustomers() {
+export function useCustomers(options: { loadList?: boolean } = {}) {
   const label = useWorkspaceLabels();
 
   const auth = useAuthStore(),
@@ -55,7 +55,7 @@ export function useCustomers() {
   });
 
   onMounted(async () => {
-    await loadCustomers();
+    if (options.loadList !== false) await loadCustomers();
   });
 
   async function loadCustomers() {
@@ -95,7 +95,7 @@ export function useCustomers() {
       address: customer.address || '',
       customer_type: customer.customer_type,
       credit_limit: customer.credit_limit,
-      is_active: customer.is_active,
+      is_active: !!customer.is_active,
     };
     showModal.value = true;
   }
@@ -118,7 +118,8 @@ export function useCustomers() {
       });
       showModal.value = false;
       toast.success(pick('Customer saved', 'گاہک محفوظ ہو گیا'));
-      await loadCustomers();
+      if (options.loadList !== false) await loadCustomers();
+      return true;
     } catch (e) {
       toast.error(String(e));
     } finally {
@@ -156,6 +157,7 @@ export function useCustomers() {
     pick,
     t,
     customers,
+    loadCustomers,
     searchQuery,
     loading,
     showModal,

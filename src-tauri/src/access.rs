@@ -193,7 +193,9 @@ pub(crate) async fn authorize_query(
         if tables.iter().any(|name| q.contains(name))
             && !allowed.iter().any(|key| key == permission)
         {
-            return Err(format!("Permission denied: {permission}. Ask an administrator to review your user rights"));
+            return Err(format!(
+                "Permission denied: {permission}. Ask an administrator to review your user rights"
+            ));
         }
     }
     Ok(())

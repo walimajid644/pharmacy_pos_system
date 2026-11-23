@@ -182,6 +182,7 @@ export function useSupplierLedger() {
       reference.value = '';
       notes.value = '';
       await load();
+      return result;
     } catch (e) {
       error.value = String(e);
       toast.error(error.value);

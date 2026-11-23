@@ -499,12 +499,22 @@ pub async fn initialize(pool: &Pool<Sqlite>) -> Result<(), String> {
             .map_err(|e| e.to_string())?;
         tx.commit().await.map_err(|e| e.to_string())?;
     }
-    let preferences: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM schema_migrations WHERE version='021_purchase_preferences'")
-        .fetch_one(pool).await.map_err(|e| e.to_string())?;
+    let preferences: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM schema_migrations WHERE version='021_purchase_preferences'",
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|e| e.to_string())?;
     if preferences == 0 {
         let mut tx = pool.begin().await.map_err(|e| e.to_string())?;
-        sqlx::raw_sql(include_str!("../migrations/021_purchase_preferences.sql")).execute(&mut *tx).await.map_err(|e| e.to_string())?;
-        sqlx::query("INSERT INTO schema_migrations(version) VALUES('021_purchase_preferences')").execute(&mut *tx).await.map_err(|e| e.to_string())?;
+        sqlx::raw_sql(include_str!("../migrations/021_purchase_preferences.sql"))
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
+        sqlx::query("INSERT INTO schema_migrations(version) VALUES('021_purchase_preferences')")
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| e.to_string())?;
         tx.commit().await.map_err(|e| e.to_string())?;
     }
     Ok(())

@@ -161,13 +161,13 @@ async fn confirm_password(pool: &Pool<Sqlite>, actor: &str, password: &str) -> R
 async fn schedule(
     pool: &Pool<Sqlite>,
     state: &RestoreState,
-    config: &Path,
-    dir: &Path,
+    paths: (&Path, &Path),
     actor: &str,
     id: &str,
     password: &str,
     confirmation: &str,
 ) -> Result<Value, String> {
+    let (config, dir) = paths;
     crate::access::require(pool, actor, "backup.restore").await?;
     confirm_password(pool, actor, password).await?;
     if confirmation != "RESTORE" {
@@ -388,8 +388,7 @@ pub async fn queue_restore(
     schedule(
         &crate::database_api::pool(&instances).await?,
         &state,
-        &config,
-        &dir,
+        (&config, &dir),
         &actor,
         &plan_id,
         &password,

@@ -4,7 +4,7 @@ import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
 import BilingualText from '@/components/ui/BilingualText.vue';
 import SupplierCards from '@/components/suppliers/SupplierCards.vue';
-import SupplierFormDialog from '@/components/suppliers/SupplierFormDialog.vue';
+import ContactFormDialog from '@/components/contacts/ContactFormDialog.vue';
 import { useSuppliers } from '@/composables/useSuppliers';
 
 const {
@@ -13,6 +13,7 @@ const {
   formatCurrency,
   formatNumber,
   suppliers,
+  loadSuppliers,
   loading,
   searchQuery,
   statusFilter,
@@ -23,7 +24,6 @@ const {
   filteredSuppliers,
   openAddModal,
   openEditModal,
-  saveSupplier,
   deleteSupplier,
 } = useSuppliers();
 </script>
@@ -96,13 +96,12 @@ const {
       :delete-supplier="deleteSupplier"
     />
     <!-- Modal -->
-    <SupplierFormDialog
-      :t="t"
-      :pick="pick"
-      :is-editing="isEditing"
-      :save-supplier="saveSupplier"
-      v-model:show-modal="showModal"
-      v-model:current-supplier="currentSupplier"
+    <ContactFormDialog
+      v-if="showModal"
+      v-model:open="showModal"
+      initial-role="supplier"
+      :supplier="isEditing ? currentSupplier : null"
+      @saved="loadSuppliers"
     />
   </div>
 </template>

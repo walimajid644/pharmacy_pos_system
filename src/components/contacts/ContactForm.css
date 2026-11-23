@@ -1,0 +1,227 @@
+/* Shared client/supplier entry geometry; colors follow the application theme. */
+:is(#app, .compact-dialog) .contact-form-dialog {
+  padding: 16px;
+}
+:is(#app, .compact-dialog) .contact-form-dialog .contact-form-card {
+  display: flex;
+  flex-direction: column;
+  width: min(720px, 100%);
+  max-height: calc(100dvh - 32px);
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-card);
+  color: var(--text-primary);
+}
+:is(#app, .compact-dialog) .contact-form-titlebar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+:is(#app, .compact-dialog) .contact-form-titlebar :is(h2, h3) {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+:is(#app, .compact-dialog) .contact-form-titlebar > button {
+  width: 28px;
+  padding: 0;
+  font-size: 21px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 0;
+}
+:is(#app, .compact-dialog) .contact-role-banner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-page);
+  font-size: 12px;
+  flex-shrink: 0;
+}
+:is(#app, .compact-dialog) .contact-role-banner > label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  padding: 4px 16px;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+}
+:is(#app, .compact-dialog) .contact-role-banner > .contact-role-selected {
+  font-weight: 700;
+  background: var(--color-primary-50);
+  border-color: var(--color-primary-100);
+  color: var(--color-primary-600);
+}
+:is(#app, .compact-dialog) .contact-entry-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  gap: 0;
+}
+:is(#app, .compact-dialog) .contact-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: center;
+  align-content: start;
+  gap: 7px 16px;
+  border: 0;
+  padding: 14px 20px;
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+:is(#app, .compact-dialog) .contact-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  font-size: 11px;
+}
+:is(#app, .compact-dialog) .contact-field > :is(span, label) {
+  flex: 0 0 125px;
+  text-align: right;
+  line-height: 1.2;
+  font-weight: 600;
+  margin: 0;
+  color: var(--text-primary);
+}
+:is(#app, .compact-dialog) .contact-field > :last-child {
+  flex: 1;
+  min-width: 0;
+}
+:is(#app, .compact-dialog) .contact-field :is(input, select, textarea) {
+  width: 100%;
+  min-width: 0;
+  height: 26px;
+  min-height: 0;
+  padding: 3px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface-card);
+  color: var(--text-primary);
+  box-shadow: none;
+  font-size: 12px;
+}
+:is(#app, .compact-dialog) .contact-field :is(input:read-only, input:disabled) {
+  background: var(--surface-page);
+  color: var(--text-secondary);
+}
+:is(#app, .compact-dialog) .contact-field :is(input, select, textarea):focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+:is(#app, .compact-dialog) .contact-field b {
+  color: var(--color-danger);
+}
+:is(#app, .compact-dialog) .contact-full {
+  grid-column: 1/-1;
+}
+:is(#app, .compact-dialog) .contact-multiline {
+  align-items: start;
+}
+:is(#app, .compact-dialog) .contact-multiline > span {
+  padding-top: 5px;
+}
+:is(#app, .compact-dialog) .contact-multiline textarea {
+  height: 48px;
+  min-height: 48px;
+  resize: none;
+}
+:is(#app, .compact-dialog) .contact-help {
+  grid-column: 1/-1;
+  margin: 0 0 0 133px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.4;
+}
+:is(#app, .compact-dialog) .contact-active {
+  grid-column: 1/-1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 2px 4px;
+  margin: 0;
+  font-size: 12px;
+}
+:is(#app, .compact-dialog) .contact-active input {
+  width: 14px;
+  height: 14px;
+  accent-color: var(--color-primary);
+}
+:is(#app, .compact-dialog) .contact-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  padding: 9px 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-page);
+  flex-shrink: 0;
+}
+:is(#app, .compact-dialog) .contact-actions button {
+  height: auto;
+  min-height: 30px;
+  padding: 4px 10px;
+  font-size: 12px;
+}
+@media (max-width: 650px) {
+  :is(#app, .compact-dialog) .contact-fields {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 12px;
+  }
+  :is(#app, .compact-dialog) .contact-field > :is(span, label) {
+    flex-basis: 110px;
+  }
+  :is(#app, .compact-dialog) .contact-help {
+    margin-left: 118px;
+  }
+}
+@media (max-height: 650px) {
+  :is(#app, .compact-dialog) .contact-fields {
+    gap: 5px 12px;
+    padding: 10px 16px;
+  }
+  :is(#app, .compact-dialog) .contact-role-banner {
+    padding: 5px 12px;
+  }
+  :is(#app, .compact-dialog) .contact-form-titlebar {
+    padding: 6px 12px;
+  }
+  :is(#app, .compact-dialog) .contact-actions {
+    padding: 7px 12px;
+  }
+  :is(#app, .compact-dialog) .contact-multiline textarea {
+    height: 44px;
+    min-height: 44px;
+  }
+}
+
+:is(#app, .compact-dialog) .contact-role-banner input[type='radio'] {
+  width: 13px;
+  height: 13px;
+  accent-color: var(--color-primary);
+}
+:is(#app, .compact-dialog) .contact-role-banner label:has(input:disabled) {
+  cursor: default;
+  opacity: 0.6;
+}

@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import CompactPages from '@/components/ui/CompactPages.vue';
-import { ref } from 'vue';
-import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
-import { bindTemplateRef } from '@/lib/templateRefs';
+import ContactFormDialog from '@/components/contacts/ContactFormDialog.vue';
 import Card from '@/components/ui/Card.vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
@@ -10,28 +8,21 @@ import { useCustomers } from '@/composables/useCustomers';
 
 const {
   label,
-  auth,
   router,
   pick,
   t,
   customers,
+  loadCustomers,
   searchQuery,
   loading,
   showModal,
   editingCustomer,
-  formData,
   filteredCustomers,
   openAddModal,
   openEditModal,
-  saveCustomer,
   deleteCustomer,
   formatCurrency,
 } = useCustomers();
-const formDialog = ref<HTMLElement | null>(null);
-const bindFormDialog = bindTemplateRef(formDialog);
-useDialogKeyboard(formDialog, () => {
-  if (!loading.value) showModal.value = false;
-});
 </script>
 
 <template>
@@ -186,138 +177,12 @@ useDialogKeyboard(formDialog, () => {
       </footer>
     </Card>
 
-    <!-- Modal -->
-    <div
+    <ContactFormDialog
       v-if="showModal"
-      :ref="bindFormDialog"
-      role="dialog"
-      aria-modal="true"
-      tabindex="-1"
-      :aria-label="pick('Customer', 'گاہک')"
-      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-      @pointerdown.self.prevent
-    >
-      <Card class="w-full max-w-2xl max-h-[90vh] overflow-auto">
-        <div class="p-6 border-b">
-          <h2 class="text-xl font-bold">
-            {{
-              editingCustomer
-                ? pick('Edit Customer', 'گاہک کی تدوین')
-                : pick('Add New Customer', 'نیا گاہک شامل کریں')
-            }}
-          </h2>
-        </div>
-
-        <div class="p-6 space-y-4">
-          <!-- Row 1 -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label for="field-customersview-1" class="block text-sm font-medium mb-2"
-                >{{ pick('First Name', 'پہلا نام') }} *</label
-              >
-              <Input id="field-customersview-1" v-model="formData.first_name" placeholder="Ahmed" />
-            </div>
-            <div>
-              <label for="field-customersview-2" class="block text-sm font-medium mb-2"
-                >{{ pick('Last Name', 'آخری نام') }} *</label
-              >
-              <Input id="field-customersview-2" v-model="formData.last_name" placeholder="Ali" />
-            </div>
-          </div>
-
-          <!-- Row 2 -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label for="field-customersview-3" class="block text-sm font-medium mb-2">{{
-                t('phone_number')
-              }}</label>
-              <Input
-                id="field-customersview-3"
-                v-model="formData.phone_number"
-                placeholder="03001234567"
-              />
-            </div>
-            <div>
-              <label for="field-customersview-4" class="block text-sm font-medium mb-2">{{
-                t('customer_type')
-              }}</label>
-              <select
-                id="field-customersview-4"
-                v-model="formData.customer_type"
-                class="w-full border rounded-md p-2"
-              >
-                <option value="retail">{{ t('retail') }}</option>
-                <option value="wholesale">{{ t('wholesale') }}</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Row 3 -->
-          <div>
-            <label for="field-customersview-5" class="block text-sm font-medium mb-2">{{
-              t('address')
-            }}</label>
-            <Input
-              id="field-customersview-5"
-              v-model="formData.address"
-              placeholder="House 123, Street 5, City"
-            />
-          </div>
-
-          <!-- Row 4 -->
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label for="field-customersview-6" class="block text-sm font-medium mb-2"
-                >{{ t('credit_limit') }} (Rs)</label
-              >
-              <Input
-                id="field-customersview-6"
-                v-model.number="formData.credit_limit"
-                type="number"
-                min="0"
-                step="0.01"
-                :disabled="!auth.hasRole(['admin', 'manager'])"
-              /><small>{{
-                pick(
-                  'Managers set credit limits. Current debt is changed only by sales, collections and credit notes.',
-                  'کریڈٹ حد منیجر مقرر کرتا ہے۔ بقایا صرف فروخت، وصولی اور کریڈٹ نوٹ سے بدلتا ہے۔',
-                )
-              }}</small>
-            </div>
-            <div class="flex items-end">
-              <label class="flex items-center gap-2 mb-2">
-                <input v-model="formData.is_active" type="checkbox" />
-                <span class="text-sm font-medium">{{ t('active') }}</span>
-              </label>
-            </div>
-          </div>
-
-          <div
-            v-if="!editingCustomer"
-            class="text-sm text-info-text bg-banner-info-bg border-banner-info-border p-3 rounded"
-          >
-            {{
-              pick(
-                'Customer code will be auto-generated (e.g., C001, C002...)',
-                'گاہک کا کوڈ خود بخود بنے گا (مثلاً C001، C002...)',
-              )
-            }}
-          </div>
-        </div>
-
-        <div class="p-6 border-t flex justify-end gap-3">
-          <Button variant="outline" @click="showModal = false" :disabled="loading">
-            {{ t('cancel') }}
-          </Button>
-          <Button @click="saveCustomer" :disabled="loading">
-            {{
-              loading
-                ? pick('Saving...', 'محفوظ ہو رہا ہے...')
-                : pick('Save Customer', 'گاہک محفوظ کریں')
-            }}
-          </Button>
-        </div>
-      </Card>
-    </div>
+      v-model:open="showModal"
+      initial-role="client"
+      :client="editingCustomer"
+      @saved="loadCustomers"
+    />
   </div>
 </template>
