@@ -3,9 +3,10 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from '@/lib/i18n';
+import NavIcon from '@/components/ui/NavIcon.vue';
 import type { UserRole } from '@/lib/types';
 
-type NavItem = { path: string; en: string; ur: string; icon: string; roles?: UserRole[] };
+type NavItem = { path: string; en: string; ur: string; roles?: UserRole[] };
 type NavGroup = { en: string; ur: string; items: NavItem[] };
 
 const route = useRoute();
@@ -15,308 +16,323 @@ const { pick, t } = useI18n();
 const openGroup = ref<string | null>(null);
 const navRoot = ref<HTMLElement | null>(null);
 
+// Route permissions stay attached to their items when navigation groups change.
+const allItems: NavItem[] = [
+  { path: '/pos', en: 'Point of Sale', ur: 'فروخت' },
+  { path: '/products', en: 'Products & Stock', ur: 'مصنوعات اور اسٹاک' },
+  {
+    path: '/income-heads',
+    en: 'Income Heads',
+    ur: 'آمدنی کی مدات',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/expense-heads',
+    en: 'Expense Heads',
+    ur: 'اخراجات کے مدات',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/bank-accounts',
+    en: 'Bank Accounts',
+    ur: 'بینک کھاتے',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/opening-balances',
+    en: 'Opening Balances',
+    ur: 'ابتدائی بیلنس',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/batch-stickers',
+    en: 'Print Batch Stickers',
+    ur: 'بیچ کے اسٹیکرز',
+    roles: ['admin', 'manager'],
+  },
+  { path: '/categories', en: 'Categories', ur: 'زمرے', roles: ['admin', 'manager'] },
+  {
+    path: '/manufacturers',
+    en: 'Companies / Manufacturers',
+    ur: 'کمپنیاں / مینوفیکچررز',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/shelf-locations',
+    en: 'Shelves / Locations',
+    ur: 'شیلف / مقامات',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/catalog-import',
+    en: 'Catalog Import',
+    ur: 'فہرست کی درآمد',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/catalog-bulk',
+    en: 'Bulk Catalog Setup',
+    ur: 'فہرست کی اجتماعی ترتیب',
+    roles: ['admin', 'manager'],
+  },
+  { path: '/item-search', en: 'Advanced Item Search', ur: 'تفصیلی مصنوعات تلاش' },
+  {
+    path: '/customers',
+    en: 'Customers',
+    ur: 'گاہک',
+    roles: ['admin', 'manager', 'cashier'],
+  },
+  {
+    path: '/suppliers',
+    en: 'Suppliers',
+    ur: 'سپلائرز',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/purchases',
+    en: 'Purchase Invoice',
+    ur: 'خریداری انوائس',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/purchase-orders',
+    en: 'Purchase Register',
+    ur: 'خریداری رجسٹر',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/estimates',
+    en: 'Estimates',
+    ur: 'تخمینے',
+    roles: ['admin', 'manager', 'cashier'],
+  },
+  {
+    path: '/preorders',
+    en: 'Customer Pre-orders',
+    ur: 'گاہک کے پیشگی آرڈر',
+    roles: ['admin', 'manager', 'cashier'],
+  },
+  {
+    path: '/sales-returns',
+    en: 'Sales Returns',
+    ur: 'فروخت کی واپسی',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/sales-history',
+    en: 'Sales History',
+    ur: 'فروخت کی تاریخ',
+    roles: ['admin', 'manager', 'accountant'],
+  },
+  {
+    path: '/expiry-actions',
+    en: 'Expiry & Quarantine',
+    ur: 'میعاد اور قرنطینہ',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/purchase-suggestions',
+    en: 'Purchase Suggestions',
+    ur: 'خریداری کی تجاویز',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/stock-adjustments',
+    en: 'Stock Adjustments',
+    ur: 'اسٹاک ایڈجسٹمنٹ',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/bank-transactions',
+    en: 'Bank Transactions',
+    ur: 'بینک لین دین',
+    roles: ['admin', 'manager', 'accountant'],
+  },
+  {
+    path: '/incomes',
+    en: 'Incomes',
+    ur: 'آمدنی',
+    roles: ['admin', 'manager', 'accountant'],
+  },
+  {
+    path: '/customer-ledger',
+    en: 'Customer Udhar Ledger',
+    ur: 'گاہک کا ادھار کھاتہ',
+    roles: ['admin', 'manager', 'cashier', 'accountant'],
+  },
+  {
+    path: '/payments',
+    en: 'Payments & Receipts',
+    ur: 'ادائیگیاں اور وصولیاں',
+    roles: ['admin', 'manager', 'accountant'],
+  },
+  {
+    path: '/expenses',
+    en: 'Expenses',
+    ur: 'اخراجات',
+    roles: ['admin', 'manager', 'accountant'],
+  },
+  {
+    path: '/shifts',
+    en: 'Cash Drawer',
+    ur: 'کیش دراز',
+    roles: ['admin', 'manager', 'cashier'],
+  },
+  {
+    path: '/daily-closing',
+    en: 'Daily Closing',
+    ur: 'روزانہ بندش',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/supplier-ledger',
+    en: 'Supplier Ledger',
+    ur: 'سپلائر کھاتہ',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/user-rights',
+    en: 'User Rights',
+    ur: 'صارف کے اختیارات',
+    roles: ['admin'],
+  },
+  {
+    path: '/login-history',
+    en: 'Login History',
+    ur: 'لاگ ان کی تاریخ',
+    roles: ['admin', 'manager'],
+  },
+  { path: '/restore', en: 'Restore Data', ur: 'ڈیٹا بحال کریں', roles: ['admin'] },
+  {
+    path: '/fbr-sandbox',
+    en: 'FBR DI Sandbox Check',
+    ur: 'FBR DI سینڈ باکس جانچ',
+    roles: ['admin', 'manager'],
+  },
+  {
+    path: '/audit-log',
+    en: 'Audit Log',
+    ur: 'پڑتال ریکارڈ',
+    roles: ['admin', 'manager'],
+  },
+  { path: '/users', en: 'Users', ur: 'صارفین', roles: ['admin'] },
+  { path: '/backups', en: 'Backups', ur: 'بیک اپ', roles: ['admin', 'manager'] },
+  {
+    path: '/controlled-sales',
+    en: 'Controlled Sales',
+    ur: 'کنٹرول شدہ فروخت',
+    roles: ['admin', 'manager', 'accountant'],
+  },
+  {
+    path: '/cashier-performance',
+    en: 'Cashier Performance',
+    ur: 'کیشئر کی کارکردگی',
+    roles: ['admin', 'manager', 'accountant'],
+  },
+  {
+    path: '/report-center',
+    en: 'Report Center',
+    ur: 'رپورٹ مرکز',
+    roles: ['admin', 'manager', 'accountant'],
+  },
+  {
+    path: '/reports',
+    en: 'Reports',
+    ur: 'رپورٹس',
+    roles: ['admin', 'manager', 'accountant'],
+  },
+  {
+    path: '/purchase-settings',
+    en: 'Purchase Form Settings',
+    ur: 'خریداری فارم ترتیبات',
+    roles: ['admin', 'manager'],
+  },
+  { path: '/settings', en: 'Settings', ur: 'ترتیبات', roles: ['admin', 'manager'] },
+  { path: '/change-password', en: 'Change password', ur: 'پاس ورڈ تبدیل کریں' },
+];
+function itemsFor(paths: string[]) {
+  return paths.map((path) => allItems.find((item) => item.path === path)!);
+}
 const groups: NavGroup[] = [
   {
-    en: 'Register',
-    ur: 'رجسٹر',
-    items: [
-      {
-        path: '/income-heads',
-        en: 'Income Heads',
-        ur: 'آمدنی کی مدات',
-        icon: '▤',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/expense-heads',
-        en: 'Expense Heads',
-        ur: 'اخراجات کے مدات',
-        icon: '▤',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/bank-accounts',
-        en: 'Bank Accounts',
-        ur: 'بینک کھاتے',
-        icon: '▤',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/opening-balances',
-        en: 'Opening Balances',
-        ur: 'ابتدائی بیلنس',
-        icon: '▤',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/batch-stickers',
-        en: 'Print Batch Stickers',
-        ur: 'بیچ کے اسٹیکرز',
-        icon: '▤',
-        roles: ['admin', 'manager'],
-      },
-      { path: '/categories', en: 'Categories', ur: 'زمرے', icon: '▤', roles: ['admin', 'manager'] },
-      {
-        path: '/manufacturers',
-        en: 'Companies / Manufacturers',
-        ur: 'کمپنیاں / مینوفیکچررز',
-        icon: '▧',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/shelf-locations',
-        en: 'Shelves / Locations',
-        ur: 'شیلف / مقامات',
-        icon: '▦',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/catalog-import',
-        en: 'Catalog Import',
-        ur: 'فہرست کی درآمد',
-        icon: '↓',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/catalog-bulk',
-        en: 'Bulk Catalog Setup',
-        ur: 'فہرست کی اجتماعی ترتیب',
-        icon: '▤',
-        roles: ['admin', 'manager'],
-      },
-      { path: '/item-search', en: 'Advanced Item Search', ur: 'تفصیلی مصنوعات تلاش', icon: '⌕' },
-      {
-        path: '/customers',
-        en: 'Customers',
-        ur: 'گاہک',
-        icon: '♙',
-        roles: ['admin', 'manager', 'cashier'],
-      },
-      {
-        path: '/suppliers',
-        en: 'Suppliers',
-        ur: 'سپلائرز',
-        icon: '▧',
-        roles: ['admin', 'manager'],
-      },
-    ],
+    en: 'Sales',
+    ur: 'فروخت',
+    items: itemsFor([
+      '/pos',
+      '/sales-history',
+      '/sales-returns',
+      '/estimates',
+      '/preorders',
+      '/customers',
+    ]),
   },
   {
-    en: 'Transactions',
-    ur: 'لین دین',
-    items: [
-      {
-        path: '/purchases',
-        en: 'Purchase Invoice',
-        ur: 'خریداری انوائس',
-        icon: '▤',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/purchase-orders',
-        en: 'Purchase Register',
-        ur: 'خریداری رجسٹر',
-        icon: '▦',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/estimates',
-        en: 'Estimates',
-        ur: 'تخمینے',
-        icon: '▤',
-        roles: ['admin', 'manager', 'cashier'],
-      },
-      {
-        path: '/preorders',
-        en: 'Customer Pre-orders',
-        ur: 'گاہک کے پیشگی آرڈر',
-        icon: '◷',
-        roles: ['admin', 'manager', 'cashier'],
-      },
-      {
-        path: '/sales-returns',
-        en: 'Sales Returns',
-        ur: 'فروخت کی واپسی',
-        icon: '↩',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/sales-history',
-        en: 'Sales History',
-        ur: 'فروخت کی تاریخ',
-        icon: '◷',
-        roles: ['admin', 'manager', 'accountant'],
-      },
-      {
-        path: '/expiry-actions',
-        en: 'Expiry & Quarantine',
-        ur: 'میعاد اور قرنطینہ',
-        icon: '⛔',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/purchase-suggestions',
-        en: 'Purchase Suggestions',
-        ur: 'خریداری کی تجاویز',
-        icon: '↓',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/stock-adjustments',
-        en: 'Stock Adjustments',
-        ur: 'اسٹاک ایڈجسٹمنٹ',
-        icon: '⚖',
-        roles: ['admin', 'manager'],
-      },
-    ],
+    en: 'Inventory',
+    ur: 'اسٹاک',
+    items: itemsFor([
+      '/products',
+      '/item-search',
+      '/expiry-actions',
+      '/stock-adjustments',
+      '/batch-stickers',
+      '/categories',
+      '/manufacturers',
+      '/shelf-locations',
+      '/catalog-import',
+      '/catalog-bulk',
+    ]),
   },
   {
-    en: 'Accounts',
-    ur: 'کھاتے',
-    items: [
-      {
-        path: '/bank-transactions',
-        en: 'Bank Transactions',
-        ur: 'بینک لین دین',
-        icon: '↔',
-        roles: ['admin', 'manager', 'accountant'],
-      },
-      {
-        path: '/incomes',
-        en: 'Incomes',
-        ur: 'آمدنی',
-        icon: '▥',
-        roles: ['admin', 'manager', 'accountant'],
-      },
-      {
-        path: '/customer-ledger',
-        en: 'Customer Udhar Ledger',
-        ur: 'گاہک کا ادھار کھاتہ',
-        icon: '▤',
-        roles: ['admin', 'manager', 'cashier', 'accountant'],
-      },
-      {
-        path: '/payments',
-        en: 'Payments & Receipts',
-        ur: 'ادائیگیاں اور وصولیاں',
-        icon: '↔',
-        roles: ['admin', 'manager', 'accountant'],
-      },
-      {
-        path: '/expenses',
-        en: 'Expenses',
-        ur: 'اخراجات',
-        icon: '▥',
-        roles: ['admin', 'manager', 'accountant'],
-      },
-      {
-        path: '/shifts',
-        en: 'Cash Drawer',
-        ur: 'کیش دراز',
-        icon: '▣',
-        roles: ['admin', 'manager', 'cashier'],
-      },
-      {
-        path: '/daily-closing',
-        en: 'Daily Closing',
-        ur: 'روزانہ بندش',
-        icon: '◫',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/supplier-ledger',
-        en: 'Supplier Ledger',
-        ur: 'سپلائر کھاتہ',
-        icon: '▦',
-        roles: ['admin', 'manager'],
-      },
-    ],
+    en: 'Purchases',
+    ur: 'خریداری',
+    items: itemsFor([
+      '/purchases',
+      '/purchase-orders',
+      '/purchase-suggestions',
+      '/suppliers',
+      '/purchase-settings',
+    ]),
   },
   {
-    en: 'Admin',
-    ur: 'انتظام',
-    items: [
-      {
-        path: '/user-rights',
-        en: 'User Rights',
-        ur: 'صارف کے اختیارات',
-        icon: '⚿',
-        roles: ['admin'],
-      },
-      {
-        path: '/login-history',
-        en: 'Login History',
-        ur: 'لاگ ان کی تاریخ',
-        icon: '◷',
-        roles: ['admin', 'manager'],
-      },
-      { path: '/restore', en: 'Restore Data', ur: 'ڈیٹا بحال کریں', icon: '↶', roles: ['admin'] },
-      {
-        path: '/fbr-sandbox',
-        en: 'FBR DI Sandbox Check',
-        ur: 'FBR DI سینڈ باکس جانچ',
-        icon: '▤',
-        roles: ['admin', 'manager'],
-      },
-      {
-        path: '/audit-log',
-        en: 'Audit Log',
-        ur: 'پڑتال ریکارڈ',
-        icon: '▤',
-        roles: ['admin', 'manager'],
-      },
-      { path: '/users', en: 'Users', ur: 'صارفین', icon: '♟', roles: ['admin'] },
-      { path: '/backups', en: 'Backups', ur: 'بیک اپ', icon: '▣', roles: ['admin', 'manager'] },
-    ],
+    en: 'Finance',
+    ur: 'مالیات',
+    items: itemsFor([
+      '/shifts',
+      '/daily-closing',
+      '/payments',
+      '/customer-ledger',
+      '/supplier-ledger',
+      '/bank-transactions',
+      '/incomes',
+      '/expenses',
+      '/bank-accounts',
+      '/opening-balances',
+      '/income-heads',
+      '/expense-heads',
+    ]),
   },
   {
     en: 'Reports',
     ur: 'رپورٹس',
-    items: [
-      {
-        path: '/controlled-sales',
-        en: 'Controlled Sales',
-        ur: 'کنٹرول شدہ فروخت',
-        icon: '℞',
-        roles: ['admin', 'manager', 'accountant'],
-      },
-      {
-        path: '/cashier-performance',
-        en: 'Cashier Performance',
-        ur: 'کیشئر کی کارکردگی',
-        icon: '▥',
-        roles: ['admin', 'manager', 'accountant'],
-      },
-      {
-        path: '/report-center',
-        en: 'Report Center',
-        ur: 'رپورٹ مرکز',
-        icon: '▤',
-        roles: ['admin', 'manager', 'accountant'],
-      },
-      {
-        path: '/reports',
-        en: 'Reports',
-        ur: 'رپورٹس',
-        icon: '▥',
-        roles: ['admin', 'manager', 'accountant'],
-      },
-    ],
+    items: itemsFor(['/controlled-sales', '/cashier-performance', '/report-center', '/reports']),
+  },
+  {
+    en: 'Admin',
+    ur: 'انتظام',
+    items: itemsFor([
+      '/user-rights',
+      '/login-history',
+      '/restore',
+      '/fbr-sandbox',
+      '/audit-log',
+      '/users',
+      '/backups',
+    ]),
   },
   {
     en: 'General Settings',
     ur: 'عمومی ترتیبات',
-    items: [
-      {
-        path: '/purchase-settings',
-        en: 'Purchase Form Settings',
-        ur: 'خریداری فارم ترتیبات',
-        icon: '⚙',
-        roles: ['admin', 'manager'],
-      },
-      { path: '/settings', en: 'Settings', ur: 'ترتیبات', icon: '⚙', roles: ['admin', 'manager'] },
-      { path: '/change-password', en: 'Change password', ur: 'پاس ورڈ تبدیل کریں', icon: '🔑' },
-    ],
+    items: itemsFor(['/settings', '/change-password']),
   },
 ];
 
@@ -387,7 +403,7 @@ onUnmounted(() => document.removeEventListener('pointerdown', onOutsideClick));
         aria-keyshortcuts="Alt+D"
         @click="navigate('/')"
       >
-        <span aria-hidden="true">⌂</span>{{ pick('Back to Dashboard', 'ڈیش بورڈ پر واپس') }}
+        <NavIcon name="home" />{{ pick('Back to Dashboard', 'ڈیش بورڈ پر واپس') }}
       </button>
       <div v-for="group in visibleGroups" :key="group.en" class="nav-group">
         <button
@@ -430,10 +446,11 @@ onUnmounted(() => document.removeEventListener('pointerdown', onOutsideClick));
             :key="item.path"
             type="button"
             class="nav-menu-item"
+            :data-path="item.path"
             :aria-current="active(item.path) ? 'page' : undefined"
             @click="navigate(item.path)"
           >
-            <span aria-hidden="true">{{ item.icon }}</span>{{ pick(item.en, item.ur) }}
+            <NavIcon :name="item.path" />{{ pick(item.en, item.ur) }}
           </button>
           <button
             v-if="group.en === 'General Settings'"
@@ -448,7 +465,7 @@ onUnmounted(() => document.removeEventListener('pointerdown', onOutsideClick));
             aria-keyshortcuts="Control+Shift+L"
             @click="logout"
           >
-            <span aria-hidden="true">↪</span>{{ t('logout') }}
+            <NavIcon name="logout" />{{ t('logout') }}
           </button>
         </div>
       </div>
@@ -530,6 +547,8 @@ onUnmounted(() => document.removeEventListener('pointerdown', onOutsideClick));
   z-index: 70;
   min-width: 12.5rem;
   padding: 0.35rem;
+  max-height: calc(100dvh - 80px);
+  overflow-y: auto;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -575,7 +594,8 @@ onUnmounted(() => document.removeEventListener('pointerdown', onOutsideClick));
 }
 .nav-menu-item[aria-current='page'] {
   color: var(--color-primary);
-  background: var(--color-hover);
+  background: var(--color-primary-50);
+  box-shadow: inset 3px 0 var(--color-primary);
 }
 .nav-button:focus-visible,
 .nav-menu-item:focus-visible {

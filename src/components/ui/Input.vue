@@ -101,7 +101,7 @@ function handleSuffixClick() {
 </script>
 
 <template>
-  <div class="w-full space-y-1.5" :class="attrs.class">
+  <div class="shared-input w-full space-y-1.5" :class="attrs.class">
     <!-- Label -->
     <label v-if="label" :class="labelClass" :for="controlId">
       {{ label }}
@@ -161,7 +161,7 @@ function handleSuffixClick() {
     <p
       v-if="error"
       :id="`${controlId}-error`"
-      class="text-sm text-danger-500 flex items-center gap-1.5"
+      class="field-error text-sm text-danger-500 flex items-center gap-1.5"
     >
       <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path

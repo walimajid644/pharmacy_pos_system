@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, type Ref } from 'vue';
 import { useElementSize } from '@vueuse/core';
+import { isExpired } from '@/lib/utils';
 import type { usePosTerminal } from '@/composables/usePosTerminal';
 
 type ViewValue<T> = T extends Ref<infer Value> ? Value : T;
@@ -111,7 +112,11 @@ watch(pageCount, () => {
           <td>
             <bdi class="pos-batch-number">{{ item.batch.batch_number }}</bdi><small
               class="pos-expiry-date"
-              :class="{ warning: !!getBatchWarning(item.batch.expiry_date) }"
+              :class="{
+                expired: !!item.batch.expiry_date && isExpired(item.batch.expiry_date),
+                warning:
+                  !!getBatchWarning(item.batch.expiry_date) && !isExpired(item.batch.expiry_date),
+              }"
               >{{
                 item.batch.expiry_date
                   ? formatDate(item.batch.expiry_date)

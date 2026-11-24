@@ -1,0 +1,163 @@
+/* Workflow emphasis only: preserve the existing compact sizes and pagination. */
+:root {
+  --table-stripe: #fafaf7;
+  --table-hover: #f0f5f1;
+  --table-selected: var(--color-primary-50);
+  --selection-ink: #085041;
+}
+[data-theme='dark'] {
+  --table-stripe: #292822;
+  --table-hover: #303b32;
+  --selection-ink: #b3e5d3;
+}
+
+/* Background and selection are shared by paged registers and scrolling tables. */
+#app :is(.compact-workspace, .pos-terminal) table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-page);
+  color: var(--text-secondary);
+  font-weight: 600;
+  border-bottom-color: var(--border-strong);
+}
+#app :is(.compact-workspace, .pos-terminal) table tbody tr:nth-child(even) > td {
+  background: var(--table-stripe);
+}
+#app :is(.compact-workspace, .pos-terminal) table tbody tr:hover > td {
+  background: var(--table-hover);
+}
+#app :is(.compact-workspace, .pos-terminal) table tbody tr:focus-within > td,
+#app :is(.compact-workspace, .pos-terminal) table tbody tr[aria-selected='true'] > td,
+#app :is(.compact-workspace, .pos-terminal) table tbody tr.selected > td {
+  background: var(--table-selected);
+}
+#app :is(.compact-workspace, .pos-terminal) table tbody tr:focus-within > td:first-child {
+  box-shadow: inset 3px 0 var(--color-primary-400);
+}
+#app .pos-lines th:nth-child(n + 4):not(:last-child),
+#app :is(.compact-workspace, .pos-terminal) :is(td.money, th.money, .pos-money) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+#app .pos-line-description strong {
+  color: var(--text-primary);
+}
+#app .pos-batch-number,
+#app .pos-type-pill {
+  color: var(--text-secondary);
+}
+#app .pos-expiry-date.warning {
+  color: var(--banner-warning-text);
+  background: var(--banner-warning-bg);
+}
+#app .pos-expiry-date.expired {
+  color: var(--banner-danger-text);
+  background: var(--banner-danger-bg);
+}
+
+/* Separate the final amount from routine metadata without enlarging the dock. */
+#app .pos-terminal .pos-summary {
+  background: var(--surface-card);
+}
+#app .pos-terminal .pos-summary > div:not(.pos-summary-total) small {
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+#app .pos-terminal .pos-summary-total {
+  padding-inline: 10px;
+  border-inline-start: 3px solid var(--color-primary-400);
+  background: var(--color-primary-50);
+  color: var(--selection-ink);
+  border-radius: var(--radius-sm);
+}
+#app .pos-terminal .pos-summary-total small {
+  font-size: 11px;
+  color: inherit;
+}
+#app .pos-terminal .pos-cash-tender input {
+  border-color: var(--color-primary-400);
+  background: var(--color-primary-50);
+  color: var(--selection-ink);
+  font-weight: 700;
+  box-shadow: none;
+}
+#app .pos-terminal .pos-change-due {
+  color: var(--selection-ink);
+}
+#app .pos-terminal .pos-change-due strong {
+  font-variant-numeric: tabular-nums;
+}
+#app .pos-terminal .pos-pay-button[aria-pressed='true'] {
+  background: var(--color-primary-50);
+  border-color: var(--color-primary-400);
+  color: var(--selection-ink);
+  box-shadow: inset 0 -2px var(--color-primary-400);
+}
+#app .pos-terminal .pos-complete:not(:disabled):hover {
+  background: var(--color-primary-800);
+  border-color: var(--color-primary-800);
+}
+#app .pos-terminal .pos-complete {
+  font-weight: 700;
+  transform: none;
+}
+#app .pos-terminal .pos-customer-results .selected,
+#app .pos-terminal .pos-product-card.highlighted {
+  background: var(--table-selected);
+  color: var(--selection-ink);
+  box-shadow: inset 3px 0 var(--color-primary-400);
+}
+
+/* Section headings carry grouping; inner boxes no longer need competing rules. */
+#app .product-dialog .p-section-label {
+  border-top: 0;
+  background: var(--surface-page);
+  color: var(--text-secondary);
+}
+#app .product-dialog :is(.p-item-left, .p-price-group) {
+  border-inline-end: 0;
+  border-right: 0;
+}
+#app .product-dialog .p-price-group-title {
+  color: var(--selection-ink);
+  opacity: 1;
+}
+#app .shared-input input {
+  border-width: 1px;
+  border-color: var(--border-strong);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  box-shadow: none;
+}
+#app .shared-input input:focus-visible {
+  outline: 2px solid var(--color-primary-400);
+  outline-offset: 1px;
+}
+#app .shared-input input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+  background: var(--banner-danger-bg);
+}
+#app .shared-input .field-error {
+  color: var(--banner-danger-text);
+}
+
+/* Text accents stay legible when the action fill becomes deeper in dark mode. */
+#app :is(.text-brand-600, .text-brand-700),
+#app .stat-card-primary .stat-card-icon {
+  color: var(--selection-ink);
+}
+#app .home-view .sales-chart polyline {
+  stroke: var(--selection-ink);
+}
+
+#app :is(.dashboard-return, .nav-menu-item[aria-current='page']) {
+  color: var(--selection-ink);
+}
+#app .nav-menu-item[aria-current='page'] {
+  background: var(--table-selected);
+}
+#app button:is(.bg-primary, .bg-brand-600):enabled:hover {
+  background: var(--color-primary-800);
+  border-color: var(--color-primary-800);
+}

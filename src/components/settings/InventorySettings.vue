@@ -54,11 +54,9 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
       </p>
     </div>
 
-    <div
-      class="p-4 bg-banner-warning-bg border-banner-warning-border border border-banner-warning-border rounded-md"
-    >
+    <div class="settings-note bg-banner-warning-bg border border-banner-warning-border">
       <div class="flex items-start gap-3">
-        <span class="text-2xl">⚠️</span>
+        <span class="font-semibold text-warning-text" aria-hidden="true">!</span>
         <div>
           <div class="font-semibold text-warning-text">{{ uiLabel('Alert Settings') }}</div>
           <div class="text-sm text-warning-text mt-1">

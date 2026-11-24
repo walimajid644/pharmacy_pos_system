@@ -2,7 +2,7 @@
 import { useWorkspaceLabels } from '@/lib/workspaceLabels';
 const uiLabel = useWorkspaceLabels();
 
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useDialogKeyboard } from '@/composables/useDialogKeyboard';
 import { bindTemplateRef } from '@/lib/templateRefs';
 import type { Category, Manufacturer } from '@/lib/types';
@@ -37,6 +37,26 @@ const emit = defineEmits<{ close: []; save: [] }>();
 const { pick } = useI18n();
 const formDialog = ref<HTMLElement | null>(null);
 const bindFormDialog = bindTemplateRef(formDialog);
+const saveAttempted = ref(false);
+const skuError = computed(() =>
+  saveAttempted.value && !formData.value.sku.trim()
+    ? pick('Enter a code / SKU.', 'کوڈ درج کریں۔')
+    : '',
+);
+const nameError = computed(() =>
+  saveAttempted.value && !formData.value.name.trim()
+    ? pick('Enter a medicine description.', 'دوا کی تفصیل درج کریں۔')
+    : '',
+);
+async function save() {
+  saveAttempted.value = true;
+  if (skuError.value || nameError.value) {
+    await nextTick();
+    formDialog.value?.querySelector<HTMLInputElement>('input[aria-invalid="true"]')?.focus();
+    return;
+  }
+  emit('save');
+}
 useDialogKeyboard(formDialog, () => {
   if (!props.loading) emit('close');
 });
@@ -102,7 +122,12 @@ watch(
         </h2>
         <div class="p-reg-date flex items-center gap-2">
           <span class="font-semibold">{{ pick('Registration Date', 'اندراج کی تاریخ') }}</span>
-          <Input v-model="formData.registration_date" type="date" class="p-reg-date-input" />
+          <Input
+            v-model="formData.registration_date"
+            type="date"
+            :aria-label="pick('Registration Date', 'اندراج کی تاریخ')"
+            class="p-reg-date-input"
+          />
         </div>
       </div>
 
@@ -144,9 +169,11 @@ watch(
           </div>
           <!-- SKU / Code -->
           <div class="p-field-row">
-            <label for="pf-sku" class="p-field-lbl">{{ pick('Code / SKU', 'کوڈ') }}</label>
+            <label for="pf-sku" class="p-field-lbl">{{ pick('Code / SKU', 'کوڈ') }} *</label>
             <Input
               id="pf-sku"
+              required
+              :error="skuError"
               v-model="formData.sku"
               placeholder="e.g. PARA500"
               class="p-field-ctrl"
@@ -157,6 +184,8 @@ watch(
             <label for="pf-name" class="p-field-lbl">{{ pick('Description', 'تفصیل') }} *</label>
             <Input
               id="pf-name"
+              required
+              :error="nameError"
               v-model="formData.name"
               placeholder="e.g. Panadol 500mg"
               class="p-field-ctrl"
@@ -393,7 +422,7 @@ watch(
         <Button variant="outline" :disabled="loading" @click="emit('close')">
           {{ pick('Cancel', 'منسوخ') }}
         </Button>
-        <Button :disabled="loading" @click="emit('save')">
+        <Button :disabled="loading" @click="save">
           {{ loading ? pick('Saving…', 'محفوظ ہو رہا ہے…') : pick('Save Product', 'محفوظ کریں') }}
         </Button>
       </div>

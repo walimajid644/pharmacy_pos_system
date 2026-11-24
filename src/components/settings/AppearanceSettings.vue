@@ -24,14 +24,6 @@ defineProps<{
 
 <template>
   <div v-if="activeTab === 'appearance'" class="settings-fields max-w-2xl space-y-5">
-    <p class="text-sm text-muted-foreground">
-      {{
-        pick(
-          'Display preferences apply immediately on this desktop.',
-          'ڈسپلے کی ترتیبات اس کمپیوٹر پر فوراً لاگو ہوتی ہیں۔',
-        )
-      }}
-    </p>
     <label class="block text-sm font-medium"
       >{{ pick('Theme', 'تھیم') }}
       <select
@@ -79,7 +71,7 @@ defineProps<{
         <option value="iso">{{ pick('Year-Month-Day', 'سال-مہینہ-دن') }}</option>
       </select>
     </label>
-    <div class="rounded border p-3 text-sm">
+    <div class="settings-note rounded border p-3 text-sm">
       {{ pick('Preview', 'نمونہ') }}: {{ formatCurrency(1234.5) }} · {{ formatDate('2026-10-25') }}
     </div>
   </div>

@@ -756,7 +756,7 @@ async function openDetail(mode: 'sale' | 'client' | 'item') {
             <button type="button" @click="cashReceived = total">
               {{ pick('Exact amount', 'پوری رقم') }}
             </button>
-            <div>
+            <div class="pos-change-due">
               <span>{{ pick('Change to return', 'واپس دینے کی رقم') }}</span><strong>{{
                 formatCurrency(changeDue)
               }}</strong>

@@ -218,6 +218,35 @@ try {
     '18px',
   );
   await shot('dashboard-populated-1024x600');
+  assert.deepEqual(
+    await evaluate(
+      `[...document.querySelectorAll('.nav-group .nav-button')].map(e => e.textContent.split('/')[0].trim())`,
+    ),
+    ['Sales', 'Inventory', 'Purchases', 'Finance', 'Reports', 'Admin', 'General Settings'],
+  );
+  const navigationPaths = [];
+  for (let index = 0; index < 7; index++) {
+    await evaluate(`document.querySelectorAll('.nav-group .nav-button')[${index}].click()`);
+    navigationPaths.push(
+      ...(await evaluate(
+        `[...document.querySelectorAll('.nav-menu-item[data-path]')].map(e => e.dataset.path)`,
+      )),
+    );
+    await evaluate(
+      `document.querySelector('.nav-menu .nav-menu-item:last-of-type').scrollIntoView({block:'nearest'})`,
+    );
+    inside(await evaluate(rect('.nav-menu .nav-menu-item:last-of-type')), 'Last navigation item');
+    await evaluate(
+      `document.querySelector('.desktop-nav').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true}))`,
+    );
+    assert.equal(await evaluate(`document.querySelectorAll('.nav-menu').length`), 0);
+  }
+  assert.equal(navigationPaths.length, 46);
+  assert.equal(new Set(navigationPaths).size, 46);
+  results.push(
+    'All 46 routes remain reachable in seven task groups; long menus scroll and Escape closes them',
+  );
+
   await evaluate(
     'document.querySelector(\'.dashboard-footer [data-path="/item-search"]\').click()',
   );
@@ -392,6 +421,12 @@ try {
   );
   await until("testCart.items.length===1&&!document.querySelector('.pos-search-dialog')");
   assert.equal(await evaluate('testCart.items[0].product.name'), 'Medicine 13');
+  await shot('pos-checkout-dark-1024x600');
+  await evaluate(
+    "document.documentElement.dataset.theme='light';document.documentElement.classList.remove('dark')",
+  );
+  await delay(350);
+  await shot('pos-checkout-light-1024x600');
 
   results.push(
     'Product-search dialog scrolls long result lists; keyboard navigation keeps the highlighted row visible',
@@ -426,6 +461,18 @@ try {
   );
   inside(await evaluate(rect('.product-dialog-card button:last-child')), 'save product');
   await shot('product-dialog-1024x600');
+  await evaluate("document.querySelector('.product-dialog-card button:last-child').click()");
+  await until("document.activeElement?.id==='pf-sku'");
+  assert.equal(
+    await evaluate("document.querySelectorAll('.product-dialog input[aria-invalid=true]').length"),
+    2,
+  );
+  await fits('.product-dialog-card');
+  await shot('product-required-fields-1024x600');
+  results.push(
+    'An empty product save keeps the dialog open, shows inline required-field errors and focuses the first invalid field',
+  );
+
   await evaluate("document.querySelector('.product-dialog input').focus()");
   await escape();
   await until("!document.querySelector('.product-dialog')");

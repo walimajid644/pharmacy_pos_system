@@ -28,13 +28,19 @@ export default {
           DEFAULT: 'var(--border)',
           strong: 'var(--border-strong)',
         },
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        brand: Object.fromEntries(
+          [50, 100, 200, 300, 400, 500, 600, 700, 800, 900].map((step) => [
+            step,
+            `var(--brand-${step})`,
+          ]),
+        ),
+        input: 'var(--border)',
+        ring: 'var(--border-focus)',
+        background: 'var(--surface-page)',
+        foreground: 'var(--text-primary)',
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: 'var(--color-primary-600)',
+          foreground: 'var(--text-inverse)',
           50: 'var(--color-primary-50)',
           100: 'var(--color-primary-100)',
           400: 'var(--color-primary-400)',
@@ -42,8 +48,8 @@ export default {
           800: 'var(--color-primary-800)',
         },
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
+          DEFAULT: 'var(--color-secondary-600)',
+          foreground: 'var(--text-inverse)',
           50: 'var(--color-secondary-50)',
           400: 'var(--color-secondary-400)',
           600: 'var(--color-secondary-600)',
@@ -62,10 +68,11 @@ export default {
           foreground: 'hsl(var(--accent-foreground))',
         },
         card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
+          DEFAULT: 'var(--surface-card)',
+          foreground: 'var(--text-primary)',
         },
         success: {
+          500: 'var(--color-success)',
           50: 'var(--color-success-50)',
           600: 'var(--color-success-600)',
           DEFAULT: 'var(--color-success)',
@@ -73,6 +80,7 @@ export default {
           text: 'var(--color-success-text)',
         },
         warning: {
+          500: 'var(--color-warning)',
           50: 'var(--color-warning-50)',
           600: 'var(--color-warning-600)',
           DEFAULT: 'var(--color-warning)',
@@ -80,6 +88,7 @@ export default {
           text: 'var(--color-warning-text)',
         },
         danger: {
+          500: 'var(--color-danger)',
           50: 'var(--color-danger-50)',
           600: 'var(--color-danger-600)',
           DEFAULT: 'var(--color-danger)',
@@ -87,6 +96,7 @@ export default {
           text: 'var(--color-danger-text)',
         },
         info: {
+          500: 'var(--color-info)',
           50: 'var(--color-info-50)',
           600: 'var(--color-info-600)',
           DEFAULT: 'var(--color-info)',

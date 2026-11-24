@@ -48,11 +48,9 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
       <p class="text-xs text-muted mt-1">{{ uiLabel('Used in price displays and reports') }}</p>
     </div>
 
-    <div
-      class="p-4 bg-banner-info-bg border-banner-info-border border border-banner-info-border rounded-md"
-    >
+    <div class="settings-note bg-banner-info-bg border border-banner-info-border">
       <div class="flex items-start gap-3">
-        <span class="text-2xl">ℹ️</span>
+        <span class="font-semibold text-info-text" aria-hidden="true">i</span>
         <div>
           <div class="font-semibold text-info-text">{{ uiLabel('Price Format') }}</div>
           <div class="text-sm text-info-text mt-1">

@@ -21,7 +21,8 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
       <Input
         id="field-companysettings-1"
         v-model="formData.company_name"
-        placeholder="e.g. City Pharmacy"
+        :placeholder="pick('e.g. City Pharmacy', 'مثلاً سٹی فارمیسی')"
+        autocomplete="organization"
       />
       <p class="text-xs text-gray-500 mt-1">
         {{ pick('Displayed on receipts and reports', 'رسیدوں اور رپورٹوں میں ظاہر ہوتا ہے') }}
@@ -37,7 +38,8 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
         v-model="formData.company_address"
         class="w-full border rounded-md p-2 text-sm"
         rows="3"
-        placeholder="Street address, city, postal code"
+        :placeholder="pick('Street address, city, postal code', 'پتہ، شہر، پوسٹل کوڈ')"
+        autocomplete="street-address"
       ></textarea>
     </div>
 
@@ -48,6 +50,8 @@ const formData = defineModel<ViewValue<State['formData']>>('formData', { require
       <Input
         id="field-companysettings-3"
         v-model="formData.company_phone"
+        type="tel"
+        autocomplete="tel"
         placeholder="e.g. 042-12345678"
       />
     </div>

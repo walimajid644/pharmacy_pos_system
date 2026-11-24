@@ -54,7 +54,7 @@ function getExpiryText(days: number): string {
           class="alert-tab"
           :class="{ 'alert-tab-active': activeTab === 'lowStock' }"
         >
-          <Badge :variant="lowStockCount > 0 ? 'danger' : 'neutral'" :dot="lowStockCount > 0">
+          <Badge :variant="lowStockCount > 0 ? 'warning' : 'neutral'" :dot="lowStockCount > 0">
             <BilingualText textKey="low_stock_items" />
             ({{ formatNumber(lowStockCount) }})
           </Badge>

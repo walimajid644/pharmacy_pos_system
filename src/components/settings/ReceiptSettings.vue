@@ -73,107 +73,114 @@ function clearLogo() {
 
 <template>
   <div v-if="activeTab === 'receipt'" class="settings-fields receipt-fields max-w-2xl space-y-6">
-    <div>
-      <label for="field-receiptsettings-logo" class="block text-sm font-medium mb-2">{{
-        pick('Pharmacy Logo (Optional)', 'فارمیسی کا لوگو (اختیاری)')
-      }}</label>
+    <div class="receipt-options">
+      <div>
+        <label for="field-receiptsettings-logo" class="block text-sm font-medium mb-2">{{
+          pick('Pharmacy Logo (Optional)', 'فارمیسی کا لوگو (اختیاری)')
+        }}</label>
 
-      <!-- File input for selecting logo -->
-      <div class="space-y-2">
-        <input
-          id="field-receiptsettings-logo"
-          type="file"
-          accept="image/png,image/jpeg,image/jpg,image/gif"
-          class="w-full border rounded-md p-2 text-sm"
-          @change="handleLogoUpload"
-        />
+        <!-- File input for selecting logo -->
+        <div class="space-y-2">
+          <input
+            id="field-receiptsettings-logo"
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/gif"
+            class="w-full border rounded-md p-2 text-sm"
+            @change="handleLogoUpload"
+          />
 
-        <!-- Show current logo path if exists -->
-        <div
-          v-if="formData.receipt_logo_path"
-          class="flex items-center gap-2 p-2 bg-gray-50 rounded border"
-        >
-          <span class="text-xs text-gray-600">{{ uiLabel('Current:') }}</span>
-          <span class="text-xs font-mono flex-1">{{
-            formData.receipt_logo_path.startsWith('data:image/')
-              ? pick('Uploaded image', 'اپ لوڈ شدہ تصویر')
-              : formData.receipt_logo_path
-          }}</span>
-          <button type="button" class="text-xs text-red-600 hover:text-red-800" @click="clearLogo">
-            {{ pick('Remove', 'ہٹائیں') }}
-          </button>
+          <!-- Show current logo path if exists -->
+          <div
+            v-if="formData.receipt_logo_path"
+            class="flex items-center gap-2 p-2 bg-gray-50 rounded border"
+          >
+            <span class="text-xs text-gray-600">{{ uiLabel('Current:') }}</span>
+            <span class="text-xs font-mono flex-1">{{
+              formData.receipt_logo_path.startsWith('data:image/')
+                ? pick('Uploaded image', 'اپ لوڈ شدہ تصویر')
+                : formData.receipt_logo_path
+            }}</span>
+            <button
+              type="button"
+              class="receipt-remove text-xs text-red-600 hover:text-red-800"
+              @click="clearLogo"
+            >
+              {{ pick('Remove', 'ہٹائیں') }}
+            </button>
+          </div>
+
+          <!-- Or manual path input -->
+          <details class="text-xs">
+            <summary class="cursor-pointer text-gray-600 hover:text-gray-800">
+              {{ pick('Or enter path manually', 'یا دستی طور پر راستہ درج کریں') }}
+            </summary>
+            <input
+              :aria-label="pick('Logo file path', 'لوگو فائل کا راستہ')"
+              v-model="formData.receipt_logo_path"
+              type="text"
+              class="w-full border rounded-md p-2 text-sm mt-2"
+              placeholder="./assets/logo.png"
+            />
+          </details>
         </div>
 
-        <!-- Or manual path input -->
-        <details class="text-xs">
-          <summary class="cursor-pointer text-gray-600 hover:text-gray-800">
-            {{ pick('Or enter path manually', 'یا دستی طور پر راستہ درج کریں') }}
-          </summary>
-          <input
-            v-model="formData.receipt_logo_path"
-            type="text"
-            class="w-full border rounded-md p-2 text-sm mt-2"
-            placeholder="./assets/logo.png"
-          />
-        </details>
+        <p class="text-xs text-gray-500 mt-1">
+          {{
+            pick(
+              'Upload PNG, JPG, or GIF image (recommended: 200-300px wide)',
+              'PNG، JPG، یا GIF تصویر اپ لوڈ کریں (تجویز: 200-300px چوڑی)',
+            )
+          }}
+        </p>
       </div>
 
-      <p class="text-xs text-gray-500 mt-1">
-        {{
-          pick(
-            'Upload PNG, JPG, or GIF image (recommended: 200-300px wide)',
-            'PNG، JPG، یا GIF تصویر اپ لوڈ کریں (تجویز: 200-300px چوڑی)',
-          )
-        }}
-      </p>
-    </div>
+      <div>
+        <label for="field-receiptsettings-1" class="block text-sm font-medium mb-2">{{
+          pick('Receipt Header', 'رسید کا عنوان')
+        }}</label>
+        <textarea
+          id="field-receiptsettings-1"
+          v-model="formData.receipt_header"
+          class="w-full border rounded-md p-2 text-sm font-mono"
+          rows="3"
+          placeholder="Welcome to City Pharmacy&#10;Your Health, Our Priority"
+        ></textarea>
+        <p class="text-xs text-gray-500 mt-1">
+          {{ uiLabel('Printed at the top of receipts (optional)') }}
+        </p>
+      </div>
 
-    <div>
-      <label for="field-receiptsettings-1" class="block text-sm font-medium mb-2">{{
-        pick('Receipt Header', 'رسید کا عنوان')
-      }}</label>
-      <textarea
-        id="field-receiptsettings-1"
-        v-model="formData.receipt_header"
-        class="w-full border rounded-md p-2 text-sm font-mono"
-        rows="3"
-        placeholder="Welcome to City Pharmacy&#10;Your Health, Our Priority"
-      ></textarea>
-      <p class="text-xs text-gray-500 mt-1">
-        {{ uiLabel('Printed at the top of receipts (optional)') }}
-      </p>
-    </div>
+      <div>
+        <label for="field-receiptsettings-2" class="block text-sm font-medium mb-2">{{
+          pick('Receipt Footer', 'رسید کا اختتام')
+        }}</label>
+        <textarea
+          id="field-receiptsettings-2"
+          v-model="formData.receipt_footer"
+          class="w-full border rounded-md p-2 text-sm font-mono"
+          rows="3"
+          placeholder="Thank you for your business!&#10;Exchange policy: 7 days with receipt"
+        ></textarea>
+        <p class="text-xs text-gray-500 mt-1">
+          {{ uiLabel('Printed at the bottom of receipts (optional)') }}
+        </p>
+      </div>
 
-    <div>
-      <label for="field-receiptsettings-2" class="block text-sm font-medium mb-2">{{
-        pick('Receipt Footer', 'رسید کا اختتام')
-      }}</label>
-      <textarea
-        id="field-receiptsettings-2"
-        v-model="formData.receipt_footer"
-        class="w-full border rounded-md p-2 text-sm font-mono"
-        rows="3"
-        placeholder="Thank you for your business!&#10;Exchange policy: 7 days with receipt"
-      ></textarea>
-      <p class="text-xs text-gray-500 mt-1">
-        {{ uiLabel('Printed at the bottom of receipts (optional)') }}
-      </p>
-    </div>
-
-    <div>
-      <label class="flex items-center gap-2">
-        <input v-model="formData.show_drap" type="checkbox" />
-        <span class="text-sm font-medium">{{
-          pick('Show DRAP Registration on Receipts', 'رسید پر ڈریپ رجسٹریشن دکھائیں')
-        }}</span>
-      </label>
-      <p class="text-xs text-gray-500 mt-1 ml-6">
-        {{
-          uiLabel(
-            'Display Drug Regulatory Authority of Pakistan registration numbers for controlled substances',
-          )
-        }}
-      </p>
+      <div>
+        <label class="flex items-center gap-2">
+          <input v-model="formData.show_drap" type="checkbox" />
+          <span class="text-sm font-medium">{{
+            pick('Show DRAP Registration on Receipts', 'رسید پر ڈریپ رجسٹریشن دکھائیں')
+          }}</span>
+        </label>
+        <p class="text-xs text-gray-500 mt-1 ml-6">
+          {{
+            uiLabel(
+              'Display Drug Regulatory Authority of Pakistan registration numbers for controlled substances',
+            )
+          }}
+        </p>
+      </div>
     </div>
 
     <div class="receipt-preview">
@@ -433,23 +440,21 @@ function clearLogo() {
 </template>
 
 <style scoped>
-:global(.workspace-body .tool-terminal.compact-workspace .receipt-fields) {
-  height: 100%;
-  min-height: 0;
-  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.8fr);
-  grid-template-rows: auto auto auto auto;
-  align-content: stretch;
-}
-.receipt-fields > :not(.receipt-preview) {
+.receipt-options {
   grid-column: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow: auto;
+  padding-inline-end: 4px;
 }
 .receipt-preview {
   grid-column: 2;
-  grid-row: 1 / span 4;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: 8px;
+  padding: 12px;
   border: 1px solid var(--border);
   background: var(--surface-secondary);
   border-radius: 6px;
@@ -471,6 +476,12 @@ function clearLogo() {
   background: #fff;
   color-scheme: light;
 }
+.receipt-preview-paper {
+  overflow-wrap: anywhere;
+}
+.receipt-preview-paper th {
+  position: static !important;
+}
 .receipt-preview-paper tr {
   height: auto !important;
 }
@@ -489,5 +500,30 @@ function clearLogo() {
 }
 .receipt-preview p {
   margin: 4px 0 0;
+}
+.receipt-remove {
+  flex-shrink: 0;
+  padding: 4px 8px;
+  border: 1px solid var(--banner-danger-border);
+  border-radius: 4px;
+  color: var(--banner-danger-text);
+  background: var(--banner-danger-bg);
+}
+.receipt-fields details input,
+.receipt-fields .font-mono {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 680px) {
+  .receipt-options {
+    overflow: visible;
+  }
+  .receipt-preview-viewport {
+    min-height: 360px;
+  }
+  .receipt-preview {
+    grid-column: 1;
+    grid-row: auto;
+    min-height: 480px;
+  }
 }
 </style>

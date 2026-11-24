@@ -49,7 +49,7 @@ const salesChange = computed(() =>
       :title="t('low_stock_items')"
       :value="loading ? '…' : formatNumber(lowStockCount)"
       icon="⚠️"
-      :color="lowStockCount > 0 ? 'danger' : 'success'"
+      :color="lowStockCount > 0 ? 'warning' : 'success'"
       :clickable="true"
       @click="emit('alerts', 'lowStock')"
     />

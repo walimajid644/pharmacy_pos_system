@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from '@/lib/i18n';
+import NavIcon from '@/components/ui/NavIcon.vue';
 import type { UserRole } from '@/lib/types';
 
 const router = useRouter();
@@ -13,15 +14,13 @@ const tasks = [
     path: '/pos',
     en: 'Sales',
     ur: 'فروخت',
-    icon: '🛒',
-    color: 'var(--color-success)',
+    color: 'var(--color-primary)',
     roles: ['admin', 'manager', 'cashier'],
   },
   {
     path: '/item-search',
     en: 'General Search',
     ur: 'عام تلاش',
-    icon: '⌕',
     color: 'var(--color-primary)',
     roles: ['admin', 'manager', 'cashier', 'accountant'],
   },
@@ -29,23 +28,20 @@ const tasks = [
     path: '/products',
     en: 'Products',
     ur: 'مصنوعات',
-    icon: '💊',
-    color: 'var(--color-secondary)',
+    color: 'var(--color-primary)',
     roles: ['admin', 'manager'],
   },
   {
     path: '/purchases',
     en: 'Purchases',
     ur: 'خریداری',
-    icon: '📦',
-    color: 'var(--color-warning)',
+    color: 'var(--color-primary)',
     roles: ['admin', 'manager'],
   },
   {
     path: '/',
     en: 'Dashboard',
     ur: 'ڈیش بورڈ',
-    icon: '▥',
     color: 'var(--color-primary)',
     roles: ['admin', 'manager', 'cashier', 'accountant'],
   },
@@ -53,7 +49,6 @@ const tasks = [
     path: '/daily-closing',
     en: 'Daily Closing',
     ur: 'روزانہ بندش',
-    icon: '▤',
     color: 'var(--color-primary)',
     roles: ['admin', 'manager'],
   },
@@ -61,8 +56,7 @@ const tasks = [
     path: '/shifts',
     en: 'Open Shift',
     ur: 'شفٹ کھولیں',
-    icon: '▣',
-    color: 'var(--color-info, var(--color-secondary))',
+    color: 'var(--color-primary)',
     roles: ['admin', 'manager', 'cashier'],
   },
 ];
@@ -84,7 +78,9 @@ const visibleTasks = computed(() =>
       :aria-keyshortcuts="task.path === '/pos' ? 'Control+N' : undefined"
       @click="router.push(task.path)"
     >
-      <span class="task-icon" aria-hidden="true">{{ task.icon }}</span>
+      <span class="task-icon" aria-hidden="true"
+        ><NavIcon :name="task.path === '/' ? 'home' : task.path"
+      /></span>
       <span>{{ pick(task.en, task.ur) }}</span>
     </button>
   </nav>

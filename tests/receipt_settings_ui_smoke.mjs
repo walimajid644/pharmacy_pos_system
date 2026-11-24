@@ -128,10 +128,10 @@ try {
   })()`);
   const receiptTab = async () => {
     await until(
-      `[...document.querySelectorAll('button')].some(b=>b.textContent.trim().startsWith('Receipt'))`,
+      `[...document.querySelectorAll('.settings-workspace button')].some(b=>b.textContent.trim().startsWith('Receipt'))`,
     );
     await evaluate(
-      `[...document.querySelectorAll('button')].find(b=>b.textContent.trim().startsWith('Receipt')).click()`,
+      `[...document.querySelectorAll('.settings-workspace button')].find(b=>b.textContent.trim().startsWith('Receipt')).click()`,
     );
     await until(`!!document.querySelector('#field-receiptsettings-logo')`);
   };
@@ -148,11 +148,11 @@ try {
   };
   const save = async (count) => {
     await evaluate(
-      `[...document.querySelectorAll('button')].find(b=>b.textContent.includes('Save Settings')).click()`,
+      `[...document.querySelectorAll('.settings-workspace button')].find(b=>b.textContent.includes('Save Settings')).click()`,
     );
     await until(`settingsWrites.length === ${count}`);
     await until(
-      `![...document.querySelectorAll('button')].find(b=>b.textContent.includes('Save Settings'))?.disabled`,
+      `![...document.querySelectorAll('.settings-workspace button')].find(b=>b.textContent.includes('Save Settings'))?.disabled`,
     );
   };
   const reopen = async () => {
@@ -169,7 +169,7 @@ try {
   assert(await evaluate(`document.body.textContent.includes('Uploaded image')`));
   await shot('saved-logo');
   await evaluate(
-    `[...document.querySelectorAll('button')].find(b=>b.textContent.trim().startsWith('Remove')).click()`,
+    `[...document.querySelectorAll('.settings-workspace button')].find(b=>b.textContent.trim().startsWith('Remove')).click()`,
   );
   await save(2);
   assert.equal(await evaluate('settingsRow.receipt_logo_path'), null);
@@ -179,7 +179,7 @@ try {
   await evaluate('window.settingsRow=null');
   await reopen();
   await evaluate(
-    `[...document.querySelectorAll('button')].find(b=>b.textContent.trim().startsWith('Company Info')).click()`,
+    `[...document.querySelectorAll('.settings-workspace button')].find(b=>b.textContent.trim().startsWith('Company Info')).click()`,
   );
   await until(`!!document.querySelector('#field-companysettings-1')`);
   await evaluate(
@@ -192,6 +192,85 @@ try {
   assert((await evaluate('settingsWrites[2].query')).trim().startsWith('INSERT'));
   await reopen();
   assert(await evaluate(`document.body.textContent.includes('Uploaded image')`));
+  // Verify settings navigation and layout within the actual compact workspace.
+  const selectTab = async (id) => {
+    await evaluate(`document.querySelector('#settings-tab-${id}').click()`);
+    await until(`document.querySelector('#settings-panel-${id}') !== null`);
+  };
+  for (const width of [1024, 640, 390]) {
+    await cdp('Emulation.setDeviceMetricsOverride', {
+      width,
+      height: 600,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
+    for (const id of ['company', 'tax', 'inventory', 'receipt', 'appearance']) {
+      await selectTab(id);
+      await delay(120);
+      const layout = await evaluate(`(() => {
+        const root = document.querySelector('.settings-workspace');
+        const panel = document.querySelector('.settings-content');
+        const footer = document.querySelector('.settings-footer').getBoundingClientRect();
+        return {
+          rootFits: root.scrollWidth <= root.clientWidth + 1,
+          contentFits: panel.scrollWidth <= panel.clientWidth + 1,
+          footerVisible: footer.bottom <= innerHeight + 1 && footer.top >= 0,
+          selectedTabs: document.querySelectorAll('[role="tab"][aria-selected="true"]').length,
+          previewFits: ${JSON.stringify(id)} !== 'receipt' || (() => {
+            const paper = document.querySelector('.receipt-preview-paper').getBoundingClientRect();
+            const viewport = document.querySelector('.receipt-preview-viewport').getBoundingClientRect();
+            return paper.width > 0 && paper.left >= viewport.left - 1 && paper.right <= viewport.right + 1 && paper.bottom <= viewport.bottom + 1;
+          })(),
+        };
+      })()`);
+      assert(layout.rootFits && layout.contentFits, `${id} overflows at ${width}px`);
+      assert(layout.footerVisible, `Save bar is outside the viewport at ${width}px`);
+      assert.equal(layout.selectedTabs, 1);
+      assert(layout.previewFits, `Receipt preview does not fit at ${width}px`);
+    }
+  }
+  await selectTab('company');
+  await evaluate(`document.querySelector('#settings-tab-company').focus()`);
+  await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'End', code: 'End' });
+  await until(`document.activeElement?.id === 'settings-tab-appearance'`);
+  assert.equal(await evaluate(`!!document.querySelector('.settings-save')`), false);
+  await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'Home', code: 'Home' });
+  await until(`document.activeElement?.id === 'settings-tab-company'`);
+  await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowRight', code: 'ArrowRight' });
+  await until(`document.activeElement?.id === 'settings-tab-tax'`);
+  // Desktop preferences update immediately, including theme and RTL layout.
+  await selectTab('appearance');
+  await evaluate(`(async () => {
+    const {useTheme} = await import('/src/lib/theme.ts');
+    const {useI18n} = await import('/src/lib/i18n.ts');
+    useTheme().setTheme('dark');
+    useI18n().setLanguage('ur');
+  })()`);
+  await until(`document.documentElement.dir === 'rtl'`);
+  await shot('settings-dark-rtl');
+  await selectTab('company');
+  await evaluate(`document.querySelector('#settings-tab-company').focus()`);
+  await cdp('Input.dispatchKeyEvent', { type: 'keyDown', key: 'ArrowLeft', code: 'ArrowLeft' });
+  await until(`document.activeElement?.id === 'settings-tab-tax'`);
+  await evaluate(`(async () => {
+    const {useTheme} = await import('/src/lib/theme.ts');
+    const {useI18n} = await import('/src/lib/i18n.ts');
+    useTheme().setTheme('light');
+    useI18n().setLanguage('en');
+  })()`);
+  await cdp('Emulation.setDeviceMetricsOverride', {
+    width: 1024,
+    height: 600,
+    deviceScaleFactor: 1,
+    mobile: false,
+  });
+  await selectTab('company');
+  await shot('settings-company');
+  await selectTab('receipt');
+  await shot('settings-receipt');
+  results.push(
+    'Settings tabs, keyboard navigation, responsive layout, receipt fitting and dark RTL preferences passed',
+  );
   results.push('Receipt logo upload, update, reload, removal and first settings insert passed');
   console.log(results.join('\n'));
 } catch (e) {

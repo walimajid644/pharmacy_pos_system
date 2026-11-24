@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useI18n } from '@/lib/i18n';
+import NavIcon from '@/components/ui/NavIcon.vue';
 import type { UserRole } from '@/lib/types';
 
 const router = useRouter();
@@ -14,63 +15,54 @@ const links = [
     path: '/payments',
     en: 'Receipts',
     ur: 'وصولیاں',
-    icon: '↔',
     roles: ['admin', 'manager', 'accountant'],
   },
   {
     path: '/expenses',
     en: 'Expenses',
     ur: 'اخراجات',
-    icon: '▥',
     roles: ['admin', 'manager', 'accountant'],
   },
   {
     path: '/preorders',
     en: 'Sale Orders',
     ur: 'فروخت آرڈر',
-    icon: '📦',
     roles: ['admin', 'manager', 'cashier'],
   },
   {
     path: '/customers',
     en: 'Clients',
     ur: 'گاہک',
-    icon: '♙',
     roles: ['admin', 'manager', 'cashier'],
   },
   {
     path: '/suppliers',
     en: 'Suppliers',
     ur: 'سپلائرز',
-    icon: '▧',
     roles: ['admin', 'manager'],
   },
   {
     path: '/sales-history',
     en: 'Sales History',
     ur: 'فروخت کی تاریخ',
-    icon: '◷',
     roles: ['admin', 'manager', 'accountant'],
   },
   {
     path: '/item-search',
     en: 'Adv. Item Search',
     ur: 'تفصیلی مصنوعات تلاش',
-    icon: '⌕',
     roles: ['admin', 'manager', 'cashier', 'accountant'],
   },
   {
     path: '/estimates',
     en: 'Estimates',
     ur: 'تخمینے',
-    icon: '📋',
     roles: ['admin', 'manager', 'cashier'],
   },
   {
     path: '/backups',
     en: 'Backup',
     ur: 'بیک اپ',
-    icon: '💾',
     roles: ['admin', 'manager'],
   },
 ];
@@ -95,7 +87,9 @@ const visibleLinks = computed(() =>
       :data-path="link.path"
       @click="router.push(link.path)"
     >
-      <span class="footer-icon" aria-hidden="true">{{ link.icon }}</span>
+      <span class="footer-icon" aria-hidden="true"
+        ><NavIcon :name="link.path === '/' ? 'home' : link.path"
+      /></span>
       <span class="footer-label">{{ pick(link.en, link.ur) }}</span>
     </button>
   </footer>

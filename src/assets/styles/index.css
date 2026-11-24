@@ -2,6 +2,7 @@
 @import './compact-operational.css';
 @import './soft-surfaces.css';
 @import './entry-windows.css';
+@import './workflow-polish.css';
 
 @tailwind base;
 @tailwind components;
@@ -9,7 +10,7 @@
 
 :root {
   color-scheme: light;
-  /* Quiet status surfaces; existing palette values remain unchanged. */
+  /* Quiet status surfaces shared by the light theme. */
   --banner-success-bg: #f2f8ec;
   --banner-success-border: #d8e8c4;
   --banner-success-text: var(--color-success-text);
@@ -80,17 +81,17 @@
   --neutral-900: #171717;
   --neutral-950: #0a0a0a;
 
-  /* Brand - Emerald (medical, trusted) */
-  --brand-50: #ecfdf5;
-  --brand-100: #d1fae5;
-  --brand-200: #a7f3d0;
-  --brand-300: #6ee7b7;
-  --brand-400: #34d399;
-  --brand-500: #10b981;
-  --brand-600: #059669;
-  --brand-700: #047857;
-  --brand-800: #065f46;
-  --brand-900: #064e3b;
+  /* Brand aliases: the primary role tokens own the teal palette. */
+  --brand-50: var(--color-primary-50);
+  --brand-100: var(--color-primary-100);
+  --brand-200: #b8e1d4;
+  --brand-300: #83c8b3;
+  --brand-400: var(--color-primary-400);
+  --brand-500: var(--color-primary-600);
+  --brand-600: var(--color-primary-600);
+  --brand-700: var(--color-primary-800);
+  --brand-800: var(--color-primary-800);
+  --brand-900: #063c31;
 
   /* Semantic Colors */
   --success-500: #22c55e;
@@ -103,11 +104,11 @@
   --info-600: #2563eb;
 
   /* Functional Colors - Light Theme */
-  --background-primary: var(--neutral-50);
-  --background-secondary: var(--neutral-100);
-  --surface-primary: #ffffff;
-  --surface-secondary: var(--neutral-50);
-  --surface-elevated: #ffffff;
+  --background-primary: var(--surface-page);
+  --background-secondary: var(--surface-page);
+  --surface-primary: var(--surface-card);
+  --surface-secondary: var(--surface-page);
+  --surface-elevated: var(--surface-card);
 
   --text-primary: var(--neutral-900);
   --text-secondary: var(--neutral-600);
@@ -115,8 +116,8 @@
   --text-inverse: #ffffff;
   --overlay: rgba(0, 0, 0, 0.28);
 
-  --border-primary: var(--neutral-200);
-  --border-secondary: var(--neutral-300);
+  --border-primary: var(--border);
+  --border-secondary: var(--border-strong);
   --border-focus: var(--brand-500);
 
   /* Legacy support (deprecated - use functional colors) */
@@ -136,7 +137,7 @@
 
   /* === New Design Token System === */
   --color-primary-50: #e1f5ee;
-  --color-primary-100: #9fe1cb;
+  --color-primary-100: #d0ebdf;
   --color-primary-400: #1d9e75;
   --color-primary-600: #0f6e56;
   --color-primary-800: #085041;
@@ -243,22 +244,22 @@
   --banner-info-text: var(--info-500);
 
   /* Functional Colors - Dark Theme */
-  --background-primary: var(--neutral-950);
-  --background-secondary: var(--neutral-900);
-  --surface-primary: var(--neutral-900);
-  --surface-secondary: var(--neutral-800);
-  --surface-elevated: var(--neutral-800);
+  --background-primary: var(--surface-page);
+  --background-secondary: var(--surface-page);
+  --surface-primary: var(--surface-card);
+  --surface-secondary: var(--surface-page);
+  --surface-elevated: var(--surface-card);
 
   --text-primary: var(--neutral-50);
   --text-secondary: var(--neutral-400);
   --text-tertiary: var(--neutral-500);
 
-  --border-primary: var(--neutral-800);
-  --border-secondary: var(--neutral-700);
+  --border-primary: var(--border);
+  --border-secondary: var(--border-strong);
 
-  /* Slightly desaturated brand colors in dark mode for better contrast */
-  --brand-500: #34d399;
-  --brand-600: #10b981;
+  /* Shared brand aliases continue to follow the dark action palette. */
+  --brand-500: var(--color-primary-600);
+  --brand-600: var(--color-primary-600);
 
   /* Adjusted semantic colors */
   --success-500: #4ade80;
@@ -294,12 +295,19 @@
   --text-secondary: #b4b2a9;
   --text-muted: #888780;
 
-  --color-primary-600: #1d9e75;
+  --color-primary-600: #14785d;
+  --color-primary-800: #0f604c;
+  --color-primary-100: #124737;
+  --color-primary-400: #69c4a5;
   --color-primary-50: #0b3a2d;
   --color-secondary-600: #378add;
   --color-secondary-50: #0a2a44;
 
   --color-success-bg: #1c2b0c;
+  --color-success-text: #bfdf9b;
+  --color-warning-text: #f2cb87;
+  --color-danger-text: #f3b4b4;
+  --color-info-text: #aacff1;
   --color-warning-bg: #2e200a;
   --color-danger-bg: #331010;
   --color-info-bg: #0a2a44;
